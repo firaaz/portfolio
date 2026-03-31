@@ -1,45 +1,45 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.pnp
 .pnp.js
-.yarn/install-state.gz
 
-# testing
-/coverage
+# Build output
+dist/
+build/
+*.egg-info/
 
-# next.js
-/.next/
-/out/
+# Testing
+coverage/
+.pytest_cache/
+htmlcov/
 
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
+# Environment
 .env
 .env.*
 !.env.example
+.venv/
 
-# vercel
-.vercel
+# OS
+.DS_Store
 
-# typescript
+# Editor
+*.swp
+*.swo
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# TypeScript
 *.tsbuildinfo
-next-env.d.ts
-.content-collections
 
-# claude/superpowers ephemeral
+# Python
+*.pyc
+*.pyo
+
+# Claude/Superpowers ephemeral
 .superpowers/
 .claude/worktrees/
-.superpowers/
