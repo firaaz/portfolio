@@ -78,10 +78,11 @@ Vercel Edge Functions read referrer URL and UTM parameters. LinkedIn visitor →
 - **Content:** Zero Emaratech references in public content
 
 ## Key Decisions
-- ADR-0001: [Tech Stack](adrs/0001-tech-stack.md) — Next.js + shadcn/ui + TF.js + Claude Haiku
+- ADR-0001: [Tech Stack](adrs/0001-tech-stack.md) — ~~Next.js + shadcn/ui + TF.js + Claude Haiku~~ (superseded by ADR-0005)
 - ADR-0002: [Three-Layer Architecture](adrs/0002-three-layer-architecture.md) — build-time variants + client classification + edge middleware
 - ADR-0003: [Agent Interaction Protocol](adrs/0003-agent-interaction-protocol.md) — five-verb protocol, staggered dispatch, signal-scoped lifecycle
 - ADR-0004: [Editorial Canvas & Motion](adrs/0004-editorial-canvas-motion.md) — editorial layout, opacity-only transitions, mixed element types
+- ADR-0005: [Stack Change](adrs/0005-stack-change-fastapi-vite.md) — FastAPI + Vite + React 19, replacing Next.js (supersedes ADR-0001)
 
 ## Possible Future Ideas
 Not a roadmap — just ideas that may be worth shaping into pitches when the time comes.

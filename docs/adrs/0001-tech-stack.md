@@ -1,7 +1,7 @@
 # Tech Stack Selection
 
 ## Status
-accepted
+superseded by ADR-0005
 
 ## Date
 2026-03-31
