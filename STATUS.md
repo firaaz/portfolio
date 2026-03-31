@@ -1,25 +1,33 @@
 # Status
 
 ## Current State
-Template forked (dillionverma/portfolio merged into main). No production code yet. Four ADRs define the architecture: tech stack, three-layer adaptation, agent interaction protocol, and editorial canvas/motion language. The agentic UX direction is now resolved — portfolio is a reference implementation for a broader agent interaction design system built on a five-verb protocol.
+Spec complete for the first vertical slice (FEAT-001: Home Experience). Stack changing from Next.js to FastAPI + Vite + React 19. Template will be replaced, not modified — building from scratch. Four ADRs define architecture, one spec defines the first shippable feature.
 
 ## Accomplished This Session
-- Ran a full design spike in a worktree (now discarded — code was throwaway)
-- Resolved the UX direction: single-viewport editorial canvas with agent as named guide
-- Defined the agent interaction protocol: five verbs (`focus`, `recede`, `bridge`, `surface`, `signal`)
-- Discovered the core insight: staggered intent dispatch (400-800ms gaps) IS the difference between adaptive and agentic UI
-- Designed signal-scoped content lifecycle: bridges/surfaced content auto-clear on intent state transitions
-- Validated through POC: opacity-only transitions, mixed element types, editorial canvas composition
-- Iterated motion language: stripped springs/scale/sliding → pure opacity fades feel premium and calm
-- Created ADR-0003 (Agent Interaction Protocol) and ADR-0004 (Editorial Canvas & Motion)
-- Updated architecture.md with new ADR references
+- Brainstormed and designed the first shippable feature (home experience)
+- Decided to build from scratch, not modify template
+- Chose editorial canvas with importance-driven layout (no hardcoded zones)
+- Designed the agent interaction model: passive guidance + command bar override + slide-over transparency
+- Decided atoms + molecules only — the agent IS the organism layer (composes via manifest)
+- Evaluated AG-UI as event protocol — adopting for agent↔canvas streaming
+- Evaluated A2UI — rejected (chat-centric, not editorial layout)
+- Evaluated frameworks: Next.js, Vite+Hono, TanStack Start, React Router v7
+- Chose FastAPI (Python) + Vite + React (no meta-framework)
+- Designed inline default manifest for fast first paint without SSR
+- Defined testing methodology: TDD + BDD + EDD (Evaluation-Driven Development for LLM)
+- Wrote Shape Up pitch (not a PRD) at specs/001-home-experience/spec.md
 
 ## Key Decisions
-- ADR-0003: Agent Interaction Protocol — five-verb vocabulary, exploration intents over personas, staggered dispatch, signal-scoped lifecycle
-- ADR-0004: Editorial Canvas & Motion — editorial layout (hero/flow/background zones), opacity-only transitions, mixed element types, hero stability principle
+- Stack: FastAPI + Vite + React 19 + Zustand + Tailwind 4 + AG-UI (supersedes ADR-0001, needs ADR-0005)
+- Deploy: Cloudflare Pages (frontend) + Fly.io or Railway (backend)
+- Protocol: AG-UI Custom events for five verbs, StateSnapshot for manifests
+- No DSL: manifest is items + importance + data, duck-typed molecule resolution
+- LLM agent in scope: single prompt → manifest (provider and framework TBD)
+- Observability port defined, tracing tool chosen during building
+- Test-first: TDD (domain), BDD (behavior), EDD (LLM evals)
 
 ## Blockers
 None.
 
 ## Next Step
-Spec and implement the first vertical slice of the agent interaction system on the real codebase. Start with the protocol layer (`protocol.ts` types + Zustand agent store) and one primitive (breathing card with depth layer). This is the foundation everything else builds on. Use ADR-0003 and ADR-0004 as the architectural spec. The template's existing page layout should be replaced with the editorial canvas structure.
+Implementation planning session for FEAT-001. Start with `/plan` to create the implementation plan from the spec. Write ADR-0005 (stack change) before building.
