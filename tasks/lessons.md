@@ -5,6 +5,7 @@ Last reviewed: 2026-03-31
 - Shape Up methodology for all planning. Pitches (Problem/Appetite/Solution/Rabbit Holes/No-Gos), not PRDs. One spec at a time, no waterfall phasing. (2 occurrences: sessions 3, 4)
 
 ## Recent Corrections
+- Plans must be persisted to disk. Claude Code's plan mode keeps plans in conversation context only — they are NOT written to `.claude/plans/` or anywhere on disk. A `/clear` or new session destroys them. Always save implementation plans to a committed location (e.g., `specs/<feature>/plan.md`). Lost the entire FEAT-001 9-slice implementation plan (~100k tokens of work) because it only existed in conversation context.
 - ADRs are immutable. Never edit an existing ADR. Create a new one and update only the `superseded by` field on the old one.
 - Specs are Shape Up pitches. No acceptance criteria, no task breakdowns, no type schemas. The builder discovers tasks.
 - Don't dismiss existing protocols/tools prematurely. Evaluate deeply before rejecting — the user may see value you don't.

@@ -25,6 +25,8 @@ Monorepo: `frontend/` (pnpm) + `backend/` (uv). Hexagonal backend architecture.
 - Test first, then implement. Commit on green typecheck. Diffs ≤200 lines.
 - Decomposition and implementation are always separate sessions.
 - Never add "Co-Authored-By" lines to commits.
+- Conventional Commits: `<type>(<scope>): <description>`. Types: feat, test, fix, refactor, chore, docs. See plan for scopes.
+- Branching: `main` (protected) → `develop` (integration) → `feat/001-<slice>` (short-lived). Never commit directly to main or develop.
 - Specs are Shape Up pitches (Problem/Appetite/Solution/Rabbit Holes/No-Gos), not PRDs.
 - Spec defines ports, building picks adapters. Don't lock tools/providers in specs.
 - Test-first = TDD (domain) + BDD (behavior) + EDD (Evaluation-Driven Development for LLM).
@@ -49,4 +51,4 @@ Spike → Spec → Ship. Each session = shippable increment.
 - `docs/pre-start-docs/AI-Adaptive-Portfolio-Website-Handoff.docx` — full spec
 - `docs/research/` — UX research (psychology, protocols, editorial design, brainstorms)
 - Use `pandoc` for docx/pdf conversions — no fallback chains
-- `.claude/plans/fizzy-rolling-mango.md` — FEAT-001 implementation plan (9 slices, walking skeleton)
+- `specs/001-home-experience/plan.md` — FEAT-001 implementation plan (9 slices, walking skeleton, test-first)
