@@ -3,13 +3,14 @@
 Portfolio that adapts layout/content by visitor persona (recruiter, tech lead, developer). AI is the stage manager, not the performer.
 
 ## Stack
-Next.js 14+ (App Router), shadcn/ui, Tailwind, Zustand, Framer Motion, TensorFlow.js, Claude Haiku (build-time), Vercel Edge, PostHog. Fork of dillionverma/portfolio.
+Next.js 16 (App Router), shadcn/ui, Tailwind 4, Zustand, motion (not framer-motion), TensorFlow.js, Claude Haiku (build-time), Vercel Edge, PostHog. Fork of dillionverma/portfolio. Uses pnpm.
 
 ## Commands
-- `npm run dev` — dev server
-- `npm run test` — test suite
-- `npm run lint` — linter
-- `npm run typecheck` — TypeScript strict check
+- `pnpm dev` — dev server
+- `pnpm test` — test suite
+- `pnpm lint` — linter
+- `pnpm typecheck` — TypeScript strict check
+- pnpm may need PATH: `export PATH="$HOME/.local/share/pnpm:$HOME/.npm-global/bin:/usr/local/bin:$PATH"`
 
 ## Conventions
 - TypeScript strict, no `any`. Named exports only.
@@ -35,3 +36,5 @@ Spike → Spec → Ship. Each session = shippable increment.
 - @docs/adrs/ — architecture decisions (immutable)
 - `specs/story-map.md` — phased build plan
 - `docs/pre-start-docs/AI-Adaptive-Portfolio-Website-Handoff.docx` — full spec
+- `docs/research/` — UX research (psychology, protocols, editorial design, brainstorms)
+- Use `pandoc` for docx/pdf conversions — no fallback chains
