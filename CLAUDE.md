@@ -21,6 +21,7 @@ Next.js 16 (App Router), shadcn/ui, Tailwind 4, Zustand, motion (not framer-moti
 - ONE vertical slice per session. ≤5 files or decompose.
 - Test first, then implement. Commit on green typecheck. Diffs ≤200 lines.
 - Decomposition and implementation are always separate sessions.
+- Never add "Co-Authored-By" lines to commits.
 
 ## Hard Constraints
 - Zero Emaratech references in public content
