@@ -43,7 +43,6 @@ Spike → Spec → Ship. Each session = shippable increment.
 ## References
 - @docs/architecture.md — system vision, three-layer architecture, tech stack
 - @docs/adrs/ — architecture decisions (immutable)
-- `specs/story-map.md` — phased build plan
 - `specs/001-home-experience/spec.md` — Shape Up pitch for first vertical slice
 - `docs/pre-start-docs/AI-Adaptive-Portfolio-Website-Handoff.docx` — full spec
 - `docs/research/` — UX research (psychology, protocols, editorial design, brainstorms)

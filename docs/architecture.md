@@ -83,10 +83,11 @@ Vercel Edge Functions read referrer URL and UTM parameters. LinkedIn visitor →
 - ADR-0003: [Agent Interaction Protocol](adrs/0003-agent-interaction-protocol.md) — five-verb protocol, staggered dispatch, signal-scoped lifecycle
 - ADR-0004: [Editorial Canvas & Motion](adrs/0004-editorial-canvas-motion.md) — editorial layout, opacity-only transitions, mixed element types
 
-## Future Direction
-- **Extractable middleware:** Adaptive UI middleware as standalone npm package for other Next.js sites
-- **Blog post:** 2,000-word technical write-up — problem framing, architecture, latency optimization, results
-- **ML model:** Replace rule-based classifier with trained TensorFlow.js model (Phase 3)
+## Possible Future Ideas
+Not a roadmap — just ideas that may be worth shaping into pitches when the time comes.
+- Extractable adaptive UI middleware as standalone package
+- Technical blog post on the architecture
+- ML-based behavioral classification (replacing or augmenting LLM-based adaptation)
 
 ## Source Document
 Full project specification: `docs/pre-start-docs/AI-Adaptive-Portfolio-Website-Handoff.docx`
