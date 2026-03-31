@@ -7,9 +7,12 @@ Next.js 16 (App Router), shadcn/ui, Tailwind 4, Zustand, motion (not framer-moti
 
 ## Commands
 - `pnpm dev` — dev server
-- `pnpm test` — test suite
+- `pnpm build` — production build
 - `pnpm lint` — linter
+- `pnpm lint:fix` — auto-fix lint issues
 - `pnpm typecheck` — TypeScript strict check
+- `pnpm test` — unit tests (vitest)
+- `pnpm test:e2e` — end-to-end tests (Playwright, chromium)
 - pnpm may need PATH: `export PATH="$HOME/.local/share/pnpm:$HOME/.npm-global/bin:/usr/local/bin:$PATH"`
 
 ## Conventions

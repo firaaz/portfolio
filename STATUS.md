@@ -1,34 +1,25 @@
 # Status
 
 ## Current State
-Template forked (dillionverma/portfolio merged into main). Spike prototype running in worktree `personal-portfolio-spike` on branch `spike/agent-canvas` with a working agent loop (Zustand store → signal collection → intent classifier → action engine → UI). Six research documents saved in `docs/research/`. No production code yet — spike is throwaway. Current ideas for the agentic UX don't satisfy yet; more iteration needed.
+Template forked (dillionverma/portfolio merged into main). No production code yet. Four ADRs define the architecture: tech stack, three-layer adaptation, agent interaction protocol, and editorial canvas/motion language. The agentic UX direction is now resolved — portfolio is a reference implementation for a broader agent interaction design system built on a five-verb protocol.
 
 ## Accomplished This Session
-- Merged dillionverma/portfolio template into main repo (preserving doc history)
-- Created spike worktree with agent-driven canvas prototype:
-  - Zustand agent store (signals, intent state, confidence, exploration history)
-  - Rule-based intent classifier (idle, scanning, interested, deep-reading, confused)
-  - Action engine with content bridges and confused-state guidance
-  - Signal collection hooks (dwell, click, leave, inactivity)
-  - Agent suggestion component with intent status indicator
-  - Single-viewport canvas page with agent loop running every 1s
-- Conducted deep research across 3 parallel streams:
-  - Psychology/UX: adaptivity paradox, calm tech, Fogg model, peak-end rule
-  - Protocols: AG-UI, A2UI, CopilotKit chatless pattern, Artium dynamic blocks
-  - Infrastructure: edge agents, client-side ML, hybrid architectures
-- Extracted research from parallel Claude session (editorial design, bento grids, Fibonacci spacing, container queries)
-- Brainstormed 5 novel agentic UX ideas (narrative thread, behavioral handshake, depth gradient, journey spine, confidence ring)
-- Converted handoff doc from docx to markdown
-- Saved all research to `docs/research/` (6 documents, ~110K total)
+- Ran a full design spike in a worktree (now discarded — code was throwaway)
+- Resolved the UX direction: single-viewport editorial canvas with agent as named guide
+- Defined the agent interaction protocol: five verbs (`focus`, `recede`, `bridge`, `surface`, `signal`)
+- Discovered the core insight: staggered intent dispatch (400-800ms gaps) IS the difference between adaptive and agentic UI
+- Designed signal-scoped content lifecycle: bridges/surfaced content auto-clear on intent state transitions
+- Validated through POC: opacity-only transitions, mixed element types, editorial canvas composition
+- Iterated motion language: stripped springs/scale/sliding → pure opacity fades feel premium and calm
+- Created ADR-0003 (Agent Interaction Protocol) and ADR-0004 (Editorial Canvas & Motion)
+- Updated architecture.md with new ADR references
 
 ## Key Decisions
-- No new ADRs this session. ADR-0001 (tech stack) and ADR-0002 (three-layer architecture) remain valid.
-- ADRs are immutable — never edit body, only update superseded-by field (added to lessons.md)
-- Shape Up methodology — plan one spec at a time, not waterfall phases (added to lessons.md)
-- UX philosophy evolved: agent should feel like a guide (user feels supported and in control), not invisible manipulation
+- ADR-0003: Agent Interaction Protocol — five-verb vocabulary, exploration intents over personas, staggered dispatch, signal-scoped lifecycle
+- ADR-0004: Editorial Canvas & Motion — editorial layout (hero/flow/background zones), opacity-only transitions, mixed element types, hero stability principle
 
 ## Blockers
-None technical. The core blocker is **design direction** — the agentic UX concept needs more iteration before building production code. Current ideas are too derivative.
+None.
 
 ## Next Step
-Iterate on the agentic UX concept. The spike proved the technical approach works (agent loop, signals, classification, proactive suggestions). What's missing is the "wow" interaction paradigm — something no one has seen before. Use `docs/research/` as foundation. Consider bringing in external design inspiration or running the prototype past real users to identify what feels genuinely novel vs. just "smart personalization." The question to answer: **what does an agent-guided web experience feel like when it's truly next-generation?**
+Spec and implement the first vertical slice of the agent interaction system on the real codebase. Start with the protocol layer (`protocol.ts` types + Zustand agent store) and one primitive (breathing card with depth layer). This is the foundation everything else builds on. Use ADR-0003 and ADR-0004 as the architectural spec. The template's existing page layout should be replaced with the editorial canvas structure.
