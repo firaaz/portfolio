@@ -1,4 +1,11 @@
+import { MoleculeResolver } from "../molecules/MoleculeResolver";
 import { getHero, useManifestStore } from "../store/manifest-store";
+
+function importanceToOpacity(importance: number): number {
+  if (importance >= 0.9) return 1.0;
+  if (importance >= 0.4) return 0.55;
+  return 0.25;
+}
 
 export function Canvas() {
   const items = useManifestStore((s) => s.items);
@@ -17,17 +24,17 @@ export function Canvas() {
     <main>
       {hero && (
         <section data-zone="hero">
-          <h1>{hero.data.name as string}</h1>
-          <p>{hero.data.title as string}</p>
+          <MoleculeResolver molecule={hero.molecule} data={hero.data} />
         </section>
       )}
       {rest.length > 0 && (
         <section data-zone="flow">
           {rest.map((item) => (
-            <div key={item.id}>
-              {(item.data.title as string | undefined) ??
-                (item.data.name as string | undefined) ??
-                item.id}
+            <div
+              key={item.id}
+              style={{ opacity: importanceToOpacity(item.importance) }}
+            >
+              <MoleculeResolver molecule={item.molecule} data={item.data} />
             </div>
           ))}
         </section>

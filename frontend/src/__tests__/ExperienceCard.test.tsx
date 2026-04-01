@@ -8,14 +8,13 @@ afterEach(() => {
 
 describe("ExperienceCard", () => {
   it("renders company, role, duration, and description", () => {
-    render(
-      <ExperienceCard
-        company="Deloitte"
-        role="Senior Consultant"
-        duration="4 years"
-        description="Led GenAI initiatives across enterprise clients"
-      />,
-    );
+    const data = {
+      company: "Deloitte",
+      role: "Senior Consultant",
+      duration: "4 years",
+      description: "Led GenAI initiatives across enterprise clients",
+    };
+    render(<ExperienceCard {...data} />);
 
     expect(screen.getByText("Deloitte")).toBeInTheDocument();
     expect(screen.getByText("Senior Consultant")).toBeInTheDocument();
@@ -26,14 +25,13 @@ describe("ExperienceCard", () => {
   });
 
   it("has an accessible heading for the company", () => {
-    render(
-      <ExperienceCard
-        company="Emaratech"
-        role="Senior Software Engineer"
-        duration="Current"
-        description="Building AI systems"
-      />,
-    );
+    const data = {
+      company: "Emaratech",
+      role: "Senior Software Engineer",
+      duration: "Current",
+      description: "Building AI systems",
+    };
+    render(<ExperienceCard {...data} />);
 
     expect(
       screen.getByRole("heading", { name: "Emaratech" }),

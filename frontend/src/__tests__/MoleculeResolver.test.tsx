@@ -62,10 +62,7 @@ describe("MoleculeResolver", () => {
 
   it("renders fallback for unknown molecule type", () => {
     render(
-      <MoleculeResolver
-        molecule="unknown-type"
-        data={{ title: "Mystery" }}
-      />,
+      <MoleculeResolver molecule="unknown-type" data={{ title: "Mystery" }} />,
     );
 
     expect(screen.getByText("unknown-type")).toBeInTheDocument();
