@@ -35,7 +35,7 @@ class TestStreamEndpoint:
         payload = json.loads(data_line)
 
         assert payload["type"] == "STATE_SNAPSHOT"
-        manifest_items = payload["snapshot"]["items"]
+        manifest_items = payload["snapshot"]["manifest"]["items"]
         assert len(manifest_items) == 13
 
         for item in manifest_items:

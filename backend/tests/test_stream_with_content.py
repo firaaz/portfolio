@@ -22,7 +22,7 @@ class TestStreamServesContentCatalog:
         lines = response.text.strip().split("\n")
         data_line = next(line for line in lines if line.startswith("data: "))
         payload = json.loads(data_line.removeprefix("data: "))
-        stream_ids = {item["id"] for item in payload["snapshot"]["items"]}
+        stream_ids = {item["id"] for item in payload["snapshot"]["manifest"]["items"]}
 
         assert stream_ids == catalog_ids
 
@@ -35,9 +35,8 @@ class TestStreamServesContentCatalog:
         lines = response.text.strip().split("\n")
         data_line = next(line for line in lines if line.startswith("data: "))
         payload = json.loads(data_line.removeprefix("data: "))
-        actual = {
-            item["id"]: item["importance"] for item in payload["snapshot"]["items"]
-        }
+        manifest_items = payload["snapshot"]["manifest"]["items"]
+        actual = {item["id"]: item["importance"] for item in manifest_items}
 
         assert actual == expected
 
@@ -50,6 +49,7 @@ class TestStreamServesContentCatalog:
         lines = response.text.strip().split("\n")
         data_line = next(line for line in lines if line.startswith("data: "))
         payload = json.loads(data_line.removeprefix("data: "))
-        actual = {item["id"]: item["data"] for item in payload["snapshot"]["items"]}
+        manifest_items = payload["snapshot"]["manifest"]["items"]
+        actual = {item["id"]: item["data"] for item in manifest_items}
 
         assert actual == expected

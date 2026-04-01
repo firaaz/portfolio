@@ -17,7 +17,7 @@ def _state_snapshot_event(manifest: Manifest) -> str:
     """Format a manifest as an AG-UI StateSnapshot SSE event."""
     payload = {
         "type": "STATE_SNAPSHOT",
-        "snapshot": manifest.model_dump(),
+        "snapshot": {"manifest": manifest.model_dump()},
     }
     return f"data: {json.dumps(payload)}\n\n"
 
