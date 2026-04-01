@@ -3,6 +3,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.adapters.api import api_router
+
 app = FastAPI(
     title="Portfolio API",
     description="AI-adaptive portfolio backend",
@@ -15,6 +17,8 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+app.include_router(api_router)
 
 
 @app.get("/health")
