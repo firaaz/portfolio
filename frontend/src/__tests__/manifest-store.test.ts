@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { useManifestStore } from "../store/manifest-store";
+import { getHero, useManifestStore } from "../store/manifest-store";
 
 afterEach(() => {
   useManifestStore.setState({ items: [] });
@@ -49,7 +49,7 @@ describe("manifest store", () => {
       { id: "exp", importance: 0.7, molecule: "experience", data: {} },
     ];
     useManifestStore.getState().setManifest(items);
-    const hero = useManifestStore.getState().getHero();
+    const hero = getHero(useManifestStore.getState());
     expect(hero).toEqual(items[1]);
   });
 
@@ -59,6 +59,6 @@ describe("manifest store", () => {
       { id: "exp", importance: 0.7, molecule: "experience", data: {} },
     ];
     useManifestStore.getState().setManifest(items);
-    expect(useManifestStore.getState().getHero()).toBeUndefined();
+    expect(getHero(useManifestStore.getState())).toBeUndefined();
   });
 });

@@ -1,8 +1,8 @@
-import { useManifestStore } from "../store/manifest-store";
+import { getHero, useManifestStore } from "../store/manifest-store";
 
 export function Canvas() {
   const items = useManifestStore((s) => s.items);
-  const getHero = useManifestStore((s) => s.getHero);
+  const hero = useManifestStore(getHero);
 
   if (items.length === 0) {
     return (
@@ -11,8 +11,6 @@ export function Canvas() {
       </div>
     );
   }
-
-  const hero = getHero();
   const rest = items.filter((item) => item.importance < 0.9);
 
   return (
