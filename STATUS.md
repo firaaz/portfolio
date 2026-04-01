@@ -1,20 +1,26 @@
 # Status
 
 ## Current State
-FEAT-001 Slice 0A (Delete Template) complete. Repo is clean of all Next.js template code. Branching structure created: `main → develop → feat/001-scaffold`. `.gitignore` updated for FastAPI + Vite monorepo. Ready for Slice 0B (scaffolding).
+FEAT-001 Slices 0A + 0B complete on `feat/001-scaffold`. Monorepo scaffold is up: FastAPI backend (health endpoint), Vite + React 19 + Tailwind 4 frontend, Makefile harness. All gates green: `make check` passes (ruff, biome, typecheck, pytest, vitest).
 
 ## Accomplished This Session
-- Created `develop` and `feat/001-scaffold` branches
-- Deleted all Next.js template code: `src/`, `content/`, `public/`, `node_modules/`, config files (`next.config.mjs`, `postcss.config.mjs`, `eslint.config.mjs`, `.eslintrc.json`, `components.json`, `tsconfig.json`, `tsconfig.tsbuildinfo`, `content-collections.ts`, `pnpm-lock.yaml`, `package.json`)
-- Kept: `docs/`, `specs/`, `tasks/`, `.claude/`, `.git/`, `.gitignore`, `CLAUDE.md`, `STATUS.md`, `LICENSE`, `README.md`
-- Updated `.gitignore` for new monorepo structure (Python + Node patterns)
+- Slice 0A: Deleted all Next.js template code, updated `.gitignore` for monorepo
+- Slice 0B: Created monorepo scaffold with test-first (RED → GREEN)
+  - Backend: FastAPI + uv, Python 3.13, pytest + pytest-asyncio, ruff
+  - Frontend: Vite + React 19 + Tailwind 4, vitest + happy-dom + testing-library, Biome
+  - Makefile: dev, test, lint, typecheck, check targets
+- Testing framework decisions locked in (see plan.md)
 
 ## Key Decisions
-- `tsconfig.json` deleted along with other template files — frontend will get its own in `frontend/`
-- `.gitignore` rewritten for monorepo (Python `__pycache__`/`.venv`, Node `node_modules`, both `dist/`)
+- **Biome** over ESLint + Prettier for frontend linting/formatting (v2.4, stable, single binary)
+- **happy-dom** over jsdom for vitest (faster, per-file jsdom fallback available)
+- **Plain pytest** for BDD (Given/When/Then naming, no pytest-bdd ceremony)
+- **`@pytest.mark.eval`** for EDD separation (excluded from `make test` by default)
+- **`PYTHONPATH=src`** needed for uvicorn with `backend/src/` layout
+- **`[dependency-groups]`** not `[project.optional-dependencies]` for uv dev deps
 
 ## Blockers
 None.
 
 ## Next Step
-Slice 0B — Create Scaffolds. Test-first: write failing `test_health.py` and `App.test.tsx`, then scaffold `backend/` (FastAPI + uv) and `frontend/` (Vite + React 19 + Tailwind 4), Makefile with dev/test/lint targets. See `specs/001-home-experience/plan.md` Slice 0B.
+Merge `feat/001-scaffold` → `develop`. Then start Slice 0C (Backend SSE endpoint) and/or 0D (Frontend canvas) — these can run in parallel via worktrees.
