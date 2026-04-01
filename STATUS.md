@@ -1,30 +1,23 @@
 # Status
 
 ## Current State
-FEAT-001 Slices 0A + 0B complete on `develop`. CLAUDE.md split into root (cross-cutting) + `backend/CLAUDE.md` + `frontend/CLAUDE.md` for scoped instructions. Two worktrees created for parallel Slice 0C/0D work. All gates green (`make check` passes).
-
-Worktree layout:
-- `personal-portfolio` — `develop` (coordinator)
-- `personal-portfolio-0c` — `feat/001-backend-sse` (Slice 0C)
-- `personal-portfolio-0d` — `feat/001-frontend-canvas` (Slice 0D)
+FEAT-001 Slices 0A–0D complete on `develop`. Walking skeleton is wired end-to-end: backend serves AG-UI StateSnapshot events via SSE at `/api/agent/stream` with 13 hardcoded manifest items; frontend connects via EventSource, stores manifest in Zustand, and renders hero section + flow items in Canvas component. All gates green: 20 tests (11 backend + 9 frontend), typecheck, lint.
 
 ## Accomplished This Session
-- Split `CLAUDE.md` into three scoped files: root (conventions, constraints, methodology), `backend/CLAUDE.md` (Python/FastAPI commands, hexagonal conventions), `frontend/CLAUDE.md` (React/Vite commands, TypeScript conventions)
-- Fixed `make lint` description: biome + ruff (was incorrectly eslint + ruff)
-- Created `feat/001-backend-sse` and `feat/001-frontend-canvas` branches from `develop`
-- Set up two git worktrees (`../personal-portfolio-0c`, `../personal-portfolio-0d`) for parallel slice work
-- Committed via short-lived `chore/001-claude-md-split` branch, fast-forward merged to `develop`
+- Split `CLAUDE.md` into root + `backend/CLAUDE.md` + `frontend/CLAUDE.md` for scoped instructions
+- Merged Slice 0C (backend SSE): ManifestItem/Manifest Pydantic models, `/api/agent/stream` SSE endpoint with AG-UI StateSnapshot, DEFAULT_MANIFEST with 13 items, hexagonal ports/adapters structure
+- Merged Slice 0D (frontend canvas): Zustand manifest store with `getHero` selector, Canvas component with hero/flow zones, `useAgentStream` hook with EventSource + StateSnapshot parsing
+- Both slices executed in parallel via worktrees, rebased and fast-forward merged to `develop`
+- 2 new learnings captured: Zustand selector pattern (standalone functions, not store methods), happy-dom EventSource stub
 
 ## Key Decisions
-- Scoped CLAUDE.md per directory to avoid merge conflicts on parallel worktrees and keep instructions focused
-- Coordinator pattern: main repo stays on `develop`, both slices get their own worktree
-- Merge order: 0C (backend) first, then rebase 0D (frontend) onto updated develop
+- Scoped CLAUDE.md per directory to avoid merge conflicts on parallel worktrees
+- Coordinator pattern for worktree merges: rebase both onto develop, merge sequentially
+- No lessons.md split — temporary intake funnel promotes to already-scoped sub-CLAUDEs
+- Future worktree rule: only the coordinator writes STATUS.md
 
 ## Blockers
 None.
 
 ## Next Step
-Implement Slices 0C + 0D in parallel. Open separate Claude Code sessions in each worktree directory:
-- `cd ../personal-portfolio-0c` → `/implement` Slice 0C from `specs/001-home-experience/plan.md` (ManifestItem model + `GET /api/agent/stream` SSE endpoint)
-- `cd ../personal-portfolio-0d` → `/implement` Slice 0D from `specs/001-home-experience/plan.md` (Zustand manifest store + Canvas component + useAgentStream hook)
-After both complete, return to this coordinator repo to merge: 0C first (fast-forward), rebase 0D, merge 0D, remove worktrees.
+Slice 1 — Content Catalog (YAML data files) from `specs/001-home-experience/plan.md`. Create `feat/001-content-catalog` from `develop`. Write failing tests for ContentItem Pydantic models + YAML loader + BDD stream-with-content scenario, then implement `catalog.yaml` with all 13 items and wire it into the SSE endpoint. This replaces the hardcoded DEFAULT_MANIFEST with content-as-data.
