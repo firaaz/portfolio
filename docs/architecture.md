@@ -83,6 +83,7 @@ Vercel Edge Functions read referrer URL and UTM parameters. LinkedIn visitor →
 - ADR-0003: [Agent Interaction Protocol](adrs/0003-agent-interaction-protocol.md) — five-verb protocol, staggered dispatch, signal-scoped lifecycle
 - ADR-0004: [Editorial Canvas & Motion](adrs/0004-editorial-canvas-motion.md) — editorial layout, opacity-only transitions, mixed element types
 - ADR-0005: [Stack Change](adrs/0005-stack-change-fastapi-vite.md) — FastAPI + Vite + React 19, replacing Next.js (supersedes ADR-0001)
+- ADR-0006: [Testing Frameworks](adrs/0006-testing-framework-decisions.md) — pytest + DeepEval (EDD) + vitest + Biome, three-layer test-first
 
 ## Possible Future Ideas
 Not a roadmap — just ideas that may be worth shaping into pitches when the time comes.
