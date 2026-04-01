@@ -1,5 +1,5 @@
 # Lessons Learned
-Last reviewed: 2026-03-31
+Last reviewed: 2026-04-01
 
 ## Critical Rules (promoted after 2+ occurrences)
 - Shape Up methodology for all planning. Pitches (Problem/Appetite/Solution/Rabbit Holes/No-Gos), not PRDs. One spec at a time, no waterfall phasing. (2 occurrences: sessions 3, 4)
@@ -15,7 +15,6 @@ Last reviewed: 2026-03-31
 - Don't re-pitch rejected ideas. If user says "I don't like any of these," push for fundamentally different paradigms next time.
 - The agentic UX must feel like guidance, not invisible manipulation. The user should FEEL the agent's presence and support.
 - Walking skeleton over bottom-up. Cut through entire stack thinly (end-to-end) before adding depth. User rejected plans where first visible result was session 3+.
-- Hexagonal backend: domain/ has zero framework imports. Ports define interfaces. Adapters implement. Path tells you everything — AI-efficient naming.
 - Emaratech constraint is about IP leaks, not hiding employer name. Employer name fine in resume context. Don't reveal internal tools/processes.
 - Content as data, not code. Portfolio content lives as YAML files, loaded by adapter — not hardcoded in Python or TypeScript.
 - `tasks/lessons.md` is the intake funnel. All session learnings land here FIRST. Only promote to CLAUDE.md after 2+ occurrences. `/revise-claude-md` should check lessons.md for promotion candidates, not write directly to CLAUDE.md.
@@ -27,7 +26,7 @@ Last reviewed: 2026-03-31
 - Convention/preference corrections (walking skeleton, hexagonal) go to lessons.md first — they need validation across sessions.
 - CLAUDE.md is part of every prompt. Keep entries to one line. Don't duplicate ADR content — reference the ADR.
 
-- Zustand derived values should be standalone selector functions (`export function getHero(state: ManifestState)`), not store methods that call `get()`. Store methods are stable references that never trigger re-renders — using them as selectors causes stale renders if the underlying data subscription is removed. Caught by code review in Slice 0D.
-- happy-dom lacks `EventSource`. Stub it in test setup (`src/__tests__/setup.ts`) for any test that mounts components using SSE hooks.
-
 ## Archived
+- Zustand selectors as standalone functions — promoted to `frontend/CLAUDE.md` (2026-04-01).
+- happy-dom EventSource polyfill — promoted to `frontend/CLAUDE.md` (2026-04-01).
+- Hexagonal domain: zero framework imports — promoted to `backend/CLAUDE.md` (2026-04-01).

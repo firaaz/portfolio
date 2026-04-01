@@ -1,20 +1,19 @@
 # Status
 
 ## Current State
-FEAT-001 Slices 0A–0D complete on `develop`. Walking skeleton is wired end-to-end: backend serves AG-UI StateSnapshot events via SSE at `/api/agent/stream` with 13 hardcoded manifest items; frontend connects via EventSource, stores manifest in Zustand, and renders hero section + flow items in Canvas component. All gates green: 20 tests (11 backend + 9 frontend), typecheck, lint.
+FEAT-001 Slices 0A–0D complete on `develop`. Walking skeleton is wired end-to-end: backend serves AG-UI StateSnapshot events via SSE at `/api/agent/stream` with 13 hardcoded manifest items; frontend connects via EventSource, stores manifest in Zustand, and renders hero section + flow items in Canvas component. All gates green: 20 tests (11 backend + 9 frontend), typecheck, lint. Both `backend/CLAUDE.md` and `frontend/CLAUDE.md` now have comprehensive coding conventions (9–10 sections each) derived from actual code patterns.
 
 ## Accomplished This Session
-- Split `CLAUDE.md` into root + `backend/CLAUDE.md` + `frontend/CLAUDE.md` for scoped instructions
-- Merged Slice 0C (backend SSE): ManifestItem/Manifest Pydantic models, `/api/agent/stream` SSE endpoint with AG-UI StateSnapshot, DEFAULT_MANIFEST with 13 items, hexagonal ports/adapters structure
-- Merged Slice 0D (frontend canvas): Zustand manifest store with `getHero` selector, Canvas component with hero/flow zones, `useAgentStream` hook with EventSource + StateSnapshot parsing
-- Both slices executed in parallel via worktrees, rebased and fast-forward merged to `develop`
-- 2 new learnings captured: Zustand selector pattern (standalone functions, not store methods), happy-dom EventSource stub
+- Expanded `backend/CLAUDE.md` from 4 to 9 sections: added Architecture, Naming, Types & Models, Imports, Style, FastAPI Patterns; expanded Testing
+- Expanded `frontend/CLAUDE.md` from 3 to 10 sections: added Architecture, Naming, TypeScript, React Patterns, Zustand, Style, SSE/AG-UI; expanded Testing
+- Promoted 3 validated lessons from `tasks/lessons.md` to their respective CLAUDE.md files: Zustand selector pattern, happy-dom EventSource polyfill, hexagonal domain isolation
+- All conventions are derived from existing code patterns — nothing aspirational
+- No duplication between root CLAUDE.md (methodology) and side-specific files (language idiom)
 
 ## Key Decisions
-- Scoped CLAUDE.md per directory to avoid merge conflicts on parallel worktrees
-- Coordinator pattern for worktree merges: rebase both onto develop, merge sequentially
-- No lessons.md split — temporary intake funnel promotes to already-scoped sub-CLAUDEs
-- Future worktree rule: only the coordinator writes STATUS.md
+- No new ADRs. This session codified existing patterns, not new architectural decisions.
+- Pydantic explicitly documented as the one allowed import in domain layer (it IS the domain modeling tool, not a framework dependency).
+- Promotion threshold respected: only items validated in code + across sessions moved to CLAUDE.md.
 
 ## Blockers
 None.
