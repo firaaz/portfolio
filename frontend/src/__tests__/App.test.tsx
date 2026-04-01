@@ -7,6 +7,6 @@ afterEach(cleanup);
 describe("App", () => {
   it("mounts without error", () => {
     render(<App />);
-    expect(screen.getByRole("main")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
   });
 });
