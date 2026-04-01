@@ -1,22 +1,25 @@
 # Status
 
 ## Current State
-FEAT-001 Slices 0A–0D complete on `develop`. Walking skeleton is wired end-to-end: backend serves AG-UI StateSnapshot events via SSE at `/api/agent/stream` with 13 hardcoded manifest items; frontend connects via EventSource, stores manifest in Zustand, and renders hero section + flow items in Canvas component. All gates green: 20 tests (11 backend + 9 frontend), typecheck, lint. Both `backend/CLAUDE.md` and `frontend/CLAUDE.md` now have comprehensive coding conventions (9–10 sections each) derived from actual code patterns.
+FEAT-001 Slices 0A–1 complete on `develop`. Walking skeleton with content-as-data: backend loads 13 portfolio items from `backend/content/catalog.yaml` via YAML adapter, validates each molecule type (hero, project, experience, contact, skill, education) through Pydantic sub-models, and serves them as AG-UI StateSnapshot via SSE. Frontend unchanged — still connects via EventSource, stores manifest in Zustand, renders Canvas. All gates green: 33 backend tests (22 new) + 9 frontend tests, typecheck, lint. PyYAML added as dependency.
 
 ## Accomplished This Session
-- Expanded `backend/CLAUDE.md` from 4 to 9 sections: added Architecture, Naming, Types & Models, Imports, Style, FastAPI Patterns; expanded Testing
-- Expanded `frontend/CLAUDE.md` from 3 to 10 sections: added Architecture, Naming, TypeScript, React Patterns, Zustand, Style, SSE/AG-UI; expanded Testing
-- Promoted 3 validated lessons from `tasks/lessons.md` to their respective CLAUDE.md files: Zustand selector pattern, happy-dom EventSource polyfill, hexagonal domain isolation
-- All conventions are derived from existing code patterns — nothing aspirational
-- No duplication between root CLAUDE.md (methodology) and side-specific files (language idiom)
+- Created `backend/src/app/domain/content.py` — 6 typed data models (HeroData, ProjectData, etc.) + ContentItem with model_validator for per-molecule shape enforcement
+- Created `backend/src/app/ports/content.py` — ContentPort protocol for catalog loading
+- Created `backend/src/app/adapters/content/yaml_loader.py` — reads and validates catalog.yaml
+- Created `backend/content/catalog.yaml` — all 13 portfolio items as YAML data
+- Updated `stream_route.py` — replaced hardcoded DEFAULT_MANIFEST with catalog load + content_to_manifest conversion
+- Added 22 new tests: 14 content model validation, 5 YAML loader, 3 BDD stream-serves-catalog integration
+- TDD workflow: RED commit (failing tests) → GREEN commit (implementation) → merged to develop via fast-forward
 
 ## Key Decisions
-- No new ADRs. This session codified existing patterns, not new architectural decisions.
-- Pydantic explicitly documented as the one allowed import in domain layer (it IS the domain modeling tool, not a framework dependency).
-- Promotion threshold respected: only items validated in code + across sessions moved to CLAUDE.md.
+- No new ADRs. Content-as-data was already established in CLAUDE.md and ADR-0005.
+- ContentItem uses `dict[str, Any]` for data (matching ManifestItem wire format) but validates against typed sub-models via model_validator — type safety at boundary without changing serialization.
+- `default_importance` lives in the YAML catalog — the LLM agent (Slice 5) will override these scores.
+- Unknown molecule types are rejected at load time, not silently passed through.
 
 ## Blockers
 None.
 
 ## Next Step
-Slice 1 — Content Catalog (YAML data files) from `specs/001-home-experience/plan.md`. Create `feat/001-content-catalog` from `develop`. Write failing tests for ContentItem Pydantic models + YAML loader + BDD stream-with-content scenario, then implement `catalog.yaml` with all 13 items and wire it into the SSE endpoint. This replaces the hardcoded DEFAULT_MANIFEST with content-as-data.
+Slice 2 — Molecule Components from `specs/001-home-experience/plan.md`. Create `feat/001-molecules` from `develop`. Write failing tests for MoleculeResolver (molecule key → component), ProjectCard, and ExperienceCard. Then implement HeroMolecule, ProjectCard, ExperienceCard, MoleculeResolver, and update Canvas to use MoleculeResolver with importance→opacity mapping (1.0/0.55/0.25). This is frontend-only work.
