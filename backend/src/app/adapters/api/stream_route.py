@@ -19,7 +19,7 @@ def _state_snapshot_event(manifest: Manifest) -> str:
         "type": "STATE_SNAPSHOT",
         "snapshot": manifest.model_dump(),
     }
-    return f"event: STATE_SNAPSHOT\ndata: {json.dumps(payload)}\n\n"
+    return f"data: {json.dumps(payload)}\n\n"
 
 
 async def _generate_stream() -> AsyncGenerator[str]:

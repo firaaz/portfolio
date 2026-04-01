@@ -16,26 +16,22 @@ class TestStreamEndpoint:
         response = client.get("/api/agent/stream")
         assert response.headers["content-type"].startswith("text/event-stream")
 
-    def test_contains_state_snapshot_event(self) -> None:
+    def test_contains_state_snapshot_data(self) -> None:
         response = client.get("/api/agent/stream")
         body = response.text
-        assert "event: STATE_SNAPSHOT" in body
+        assert "data:" in body
+        assert "STATE_SNAPSHOT" in body
 
     def test_snapshot_has_valid_manifest(self) -> None:
         response = client.get("/api/agent/stream")
-        # Parse SSE: find data line after STATE_SNAPSHOT event
         lines = response.text.strip().split("\n")
         data_line = None
-        for i, line in enumerate(lines):
-            if line.startswith("event: STATE_SNAPSHOT"):
-                # Next non-empty line starting with "data:" has the payload
-                for j in range(i + 1, len(lines)):
-                    if lines[j].startswith("data:"):
-                        data_line = lines[j][len("data:") :].strip()
-                        break
+        for line in lines:
+            if line.startswith("data:"):
+                data_line = line[len("data:") :].strip()
                 break
 
-        assert data_line is not None, "No data line found after STATE_SNAPSHOT"
+        assert data_line is not None, "No data line found in SSE stream"
         payload = json.loads(data_line)
 
         assert payload["type"] == "STATE_SNAPSHOT"
