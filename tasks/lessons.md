@@ -27,4 +27,7 @@ Last reviewed: 2026-03-31
 - Convention/preference corrections (walking skeleton, hexagonal) go to lessons.md first — they need validation across sessions.
 - CLAUDE.md is part of every prompt. Keep entries to one line. Don't duplicate ADR content — reference the ADR.
 
+- Zustand derived values should be standalone selector functions (`export function getHero(state: ManifestState)`), not store methods that call `get()`. Store methods are stable references that never trigger re-renders — using them as selectors causes stale renders if the underlying data subscription is removed. Caught by code review in Slice 0D.
+- happy-dom lacks `EventSource`. Stub it in test setup (`src/__tests__/setup.ts`) for any test that mounts components using SSE hooks.
+
 ## Archived
