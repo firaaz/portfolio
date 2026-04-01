@@ -1,25 +1,24 @@
 # Status
 
 ## Current State
-FEAT-001 Slices 0A–1 complete on `develop`. Walking skeleton with content-as-data: backend loads 13 portfolio items from `backend/content/catalog.yaml` via YAML adapter, validates each molecule type (hero, project, experience, contact, skill, education) through Pydantic sub-models, and serves them as AG-UI StateSnapshot via SSE. Frontend unchanged — still connects via EventSource, stores manifest in Zustand, renders Canvas. All gates green: 33 backend tests (22 new) + 9 frontend tests, typecheck, lint. PyYAML added as dependency.
+FEAT-001 Slices 0A–1 complete on `develop`, Playwright e2e infra on `feat/001-playwright` (5 commits ahead of develop). Walking skeleton validated end-to-end in a real browser for the first time: backend loads 13 items from YAML catalog, serves via SSE, Vite proxies `/api` to backend, frontend receives StateSnapshot via EventSource, renders Canvas with hero + flow sections. All gates green: 33 backend tests + 9 frontend vitest + 2 Playwright e2e, lint, typecheck.
 
 ## Accomplished This Session
-- Created `backend/src/app/domain/content.py` — 6 typed data models (HeroData, ProjectData, etc.) + ContentItem with model_validator for per-molecule shape enforcement
-- Created `backend/src/app/ports/content.py` — ContentPort protocol for catalog loading
-- Created `backend/src/app/adapters/content/yaml_loader.py` — reads and validates catalog.yaml
-- Created `backend/content/catalog.yaml` — all 13 portfolio items as YAML data
-- Updated `stream_route.py` — replaced hardcoded DEFAULT_MANIFEST with catalog load + content_to_manifest conversion
-- Added 22 new tests: 14 content model validation, 5 YAML loader, 3 BDD stream-serves-catalog integration
-- TDD workflow: RED commit (failing tests) → GREEN commit (implementation) → merged to develop via fast-forward
+- Fixed SSE named-event bug: backend emitted `event: STATE_SNAPSHOT` (named) but frontend used `source.onmessage` (unnamed only). Removed redundant event name.
+- Fixed SSE contract mismatch: backend sent `snapshot.items` but frontend expected `snapshot.manifest.items`. Wrapped manifest in `snapshot.manifest`.
+- Added Vite `server.proxy` for `/api` → backend at `127.0.0.1:8000` (explicit IPv4 to avoid macOS `::1` resolution).
+- Installed `@playwright/test`, created `playwright.config.ts` with dual `webServer` (backend + frontend), Chromium only.
+- Created `e2e/smoke.spec.ts` — two tests: loading state + SSE hero render with flow items.
+- Added `tsconfig.e2e.json`, `test:e2e` script, Playwright artifacts to `.gitignore`.
+- Added lessons learned to `tasks/lessons.md`.
 
 ## Key Decisions
-- No new ADRs. Content-as-data was already established in CLAUDE.md and ADR-0005.
-- ContentItem uses `dict[str, Any]` for data (matching ManifestItem wire format) but validates against typed sub-models via model_validator — type safety at boundary without changing serialization.
-- `default_importance` lives in the YAML catalog — the LLM agent (Slice 5) will override these scores.
-- Unknown molecule types are rejected at load time, not silently passed through.
+- No new ADRs. Playwright was already decided in ADR-0006.
+- SSE fix on backend side (remove event name) rather than frontend (switch to addEventListener) — avoids duplicating type discrimination in SSE event name and JSON `type` field.
+- Explicit `127.0.0.1` over `localhost` in proxy config — macOS IPv6 resolution issue.
 
 ## Blockers
 None.
 
 ## Next Step
-Slice 2 — Molecule Components from `specs/001-home-experience/plan.md`. Create `feat/001-molecules` from `develop`. Write failing tests for MoleculeResolver (molecule key → component), ProjectCard, and ExperienceCard. Then implement HeroMolecule, ProjectCard, ExperienceCard, MoleculeResolver, and update Canvas to use MoleculeResolver with importance→opacity mapping (1.0/0.55/0.25). This is frontend-only work.
+Merge `feat/001-playwright` into `develop` (fast-forward), then start Slice 2 — Molecule Components from `specs/001-home-experience/plan.md`. Create `feat/001-molecules` from `develop`. Write failing tests for MoleculeResolver (molecule key → component), ProjectCard, and ExperienceCard. Then implement HeroMolecule, ProjectCard, ExperienceCard, MoleculeResolver, and update Canvas to use MoleculeResolver with importance→opacity mapping (1.0/0.55/0.25). This is frontend-only work.
