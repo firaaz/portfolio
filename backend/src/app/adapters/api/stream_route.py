@@ -1,4 +1,4 @@
-"""SSE stream route — serves AG-UI StateSnapshot with default manifest."""
+"""SSE stream route — serves AG-UI StateSnapshot from content catalog."""
 
 import json
 from collections.abc import AsyncGenerator
@@ -6,7 +6,8 @@ from collections.abc import AsyncGenerator
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
-from app.domain.defaults import DEFAULT_MANIFEST
+from app.adapters.content.yaml_loader import load_catalog
+from app.domain.content import content_to_manifest
 from app.domain.manifest import Manifest
 
 router = APIRouter(prefix="/api/agent")
@@ -23,7 +24,9 @@ def _state_snapshot_event(manifest: Manifest) -> str:
 
 async def _generate_stream() -> AsyncGenerator[str]:
     """Yield AG-UI events as SSE."""
-    yield _state_snapshot_event(DEFAULT_MANIFEST)
+    catalog = load_catalog()
+    manifest = content_to_manifest(catalog)
+    yield _state_snapshot_event(manifest)
 
 
 @router.get("/stream")

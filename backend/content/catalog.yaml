@@ -1,0 +1,101 @@
+items:
+  - id: hero
+    molecule: hero
+    default_importance: 1.0
+    data:
+      name: Firaaz Farook
+      title: Senior Software Engineer
+      subtitle: AI Systems & Agentic Platforms
+      summary: >-
+        6+ years building production AI systems.
+        Currently shipping agentic platforms at scale.
+
+  - id: project-salama
+    molecule: project
+    default_importance: 0.75
+    data:
+      title: Salama AI Platform
+      description: LangGraph-powered agentic platform serving 25K+ queries/month
+      tech:
+        - LangGraph
+        - Python
+        - FastAPI
+
+  - id: project-genai-migration
+    molecule: project
+    default_importance: 0.65
+    data:
+      title: GenAI Code Migration
+      description: Led 4-6 engineers on large-scale code migration using LLMs
+      tech:
+        - Python
+        - LLMs
+        - AST
+
+  - id: experience-deloitte
+    molecule: experience
+    default_importance: 0.7
+    data:
+      company: Deloitte
+      role: Senior Consultant
+      duration: 4 years
+      description: Led GenAI initiatives across enterprise clients
+
+  - id: experience-current
+    molecule: experience
+    default_importance: 0.7
+    data:
+      company: Emaratech
+      role: Senior Software Engineer
+      duration: Current
+      description: Building AI systems and agentic platforms
+
+  - id: contact
+    molecule: contact
+    default_importance: 0.6
+    data:
+      email: firaazfarook19@gmail.com
+      cta: Let's talk
+
+  - id: skill-python
+    molecule: skill
+    default_importance: 0.3
+    data:
+      name: Python
+
+  - id: skill-typescript
+    molecule: skill
+    default_importance: 0.3
+    data:
+      name: TypeScript
+
+  - id: skill-langgraph
+    molecule: skill
+    default_importance: 0.3
+    data:
+      name: LangGraph
+
+  - id: skill-docker
+    molecule: skill
+    default_importance: 0.25
+    data:
+      name: Docker
+
+  - id: skill-kubernetes
+    molecule: skill
+    default_importance: 0.25
+    data:
+      name: Kubernetes
+
+  - id: skill-aws
+    molecule: skill
+    default_importance: 0.25
+    data:
+      name: AWS ML
+
+  - id: education-be
+    molecule: education
+    default_importance: 0.2
+    data:
+      degree: B.E. Computer Science
+      institution: University of Peradeniya
