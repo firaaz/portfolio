@@ -6,20 +6,15 @@ Portfolio that adapts layout/content by visitor persona (recruiter, tech lead, d
 FastAPI (Python) + Vite + React 19 + Zustand + Tailwind 4 + shadcn/ui + motion + AG-UI (event streaming). See ADR-0005.
 Deploy: Cloudflare Pages (frontend) + Fly.io/Railway (backend). Building from scratch.
 Monorepo: `frontend/` (pnpm) + `backend/` (uv). Hexagonal backend architecture.
+See `backend/CLAUDE.md` and `frontend/CLAUDE.md` for side-specific commands and conventions.
 
 ## Commands
 **After scaffold (Slice 0):**
 - `make dev` — run both frontend + backend dev servers
 - `make test` — run all tests (frontend vitest + backend pytest)
-- `make lint` — lint both (eslint + ruff)
-- `cd frontend && pnpm typecheck` — TypeScript strict check
-- `cd frontend && pnpm test:e2e` — Playwright e2e tests
-- `cd backend && uv run pytest` — Python unit + behavior tests
-- `cd backend && uv run pytest evals/` — LLM evaluation suite (slow, hits API)
-- pnpm may need PATH: `export PATH="$HOME/.local/share/pnpm:$HOME/.npm-global/bin:/usr/local/bin:$PATH"`
+- `make lint` — lint both (biome + ruff)
 
 ## Conventions
-- TypeScript strict, no `any`. Named exports only. Python type hints required.
 - Functions ≤50 lines, files ≤250 lines.
 - ONE vertical slice per session. ≤5 files or decompose.
 - Test first, then implement. Commit on green typecheck. Diffs ≤200 lines.
