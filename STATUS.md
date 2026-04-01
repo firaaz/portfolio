@@ -1,28 +1,30 @@
 # Status
 
 ## Current State
-FEAT-001 Slices 0A + 0B complete on `develop`. Monorepo scaffold is up and all gates green (`make check` passes). Backend: FastAPI + Python 3.13 + uv, health endpoint at `/health`. Frontend: Vite + React 19 + Tailwind 4, blank page renders. Test infra: pytest + pytest-asyncio + DeepEval (backend), vitest + happy-dom + testing-library (frontend), Biome (lint/format), ruff (Python lint). Six ADRs define the architecture including testing framework choices (ADR-0006).
+FEAT-001 Slices 0A + 0B complete on `develop`. CLAUDE.md split into root (cross-cutting) + `backend/CLAUDE.md` + `frontend/CLAUDE.md` for scoped instructions. Two worktrees created for parallel Slice 0C/0D work. All gates green (`make check` passes).
+
+Worktree layout:
+- `personal-portfolio` — `develop` (coordinator)
+- `personal-portfolio-0c` — `feat/001-backend-sse` (Slice 0C)
+- `personal-portfolio-0d` — `feat/001-frontend-canvas` (Slice 0D)
 
 ## Accomplished This Session
-- Created `develop` branch and `feat/001-scaffold` feature branch
-- Slice 0A: Deleted all Next.js template code (88 files, 14K lines), rewrote `.gitignore` for monorepo
-- Slice 0B: Scaffolded monorepo with test-first (RED → GREEN → harness)
-  - Backend: `backend/pyproject.toml`, FastAPI app with `/health`, pytest config with eval marker exclusion
-  - Frontend: `frontend/package.json`, Vite + React 19 + Tailwind 4, vitest + happy-dom + testing-library
-  - Makefile: dev, test, test-evals, lint, typecheck, check targets
-  - Fixed: `[dependency-groups]` not `[project.optional-dependencies]` for uv, `PYTHONPATH=src` for uvicorn with src/ layout, Biome v2.4 config schema, tsconfig `forceConsistentCasingInFileNames`
-- ADR-0006: Testing framework decisions (pytest + DeepEval for EDD, vitest + Biome, three-layer test-first)
-- Added `deepeval>=2.0` to backend dev dependencies (v3.9.5 installed)
-- Fast-forward merged `feat/001-scaffold` → `develop`, deleted feature branch
+- Split `CLAUDE.md` into three scoped files: root (conventions, constraints, methodology), `backend/CLAUDE.md` (Python/FastAPI commands, hexagonal conventions), `frontend/CLAUDE.md` (React/Vite commands, TypeScript conventions)
+- Fixed `make lint` description: biome + ruff (was incorrectly eslint + ruff)
+- Created `feat/001-backend-sse` and `feat/001-frontend-canvas` branches from `develop`
+- Set up two git worktrees (`../personal-portfolio-0c`, `../personal-portfolio-0d`) for parallel slice work
+- Committed via short-lived `chore/001-claude-md-split` branch, fast-forward merged to `develop`
 
 ## Key Decisions
-- ADR-0006: [Testing Frameworks](docs/adrs/0006-testing-framework-decisions.md) — pytest + DeepEval (EDD), vitest + happy-dom, Biome v2, plain BDD naming
-- Biome over ESLint + Prettier (user chose ESLint initially, then switched to Biome)
-- DeepEval for EDD layer: `AnswerRelevancyMetric` (LLM-as-judge) + `JsonCorrectnessMetric` (schema) + plain pytest for grounding/consistency
-- Fast-forward merge strategy for clean feature branches (preserves RED → GREEN history)
+- Scoped CLAUDE.md per directory to avoid merge conflicts on parallel worktrees and keep instructions focused
+- Coordinator pattern: main repo stays on `develop`, both slices get their own worktree
+- Merge order: 0C (backend) first, then rebase 0D (frontend) onto updated develop
 
 ## Blockers
 None.
 
 ## Next Step
-Start Slice 0C (Backend SSE endpoint) and Slice 0D (Frontend canvas) — these are parallelizable via worktrees per `specs/001-home-experience/plan.md`. Create `feat/001-backend-sse` from `develop`. Slice 0C: write failing test for `GET /api/agent/stream` returning AG-UI events via SSE, then implement. Slice 0D: write failing test for Zustand manifest store + Canvas component, then implement. See plan.md Slices 0C and 0D for full details.
+Implement Slices 0C + 0D in parallel. Open separate Claude Code sessions in each worktree directory:
+- `cd ../personal-portfolio-0c` → `/implement` Slice 0C from `specs/001-home-experience/plan.md` (ManifestItem model + `GET /api/agent/stream` SSE endpoint)
+- `cd ../personal-portfolio-0d` → `/implement` Slice 0D from `specs/001-home-experience/plan.md` (Zustand manifest store + Canvas component + useAgentStream hook)
+After both complete, return to this coordinator repo to merge: 0C first (fast-forward), rebase 0D, merge 0D, remove worktrees.
