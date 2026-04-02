@@ -61,4 +61,42 @@ describe("manifest store", () => {
     useManifestStore.getState().setManifest(items);
     expect(getHero(useManifestStore.getState())).toBeUndefined();
   });
+
+  it("applyDelta merges importance scores by ID", () => {
+    const items = [
+      { id: "hero", importance: 1.0, molecule: "hero", data: { name: "Test" } },
+      {
+        id: "contact",
+        importance: 0.6,
+        molecule: "contact",
+        data: { email: "a@b.com" },
+      },
+    ];
+    useManifestStore.getState().setManifest(items);
+    useManifestStore
+      .getState()
+      .applyDelta([{ id: "contact", importance: 0.85 }]);
+    const updated = useManifestStore.getState().items;
+    const hero = updated.find((i) => i.id === "hero");
+    const contact = updated.find((i) => i.id === "contact");
+    expect(hero?.importance).toBe(1.0);
+    expect(contact?.importance).toBe(0.85);
+    expect(contact?.data).toEqual({ email: "a@b.com" });
+  });
+
+  it("applyDelta ignores unknown IDs", () => {
+    const items = [
+      { id: "hero", importance: 1.0, molecule: "hero", data: { name: "Test" } },
+    ];
+    useManifestStore.getState().setManifest(items);
+    useManifestStore
+      .getState()
+      .applyDelta([{ id: "nonexistent", importance: 0.5 }]);
+    expect(useManifestStore.getState().items).toEqual(items);
+  });
+
+  it("applyDelta on empty store is a no-op", () => {
+    useManifestStore.getState().applyDelta([{ id: "hero", importance: 0.9 }]);
+    expect(useManifestStore.getState().items).toEqual([]);
+  });
 });
