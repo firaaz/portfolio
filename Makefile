@@ -11,7 +11,7 @@ test:
 	cd frontend && pnpm test -- --run
 
 test-evals:
-	cd backend && uv run pytest evals/ -m eval
+	cd backend && uv run pytest evals/ -m eval -o "addopts="
 
 test-e2e:
 	cd frontend && pnpm test:e2e
