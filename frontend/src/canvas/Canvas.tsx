@@ -1,12 +1,8 @@
+import { PresenceDot } from "../chrome/PresenceDot";
 import { MoleculeResolver } from "../molecules/MoleculeResolver";
 import { getHero, useManifestStore } from "../store/manifest-store";
+import { AnimatedMolecule } from "./AnimatedMolecule";
 import { FlowZone } from "./FlowZone";
-
-function importanceToOpacity(importance: number): number {
-  if (importance >= 0.85) return 1.0;
-  if (importance >= 0.4) return 0.55;
-  return 0.25;
-}
 
 export function Canvas() {
   const items = useManifestStore((s) => s.items);
@@ -35,12 +31,9 @@ export function Canvas() {
         <section data-zone="flow">
           <FlowZone>
             {flowItems.map((item) => (
-              <div
-                key={item.id}
-                style={{ opacity: importanceToOpacity(item.importance) }}
-              >
+              <AnimatedMolecule key={item.id} importance={item.importance}>
                 <MoleculeResolver molecule={item.molecule} data={item.data} />
-              </div>
+              </AnimatedMolecule>
             ))}
           </FlowZone>
         </section>
@@ -48,15 +41,13 @@ export function Canvas() {
       {bgItems.length > 0 && (
         <section data-zone="background">
           {bgItems.map((item) => (
-            <div
-              key={item.id}
-              style={{ opacity: importanceToOpacity(item.importance) }}
-            >
+            <AnimatedMolecule key={item.id} importance={item.importance}>
               <MoleculeResolver molecule={item.molecule} data={item.data} />
-            </div>
+            </AnimatedMolecule>
           ))}
         </section>
       )}
+      <PresenceDot />
     </main>
   );
 }

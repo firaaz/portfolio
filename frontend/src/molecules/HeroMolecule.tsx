@@ -1,3 +1,5 @@
+import { AnimatePresence, motion } from "motion/react";
+
 export function HeroMolecule({
   name,
   title,
@@ -10,11 +12,19 @@ export function HeroMolecule({
   summary: string;
 }) {
   return (
-    <div>
-      <h1>{name}</h1>
-      <p>{title}</p>
-      <p>{subtitle}</p>
-      <p>{summary}</p>
-    </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={name}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <h1>{name}</h1>
+        <p>{title}</p>
+        <p>{subtitle}</p>
+        <p>{summary}</p>
+      </motion.div>
+    </AnimatePresence>
   );
 }
