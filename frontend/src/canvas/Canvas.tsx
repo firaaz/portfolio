@@ -1,8 +1,9 @@
 import { MoleculeResolver } from "../molecules/MoleculeResolver";
 import { getHero, useManifestStore } from "../store/manifest-store";
+import { FlowZone } from "./FlowZone";
 
 function importanceToOpacity(importance: number): number {
-  if (importance >= 0.9) return 1.0;
+  if (importance >= 0.85) return 1.0;
   if (importance >= 0.4) return 0.55;
   return 0.25;
 }
@@ -18,7 +19,10 @@ export function Canvas() {
       </div>
     );
   }
-  const rest = items.filter((item) => item.importance < 0.9);
+
+  const rest = items.filter((item) => item.id !== hero?.id);
+  const flowItems = rest.filter((item) => item.importance >= 0.4);
+  const bgItems = rest.filter((item) => item.importance < 0.4);
 
   return (
     <main>
@@ -27,9 +31,23 @@ export function Canvas() {
           <MoleculeResolver molecule={hero.molecule} data={hero.data} />
         </section>
       )}
-      {rest.length > 0 && (
+      {flowItems.length > 0 && (
         <section data-zone="flow">
-          {rest.map((item) => (
+          <FlowZone>
+            {flowItems.map((item) => (
+              <div
+                key={item.id}
+                style={{ opacity: importanceToOpacity(item.importance) }}
+              >
+                <MoleculeResolver molecule={item.molecule} data={item.data} />
+              </div>
+            ))}
+          </FlowZone>
+        </section>
+      )}
+      {bgItems.length > 0 && (
+        <section data-zone="background">
+          {bgItems.map((item) => (
             <div
               key={item.id}
               style={{ opacity: importanceToOpacity(item.importance) }}

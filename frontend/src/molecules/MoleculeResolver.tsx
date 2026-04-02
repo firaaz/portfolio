@@ -1,12 +1,16 @@
 import type { ComponentType } from "react";
+import { ContactCard } from "./ContactCard";
 import { ExperienceCard } from "./ExperienceCard";
 import { HeroMolecule } from "./HeroMolecule";
 import { ProjectCard } from "./ProjectCard";
+import { SkillLink } from "./SkillLink";
 
 const registry: Record<string, ComponentType<Record<string, unknown>>> = {
   hero: HeroMolecule as ComponentType<Record<string, unknown>>,
   project: ProjectCard as ComponentType<Record<string, unknown>>,
   experience: ExperienceCard as ComponentType<Record<string, unknown>>,
+  contact: ContactCard as ComponentType<Record<string, unknown>>,
+  skill: SkillLink as ComponentType<Record<string, unknown>>,
 };
 
 export function MoleculeResolver({
