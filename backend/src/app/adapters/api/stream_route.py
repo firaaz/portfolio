@@ -27,10 +27,7 @@ def _state_snapshot_event(manifest: Manifest) -> str:
 
 def _state_delta_event(refined: Manifest) -> str:
     """Format refined importance scores as an AG-UI StateDelta SSE event."""
-    updates = [
-        {"id": item.id, "importance": item.importance}
-        for item in refined.items
-    ]
+    updates = [{"id": item.id, "importance": item.importance} for item in refined.items]
     payload = {"type": "STATE_DELTA", "delta": {"updates": updates}}
     return f"data: {json.dumps(payload)}\n\n"
 
