@@ -1,24 +1,21 @@
 # Status
 
 ## Current State
-FEAT-001 Slices 0A–1 complete on `develop`, Playwright e2e infra on `feat/001-playwright` (5 commits ahead of develop). Walking skeleton validated end-to-end in a real browser for the first time: backend loads 13 items from YAML catalog, serves via SSE, Vite proxies `/api` to backend, frontend receives StateSnapshot via EventSource, renders Canvas with hero + flow sections. All gates green: 33 backend tests + 9 frontend vitest + 2 Playwright e2e, lint, typecheck.
+FEAT-001 Slices 0A–2 complete on `develop`. Walking skeleton now renders real molecule components: HeroMolecule, ProjectCard, ExperienceCard via registry-based MoleculeResolver. Canvas applies importance→opacity mapping (1.0/0.55/0.25). Playwright e2e infra merged. All gates green: 33 backend tests + 17 frontend vitest + 2 Playwright e2e, lint, typecheck.
 
 ## Accomplished This Session
-- Fixed SSE named-event bug: backend emitted `event: STATE_SNAPSHOT` (named) but frontend used `source.onmessage` (unnamed only). Removed redundant event name.
-- Fixed SSE contract mismatch: backend sent `snapshot.items` but frontend expected `snapshot.manifest.items`. Wrapped manifest in `snapshot.manifest`.
-- Added Vite `server.proxy` for `/api` → backend at `127.0.0.1:8000` (explicit IPv4 to avoid macOS `::1` resolution).
-- Installed `@playwright/test`, created `playwright.config.ts` with dual `webServer` (backend + frontend), Chromium only.
-- Created `e2e/smoke.spec.ts` — two tests: loading state + SSE hero render with flow items.
-- Added `tsconfig.e2e.json`, `test:e2e` script, Playwright artifacts to `.gitignore`.
-- Added lessons learned to `tasks/lessons.md`.
+- Merged `feat/001-playwright` into `develop` (fast-forward).
+- Added MoleculeResolver — registry-based dispatch from `molecule` key to React component, with fallback for unknown types.
+- Added HeroMolecule (name, title, subtitle, summary), ProjectCard (title, description, tech tags), ExperienceCard (company, role, duration, description).
+- Refactored Canvas from inline duck-typing to MoleculeResolver dispatch with importance→opacity mapping.
+- Updated Canvas tests for complete molecule data shapes. Used spread syntax in ExperienceCard tests to avoid Biome ARIA `role` prop collision.
 
 ## Key Decisions
-- No new ADRs. Playwright was already decided in ADR-0006.
-- SSE fix on backend side (remove event name) rather than frontend (switch to addEventListener) — avoids duplicating type discrimination in SSE event name and JSON `type` field.
-- Explicit `127.0.0.1` over `localhost` in proxy config — macOS IPv6 resolution issue.
+- No new ADRs. Molecule components follow ADR-0004 editorial canvas design.
+- `role` prop collision with HTML ARIA attribute handled via spread syntax in tests rather than renaming the prop — keeps data shape aligned with YAML catalog.
 
 ## Blockers
 None.
 
 ## Next Step
-Merge `feat/001-playwright` into `develop` (fast-forward), then start Slice 2 — Molecule Components from `specs/001-home-experience/plan.md`. Create `feat/001-molecules` from `develop`. Write failing tests for MoleculeResolver (molecule key → component), ProjectCard, and ExperienceCard. Then implement HeroMolecule, ProjectCard, ExperienceCard, MoleculeResolver, and update Canvas to use MoleculeResolver with importance→opacity mapping (1.0/0.55/0.25). This is frontend-only work.
+Start Slice 3 — Canvas Layout (Editorial Zones) from `specs/001-home-experience/plan.md`. Create `feat/001-canvas-layout` from `develop`. Write failing tests for three semantic zones (`data-zone="hero"`, `data-zone="flow"`, `data-zone="background"`) driven by importance thresholds (≥0.85 hero, 0.4–0.84 flow, <0.4 background), FlowZone with asymmetric bento grid, and ContactCard. Then implement zone partitioning in Canvas, FlowZone, BackgroundZone, SkillLink, and ContactCard. Frontend-only work.
