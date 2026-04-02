@@ -15,7 +15,7 @@ test.describe("Walking skeleton", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "Firaaz Farook",
     );
-    await expect(hero.locator("p")).toContainText("Senior Software Engineer");
+    await expect(hero.getByText("Senior Software Engineer")).toBeVisible();
 
     const flow = page.locator("[data-zone='flow']");
     await expect(flow).toBeVisible();
