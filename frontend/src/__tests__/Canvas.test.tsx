@@ -63,4 +63,102 @@ describe("Canvas", () => {
       screen.getByRole("heading", { name: "Salama AI" }),
     ).toBeInTheDocument();
   });
+
+  it("places items with importance >= 0.85 in hero zone", () => {
+    useManifestStore.setState({
+      items: [
+        {
+          id: "hero",
+          importance: 1.0,
+          molecule: "hero",
+          data: {
+            name: "Firaaz",
+            title: "Engineer",
+            subtitle: "AI",
+            summary: "Building",
+          },
+        },
+      ],
+    });
+
+    render(<Canvas />);
+    const heroZone = document.querySelector('[data-zone="hero"]');
+    expect(heroZone).toBeInTheDocument();
+    expect(heroZone).toHaveTextContent("Firaaz");
+  });
+
+  it("places items with importance 0.4–0.84 in flow zone", () => {
+    useManifestStore.setState({
+      items: [
+        {
+          id: "hero",
+          importance: 1.0,
+          molecule: "hero",
+          data: {
+            name: "Firaaz",
+            title: "Engineer",
+            subtitle: "AI",
+            summary: "Building",
+          },
+        },
+        {
+          id: "proj",
+          importance: 0.7,
+          molecule: "project",
+          data: {
+            title: "Salama AI",
+            description: "Platform",
+            tech: ["Python"],
+          },
+        },
+        {
+          id: "contact",
+          importance: 0.6,
+          molecule: "contact",
+          data: { email: "test@example.com", cta: "Let's talk" },
+        },
+      ],
+    });
+
+    render(<Canvas />);
+    const flowZone = document.querySelector('[data-zone="flow"]');
+    expect(flowZone).toBeInTheDocument();
+    expect(flowZone).toHaveTextContent("Salama AI");
+    expect(flowZone).toHaveTextContent("Let's talk");
+  });
+
+  it("places items with importance < 0.4 in background zone", () => {
+    useManifestStore.setState({
+      items: [
+        {
+          id: "hero",
+          importance: 1.0,
+          molecule: "hero",
+          data: {
+            name: "Firaaz",
+            title: "Engineer",
+            subtitle: "AI",
+            summary: "Building",
+          },
+        },
+        {
+          id: "skill-python",
+          importance: 0.3,
+          molecule: "skill",
+          data: { name: "Python" },
+        },
+        {
+          id: "education-be",
+          importance: 0.2,
+          molecule: "education",
+          data: { degree: "B.E. CS", institution: "UoP" },
+        },
+      ],
+    });
+
+    render(<Canvas />);
+    const bgZone = document.querySelector('[data-zone="background"]');
+    expect(bgZone).toBeInTheDocument();
+    expect(bgZone).toHaveTextContent("Python");
+  });
 });
