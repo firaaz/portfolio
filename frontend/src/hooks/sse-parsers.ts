@@ -1,6 +1,7 @@
 /**
  * Shared SSE event type guards for AG-UI protocol.
  */
+import type { DecisionRecord } from "../store/audit-store";
 import type { ImportanceUpdate, ManifestItem } from "../store/manifest-store";
 
 export interface StateSnapshotEvent {
@@ -33,4 +34,28 @@ export function isStateDelta(data: unknown): data is StateDeltaEvent {
     "type" in data &&
     (data as StateDeltaEvent).type === "STATE_DELTA"
   );
+}
+
+export interface DecisionEvent {
+  type: "CUSTOM";
+  custom: {
+    eventType: "DECISION";
+    decision: DecisionRecord;
+  };
+}
+
+export function isDecisionEvent(data: unknown): data is DecisionEvent {
+  if (typeof data !== "object" || data === null || !("type" in data)) {
+    return false;
+  }
+  const obj = data as Record<string, unknown>;
+  if (
+    obj.type !== "CUSTOM" ||
+    typeof obj.custom !== "object" ||
+    obj.custom === null
+  ) {
+    return false;
+  }
+  const custom = obj.custom as Record<string, unknown>;
+  return custom.eventType === "DECISION";
 }
