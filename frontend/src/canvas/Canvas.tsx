@@ -25,14 +25,14 @@ export function Canvas() {
   const bgItems = rest.filter((item) => item.importance < 0.4);
 
   return (
-    <main className="max-w-4xl mx-auto px-6 md:px-8 py-16 md:py-24 antialiased">
+    <main className="max-w-5xl mx-auto px-6 md:px-10 py-6 md:py-10 antialiased">
       {hero && (
-        <section data-zone="hero" className="pb-16 md:pb-20">
+        <section data-zone="hero" className="pb-6 md:pb-8">
           <MoleculeResolver molecule={hero.molecule} data={hero.data} />
         </section>
       )}
       {flowItems.length > 0 && (
-        <section data-zone="flow" className="pb-12 md:pb-16">
+        <section data-zone="flow" className="pb-5 md:pb-6">
           <FlowZone>
             {flowItems.map((item) => (
               <AnimatedMolecule key={item.id} importance={item.importance}>
@@ -43,10 +43,7 @@ export function Canvas() {
         </section>
       )}
       {bgItems.length > 0 && (
-        <section
-          data-zone="background"
-          className="flex flex-wrap gap-x-4 gap-y-2"
-        >
+        <section data-zone="background" className="flex flex-wrap gap-2">
           {bgItems.map((item) => (
             <AnimatedMolecule key={item.id} importance={item.importance}>
               <MoleculeResolver molecule={item.molecule} data={item.data} />
