@@ -19,16 +19,18 @@ export function HeroMolecule({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="space-y-2"
+        className="space-y-3"
       >
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-extralight tracking-tight text-foreground">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tighter text-foreground">
           {name}
         </h1>
-        <p className="text-base md:text-lg text-muted-foreground">{title}</p>
-        <p className="text-sm md:text-base font-light text-muted-foreground">
+        <p className="text-base md:text-lg text-muted-foreground font-light">
+          {title}
+        </p>
+        <p className="text-sm md:text-base font-light text-muted-foreground/70">
           {subtitle}
         </p>
-        <p className="text-sm font-light text-muted-foreground/70 leading-relaxed max-w-2xl">
+        <p className="text-xs md:text-sm font-light text-muted-foreground/50 leading-relaxed max-w-xl">
           {summary}
         </p>
       </motion.div>

@@ -43,7 +43,10 @@ export function Canvas() {
         </section>
       )}
       {bgItems.length > 0 && (
-        <section data-zone="background" className="flex flex-wrap gap-2">
+        <section
+          data-zone="background"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-1.5"
+        >
           {bgItems.map((item) => (
             <AnimatedMolecule key={item.id} importance={item.importance}>
               <MoleculeResolver molecule={item.molecule} data={item.data} />
