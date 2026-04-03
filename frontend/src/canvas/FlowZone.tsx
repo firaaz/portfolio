@@ -1,11 +1,8 @@
 export function FlowZone({ children }: { children: React.ReactNode }) {
   return (
     <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1.6fr 1fr",
-        gap: "1rem",
-      }}
+      className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-6"
+      style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr" }}
     >
       {children}
     </div>

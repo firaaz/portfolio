@@ -15,6 +15,7 @@ export function AnimatedMolecule({
 }) {
   return (
     <div
+      className="will-change-[opacity]"
       style={{
         opacity: importanceToOpacity(importance),
         transition: "opacity 500ms ease-out",

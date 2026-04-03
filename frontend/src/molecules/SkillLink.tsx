@@ -1,3 +1,3 @@
 export function SkillLink({ name }: { name: string }) {
-  return <span>{name}</span>;
+  return <span className="text-sm font-light text-foreground">{name}</span>;
 }
