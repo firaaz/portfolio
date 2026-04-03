@@ -133,11 +133,34 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: radial-gradient(
-      ellipse at 15% 0%,
-      oklch(0.2 0.015 260) 0%,
+    background-image:
+      radial-gradient(
+        ellipse at 15% -5%,
+        oklch(0.22 0.04 250) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at 85% 110%,
+        oklch(0.18 0.03 320) 0%,
+        transparent 40%
+      );
+  }
+
+  [data-zone="hero"] {
+    position: relative;
+  }
+
+  [data-zone="hero"]::before {
+    content: "";
+    position: absolute;
+    inset: -2rem -4rem;
+    background: radial-gradient(
+      ellipse at 10% 50%,
+      oklch(0.25 0.06 230 / 0.4) 0%,
       transparent 60%
     );
+    pointer-events: none;
+    z-index: -1;
   }
   html {
     @apply font-sans;
