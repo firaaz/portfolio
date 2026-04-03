@@ -1,12 +1,13 @@
 import { useReducedMotion } from "../hooks/use-reduced-motion";
 
-export function PresenceDot() {
+export function PresenceDot({ onClick }: { onClick: () => void }) {
   const reduced = useReducedMotion();
 
   return (
-    <div
+    <button
+      type="button"
       aria-label="AI agent active"
-      role="status"
+      onClick={onClick}
       style={{
         position: "fixed",
         bottom: "1.5rem",
@@ -18,6 +19,9 @@ export function PresenceDot() {
         boxShadow: reduced ? "none" : "0 0 10px 2px oklch(0.6 0.12 230 / 0.4)",
         opacity: reduced ? 0.5 : undefined,
         animation: reduced ? "none" : "presence-pulse 3s ease-in-out infinite",
+        border: "none",
+        padding: 0,
+        cursor: "pointer",
       }}
     />
   );

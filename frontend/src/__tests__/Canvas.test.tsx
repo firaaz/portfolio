@@ -21,13 +21,13 @@ describe("Canvas", () => {
       ],
     });
 
-    render(<Canvas />);
+    render(<Canvas onPresenceDotClick={() => {}} />);
     expect(screen.getByText("Firaaz Farook")).toBeInTheDocument();
     expect(screen.getByText("Senior AI Engineer")).toBeInTheDocument();
   });
 
   it("renders loading state when manifest is empty", () => {
-    render(<Canvas />);
+    render(<Canvas onPresenceDotClick={() => {}} />);
     expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe("Canvas", () => {
       ],
     });
 
-    render(<Canvas />);
+    render(<Canvas onPresenceDotClick={() => {}} />);
     expect(
       screen.getByRole("heading", { name: "Salama AI" }),
     ).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe("Canvas", () => {
       ],
     });
 
-    render(<Canvas />);
+    render(<Canvas onPresenceDotClick={() => {}} />);
     const heroZone = document.querySelector('[data-zone="hero"]');
     expect(heroZone).toBeInTheDocument();
     expect(heroZone).toHaveTextContent("Firaaz");
@@ -120,7 +120,7 @@ describe("Canvas", () => {
       ],
     });
 
-    render(<Canvas />);
+    render(<Canvas onPresenceDotClick={() => {}} />);
     const flowZone = document.querySelector('[data-zone="flow"]');
     expect(flowZone).toBeInTheDocument();
     expect(flowZone).toHaveTextContent("Salama AI");
@@ -156,7 +156,7 @@ describe("Canvas", () => {
       ],
     });
 
-    render(<Canvas />);
+    render(<Canvas onPresenceDotClick={() => {}} />);
     const bgZone = document.querySelector('[data-zone="background"]');
     expect(bgZone).toBeInTheDocument();
     expect(bgZone).toHaveTextContent("Python");

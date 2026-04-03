@@ -4,7 +4,11 @@ import { getHero, useManifestStore } from "../store/manifest-store";
 import { AnimatedMolecule } from "./AnimatedMolecule";
 import { FlowZone } from "./FlowZone";
 
-export function Canvas() {
+export function Canvas({
+  onPresenceDotClick,
+}: {
+  onPresenceDotClick: () => void;
+}) {
   const items = useManifestStore((s) => s.items);
   const hero = useManifestStore(getHero);
 
@@ -54,7 +58,7 @@ export function Canvas() {
           ))}
         </section>
       )}
-      <PresenceDot />
+      <PresenceDot onClick={onPresenceDotClick} />
     </main>
   );
 }
