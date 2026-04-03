@@ -24,6 +24,7 @@ Rules:
 - The "hero" item MUST have importance >= 0.9
 - LinkedIn visitors: elevate contact and experience items (>= 0.7)
 - GitHub visitors: elevate project and skill items
+- When a visitor command is provided, prioritize relevant items (>= 0.8)
 - Direct/unknown visitors: use balanced defaults close to the catalog defaults
 - ALL catalog item IDs must appear in your output — no more, no fewer
 - Scores must be between 0.0 and 1.0 inclusive
@@ -41,9 +42,10 @@ def _build_user_prompt(
     lines = [
         f"Visitor referrer: {context.referrer or 'direct'}",
         f"Referrer type: {context.referrer_type}",
-        "",
-        "Catalog items:",
     ]
+    if context.command:
+        lines.append(f"Visitor command: {context.command}")
+    lines += ["", "Catalog items:"]
     for item in catalog:
         desc = item.data.get("title") or item.data.get("name") or item.id
         lines.append(f"- {item.id} ({item.molecule}): {desc}")
