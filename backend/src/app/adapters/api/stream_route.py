@@ -7,12 +7,13 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
 from app.adapters.api.referrer import get_visitor_context
-from app.adapters.api.sse import state_delta_event, state_snapshot_event
+from app.adapters.api.sse import decision_event, state_delta_event, state_snapshot_event
 from app.adapters.cache.memory_cache import MemoryCache
 from app.adapters.content.yaml_loader import load_catalog
 from app.domain.agent import assemble_manifest
 from app.domain.content import content_to_manifest
 from app.domain.context import VisitorContext
+from app.domain.decision import build_decision
 
 router = APIRouter(prefix="/api/agent")
 
@@ -62,6 +63,13 @@ async def _generate_stream(context: VisitorContext) -> AsyncGenerator[str]:
     refined = await assemble_manifest(context, catalog, llm)
     if refined != default_manifest:
         cache.set(context.referrer_type, refined, _cache_ttl())
+        record = build_decision(
+            default=default_manifest,
+            refined=refined,
+            referrer_type=context.referrer_type,
+            command=context.command,
+        )
+        yield decision_event(record)
         yield state_delta_event(refined)
 
 

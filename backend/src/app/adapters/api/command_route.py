@@ -7,11 +7,12 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.adapters.api.sse import state_delta_event, state_snapshot_event
+from app.adapters.api.sse import decision_event, state_delta_event, state_snapshot_event
 from app.adapters.content.yaml_loader import load_catalog
 from app.domain.agent import assemble_manifest
 from app.domain.content import content_to_manifest
 from app.domain.context import VisitorContext
+from app.domain.decision import build_decision
 
 router = APIRouter(prefix="/api/agent")
 
@@ -44,6 +45,13 @@ async def _generate_command_stream(text: str) -> AsyncGenerator[str]:
     context = VisitorContext(command=text)
     refined = await assemble_manifest(context, catalog, llm)
     if refined != default_manifest:
+        record = build_decision(
+            default=default_manifest,
+            refined=refined,
+            referrer_type=context.referrer_type,
+            command=text,
+        )
+        yield decision_event(record)
         yield state_delta_event(refined)
 
 

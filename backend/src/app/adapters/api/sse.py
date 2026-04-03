@@ -2,6 +2,7 @@
 
 import json
 
+from app.domain.decision import DecisionRecord
 from app.domain.manifest import Manifest
 
 
@@ -18,4 +19,16 @@ def state_delta_event(refined: Manifest) -> str:
     """Format refined importance scores as an AG-UI StateDelta SSE event."""
     updates = [{"id": item.id, "importance": item.importance} for item in refined.items]
     payload = {"type": "STATE_DELTA", "delta": {"updates": updates}}
+    return f"data: {json.dumps(payload)}\n\n"
+
+
+def decision_event(record: DecisionRecord) -> str:
+    """Format a DecisionRecord as an AG-UI Custom SSE event."""
+    payload = {
+        "type": "CUSTOM",
+        "custom": {
+            "eventType": "DECISION",
+            "decision": record.model_dump(),
+        },
+    }
     return f"data: {json.dumps(payload)}\n\n"

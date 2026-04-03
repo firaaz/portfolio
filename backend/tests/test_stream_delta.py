@@ -67,9 +67,10 @@ class TestStreamWithDelta:
             if line.startswith("data:")
         ]
 
-        assert len(events) == 2
+        assert len(events) == 3
         assert events[0]["type"] == "STATE_SNAPSHOT"
-        assert events[1]["type"] == "STATE_DELTA"
+        assert events[1]["type"] == "CUSTOM"
+        assert events[2]["type"] == "STATE_DELTA"
 
     def test_delta_contains_updates(self) -> None:
         response = client.get("/api/agent/stream")
@@ -93,8 +94,9 @@ class TestStreamWithDelta:
             for line in response.text.strip().split("\n")
             if line.startswith("data:")
         ]
-        delta = events[1]
-        updates = delta["delta"]["updates"]
+        deltas = [e for e in events if e["type"] == "STATE_DELTA"]
+        assert len(deltas) == 1
+        updates = deltas[0]["delta"]["updates"]
         assert len(updates) == 13
         for update in updates:
             assert "id" in update
