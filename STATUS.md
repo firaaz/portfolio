@@ -26,4 +26,4 @@ FEAT-001 complete on `develop`. All 9 slices (0A–8) implemented. Full AG-UI pi
 None.
 
 ## Next Step
-Create PR `develop` → `main` to complete FEAT-001. Then deploy.
+Add a GitHub `origin` remote, push `develop`, and create a PR `develop` → `main` to land FEAT-001. No origin remote exists yet (only `upstream` pointing to dillionverma/portfolio template). Once merged, configure deployment (Cloudflare Pages frontend + Fly.io/Railway backend per CLAUDE.md).
