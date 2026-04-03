@@ -1,14 +1,19 @@
 """LLM provider adapter — calls OpenAI-compatible API for manifest scoring."""
 
+import asyncio
 import json
+import logging
 import os
 import re
 
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, RateLimitError
 
 from app.domain.content import ContentItem
 from app.domain.context import VisitorContext
 from app.domain.manifest import Manifest, ManifestItem
+
+_log = logging.getLogger(__name__)
+_MAX_RETRIES = 3
 
 _SYSTEM_PROMPT = """\
 You are a portfolio layout agent. Given a visitor context and a content catalog, \
@@ -85,14 +90,25 @@ class LLMProvider:
         catalog: list[ContentItem],
     ) -> Manifest:
         """Call the LLM and parse the response into a scored manifest."""
-        response = await self._client.chat.completions.create(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": _build_user_prompt(context, catalog)},
-            ],
-            temperature=0.3,
-            max_tokens=1024,
-        )
-        raw = response.choices[0].message.content or ""
-        return _parse_scores(raw, catalog)
+        user_prompt = _build_user_prompt(context, catalog)
+        for attempt in range(_MAX_RETRIES):
+            try:
+                response = await self._client.chat.completions.create(
+                    model=self._model,
+                    messages=[
+                        {"role": "system", "content": _SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=0.1,
+                    max_tokens=1024,
+                )
+                raw = response.choices[0].message.content or ""
+                return _parse_scores(raw, catalog)
+            except RateLimitError:
+                if attempt == _MAX_RETRIES - 1:
+                    raise
+                wait = 2 ** (attempt + 1)
+                _log.warning("Rate limited, retrying in %ds", wait)
+                await asyncio.sleep(wait)
+        msg = "Unreachable"
+        raise RuntimeError(msg)

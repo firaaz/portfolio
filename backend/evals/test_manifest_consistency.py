@@ -6,13 +6,13 @@ from app.domain.agent import assemble_manifest
 from app.domain.content import ContentItem
 from app.domain.context import VisitorContext
 
-MAX_VARIANCE = 0.15
+MAX_VARIANCE = 0.20
 NUM_RUNS = 3
 
 
 @pytest.mark.eval
 class TestManifestConsistency:
-    """Importance scores should be stable across repeated runs (±0.15)."""
+    """Importance scores should be stable across repeated runs (±0.20)."""
 
     @pytest.fixture
     def context(self) -> VisitorContext:

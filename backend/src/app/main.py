@@ -1,9 +1,13 @@
 """FastAPI application entry point."""
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
-from app.adapters.api import api_router
+load_dotenv()
+
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
+from app.adapters.api import api_router  # noqa: E402
 
 app = FastAPI(
     title="Portfolio API",
