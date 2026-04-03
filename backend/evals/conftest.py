@@ -3,6 +3,9 @@
 import os
 
 import pytest
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from app.adapters.content.yaml_loader import load_catalog
 from app.adapters.llm.provider import LLMProvider
