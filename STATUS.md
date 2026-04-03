@@ -29,27 +29,47 @@ None.
 ## Next Step
 **Slices 6 + 7 in parallel via worktrees** from `specs/001-home-experience/plan.md`.
 
-### Worktree setup
-```bash
-# Slice 6 — Command Bar (frontend + new backend route)
-git worktree add ../portfolio-slice6 -b feat/001-command-bar develop
+### Worktree layout
+```
+personal-portfolio/          ← coordinator (stays on develop, handles merges)
+../portfolio-slice6/         ← worktree: feat/001-command-bar
+../portfolio-slice7/         ← worktree: feat/001-referrer-cache
+```
 
-# Slice 7 — Referrer Middleware + Caching (backend only)
+### Setup (run from main repo)
+```bash
+git worktree add ../portfolio-slice6 -b feat/001-command-bar develop
 git worktree add ../portfolio-slice7 -b feat/001-referrer-cache develop
 ```
 
-### Slice 6 — Command Bar (in `../portfolio-slice6`)
+### Slice 6 — Command Bar (in `../portfolio-slice6/`)
 ⌘K opens command dialog → POST `/api/agent/command` → SSE response → manifest update.
 - Files: `command_route.py` (new), `CommandBar.tsx` (new), `use-command-bar.ts` (new), `Canvas.tsx` (update), `manifest-store.ts` (update)
 - EDD eval: `test_command_relevancy.py`
 - No overlap with Slice 7 except `manifest-store.ts` (Slice 7 doesn't touch frontend)
 
-### Slice 7 — Referrer Middleware + Caching (in `../portfolio-slice7`)
+### Slice 7 — Referrer Middleware + Caching (in `../portfolio-slice7/`)
 Parse referrer/UTM in middleware → in-memory LRU cache → skip LLM for repeat visitors.
 - Files: `referrer_middleware.py` (new), `cache.py` port (new), `memory_cache.py` (new), `agent.py` (update), `stream_route.py` (update)
 - No frontend changes. No overlap with Slice 6's frontend work.
 
-### Merge order
-Merge Slice 7 first (backend-only, fewer conflicts), then rebase Slice 6 on top. The only shared file is `stream_route.py` — Slice 7 adds middleware context passing, Slice 6 adds a new route. Clean separation.
+### Merge procedure (from coordinator: `personal-portfolio/`)
+```bash
+# 1. Merge Slice 7 first (backend-only, fewer conflicts)
+git checkout develop
+git merge --ff-only feat/001-referrer-cache
+
+# 2. Rebase Slice 6 onto updated develop, then merge
+git checkout feat/001-command-bar
+git rebase develop
+git checkout develop
+git merge --ff-only feat/001-command-bar
+
+# 3. Clean up worktrees
+git worktree remove ../portfolio-slice6
+git worktree remove ../portfolio-slice7
+```
+
+Slice 7 merges first (backend-only, minimal conflict surface). Slice 6 rebases on top. The only shared file is `stream_route.py` — Slice 7 adds middleware context, Slice 6 adds a new route.
 
 After both merge → **Slice 8 (Transparency Panel)** completes FEAT-001.
