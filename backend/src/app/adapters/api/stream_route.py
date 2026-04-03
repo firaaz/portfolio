@@ -4,9 +4,11 @@ import json
 import os
 from collections.abc import AsyncGenerator
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
+from app.adapters.api.referrer import get_visitor_context
+from app.adapters.cache.memory_cache import MemoryCache
 from app.adapters.content.yaml_loader import load_catalog
 from app.domain.agent import assemble_manifest
 from app.domain.content import content_to_manifest
@@ -14,6 +16,22 @@ from app.domain.context import VisitorContext
 from app.domain.manifest import Manifest
 
 router = APIRouter(prefix="/api/agent")
+
+_cache_instance: MemoryCache | None = None
+
+
+def _get_cache() -> MemoryCache:
+    """Return the module-level cache singleton, creating it on first call."""
+    global _cache_instance  # noqa: PLW0603
+    if _cache_instance is None:
+        capacity = int(os.environ.get("CACHE_CAPACITY", "32"))
+        _cache_instance = MemoryCache(capacity=capacity)
+    return _cache_instance
+
+
+def _cache_ttl() -> int:
+    """Read cache TTL from environment, defaulting to 3600 seconds."""
+    return int(os.environ.get("CACHE_TTL_SECONDS", "3600"))
 
 
 def _state_snapshot_event(manifest: Manifest) -> str:
@@ -27,7 +45,10 @@ def _state_snapshot_event(manifest: Manifest) -> str:
 
 def _state_delta_event(refined: Manifest) -> str:
     """Format refined importance scores as an AG-UI StateDelta SSE event."""
-    updates = [{"id": item.id, "importance": item.importance} for item in refined.items]
+    updates = [
+        {"id": item.id, "importance": item.importance}
+        for item in refined.items
+    ]
     payload = {"type": "STATE_DELTA", "delta": {"updates": updates}}
     return f"data: {json.dumps(payload)}\n\n"
 
@@ -41,7 +62,7 @@ def _get_llm_port() -> object | None:
     return LLMProvider()
 
 
-async def _generate_stream(referrer: str | None) -> AsyncGenerator[str]:
+async def _generate_stream(context: VisitorContext) -> AsyncGenerator[str]:
     """Yield AG-UI events: StateSnapshot immediately, StateDelta after LLM."""
     catalog = load_catalog()
     default_manifest = content_to_manifest(catalog)
@@ -51,18 +72,26 @@ async def _generate_stream(referrer: str | None) -> AsyncGenerator[str]:
     if llm is None:
         return
 
-    context = VisitorContext(referrer=referrer)
+    cache = _get_cache()
+    cached = cache.get(context.referrer_type)
+    if cached is not None:
+        if cached != default_manifest:
+            yield _state_delta_event(cached)
+        return
+
     refined = await assemble_manifest(context, catalog, llm)
     if refined != default_manifest:
+        cache.set(context.referrer_type, refined, _cache_ttl())
         yield _state_delta_event(refined)
 
 
 @router.get("/stream")
-async def stream(request: Request) -> StreamingResponse:
+async def stream(
+    context: VisitorContext = Depends(get_visitor_context),
+) -> StreamingResponse:
     """SSE endpoint serving AG-UI events with the current manifest."""
-    referrer = request.headers.get("referer")
     return StreamingResponse(
-        _generate_stream(referrer),
+        _generate_stream(context),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
