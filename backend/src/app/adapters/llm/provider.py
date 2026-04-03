@@ -73,7 +73,10 @@ class LLMProvider:
     """OpenAI-compatible LLM adapter implementing LLMPort."""
 
     def __init__(self) -> None:
-        self._client = AsyncOpenAI(api_key=os.environ["LLM_API_KEY"])
+        self._client = AsyncOpenAI(
+            api_key=os.environ["LLM_API_KEY"],
+            base_url=os.environ.get("LLM_BASE_URL"),
+        )
         self._model = os.environ.get("LLM_MODEL", "gpt-4o-mini")
 
     async def assemble_manifest(
