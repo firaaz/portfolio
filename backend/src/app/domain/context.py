@@ -31,6 +31,7 @@ class VisitorContext(BaseModel):
     utm_source: str | None = None
     utm_medium: str | None = None
     utm_campaign: str | None = None
+    command: str | None = None
 
     @model_validator(mode="after")
     def _set_referrer_type(self) -> "VisitorContext":
