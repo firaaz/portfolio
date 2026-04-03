@@ -28,8 +28,12 @@ class VisitorContext(BaseModel):
 
     referrer: str | None = None
     referrer_type: str = ""
+    utm_source: str | None = None
+    utm_medium: str | None = None
+    utm_campaign: str | None = None
 
     @model_validator(mode="after")
     def _set_referrer_type(self) -> "VisitorContext":
+        """Derive referrer_type from raw referrer URL."""
         self.referrer_type = _parse_referrer_type(self.referrer)
         return self
