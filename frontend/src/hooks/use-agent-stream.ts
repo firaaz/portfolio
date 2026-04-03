@@ -1,38 +1,6 @@
 import { useEffect } from "react";
-import type { ImportanceUpdate, ManifestItem } from "../store/manifest-store";
 import { useManifestStore } from "../store/manifest-store";
-
-interface StateSnapshotEvent {
-  type: "STATE_SNAPSHOT";
-  snapshot: {
-    manifest: { items: ManifestItem[] };
-  };
-}
-
-interface StateDeltaEvent {
-  type: "STATE_DELTA";
-  delta: {
-    updates: ImportanceUpdate[];
-  };
-}
-
-function isStateSnapshot(data: unknown): data is StateSnapshotEvent {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "type" in data &&
-    (data as StateSnapshotEvent).type === "STATE_SNAPSHOT"
-  );
-}
-
-function isStateDelta(data: unknown): data is StateDeltaEvent {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "type" in data &&
-    (data as StateDeltaEvent).type === "STATE_DELTA"
-  );
-}
+import { isStateDelta, isStateSnapshot } from "./sse-parsers";
 
 export function useAgentStream(url = "/api/agent/stream") {
   const setManifest = useManifestStore((s) => s.setManifest);
