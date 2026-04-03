@@ -1,29 +1,26 @@
 """Unit tests for referrer dependency — Referer header and UTM extraction."""
 
+from fastapi import APIRouter, Depends
 from starlette.testclient import TestClient
 
 from app.adapters.api.referrer import get_visitor_context
 from app.domain.context import VisitorContext
 from app.main import app
 
-# Wire up a test-only route that returns the extracted context as JSON.
-from fastapi import Depends
-
 _test_router_installed = False
 
 
 def _install_test_route() -> None:
     """Add a /test/context endpoint that exposes get_visitor_context."""
-    global _test_router_installed  # noqa: PLW0603
+    global _test_router_installed
     if _test_router_installed:
         return
-    from fastapi import APIRouter
 
     router = APIRouter()
 
     @router.get("/test/context")
     async def _ctx(
-        ctx: VisitorContext = Depends(get_visitor_context),
+        ctx: VisitorContext = Depends(get_visitor_context),  # noqa: B008
     ) -> dict:
         return ctx.model_dump()
 

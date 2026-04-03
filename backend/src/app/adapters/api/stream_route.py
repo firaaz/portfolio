@@ -22,7 +22,7 @@ _cache_instance: MemoryCache | None = None
 
 def _get_cache() -> MemoryCache:
     """Return the module-level cache singleton, creating it on first call."""
-    global _cache_instance  # noqa: PLW0603
+    global _cache_instance
     if _cache_instance is None:
         capacity = int(os.environ.get("CACHE_CAPACITY", "32"))
         _cache_instance = MemoryCache(capacity=capacity)
@@ -45,10 +45,7 @@ def _state_snapshot_event(manifest: Manifest) -> str:
 
 def _state_delta_event(refined: Manifest) -> str:
     """Format refined importance scores as an AG-UI StateDelta SSE event."""
-    updates = [
-        {"id": item.id, "importance": item.importance}
-        for item in refined.items
-    ]
+    updates = [{"id": item.id, "importance": item.importance} for item in refined.items]
     payload = {"type": "STATE_DELTA", "delta": {"updates": updates}}
     return f"data: {json.dumps(payload)}\n\n"
 
@@ -87,7 +84,7 @@ async def _generate_stream(context: VisitorContext) -> AsyncGenerator[str]:
 
 @router.get("/stream")
 async def stream(
-    context: VisitorContext = Depends(get_visitor_context),
+    context: VisitorContext = Depends(get_visitor_context),  # noqa: B008
 ) -> StreamingResponse:
     """SSE endpoint serving AG-UI events with the current manifest."""
     return StreamingResponse(

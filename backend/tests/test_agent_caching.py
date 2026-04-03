@@ -1,7 +1,7 @@
 """BDD tests for cache integration in the SSE stream route."""
 
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -39,7 +39,7 @@ def _get_default_manifest() -> Manifest:
         return_value=None,
     ):
         resp = client.get("/api/agent/stream")
-    event = json.loads(resp.text.strip().split("\n")[0][len("data:"):])
+    event = json.loads(resp.text.strip().split("\n")[0][len("data:") :])
     return Manifest(**event["snapshot"]["manifest"])
 
 
@@ -179,7 +179,7 @@ class TestAgentCaching:
 def _parse_events(text: str) -> list[dict]:
     """Parse SSE text into a list of event payloads."""
     return [
-        json.loads(line[len("data:"):].strip())
+        json.loads(line[len("data:") :].strip())
         for line in text.strip().split("\n")
         if line.startswith("data:")
     ]
