@@ -1,7 +1,7 @@
 # Editorial Canvas and Motion Language
 
 ## Status
-accepted
+accepted — extended by ADR-0007 (breathing motion language for zone container transitions)
 
 ## Date
 2026-03-31

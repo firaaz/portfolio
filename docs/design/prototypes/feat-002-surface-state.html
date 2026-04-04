@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FEAT-002 Surface State — Iron-Gall Ink Editorial</title>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,300;0,400;0,700;1,300&family=Inter:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  /*
+   * FEAT-002 Design Prototype — Surface State
+   * Palette: Iron-Gall Ink monochromatic
+   * Ink: #1C2430 | Canvas: #F3F4F6
+   * Typography: Zilla Slab (headlines) + Inter (body)
+   * 0px radius, no borders, tonal surface stepping
+   * 8px base unit, 12-column grid, 3 rows
+   *
+   * ⌘K overlay: surface blur(2px), overlay rgba(canvas, 0.35)
+   * Depth layer: opaque canvas, fade-in entry, 2px progress bar
+   * See standalone mockups in .superpowers/brainstorm/ for ⌘K and depth layer
+   */
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #1C2430;
+    --canvas: #F3F4F6;
+
+    /* Ink at opacity stops */
+    --ink-100: #1C2430;
+    --ink-65: rgba(28,36,48,0.65);
+    --ink-50: rgba(28,36,48,0.50);
+    --ink-45: rgba(28,36,48,0.45);
+    --ink-40: rgba(28,36,48,0.40);
+    --ink-35: rgba(28,36,48,0.35);
+    --ink-20: rgba(28,36,48,0.20);
+    --ink-06: rgba(28,36,48,0.06);
+    --ink-05: rgba(28,36,48,0.05);
+    --ink-03: rgba(28,36,48,0.03);
+
+    /* Spacing (8px base) */
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 16px;
+    --sp-4: 24px;
+    --sp-5: 32px;
+    --sp-6: 48px;
+    --sp-7: 64px;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: var(--canvas);
+    color: var(--ink-100);
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* ─── SURFACE GRID ─── */
+  .surface {
+    height: 100vh;
+    padding: var(--sp-5);
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: 1.4fr 1fr auto;
+    gap: 2px;
+  }
+
+  @media (max-height: 800px) {
+    .surface { padding: var(--sp-3); }
+    .zone { padding: var(--sp-3) !important; }
+  }
+
+  /* ─── ZONES ─── */
+  .zone {
+    padding: var(--sp-4);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    transition: background 0.3s ease-out;
+  }
+
+  /* Hover lift (short hover feedback, <2s) */
+  .zone:hover {
+    background-color: rgba(28,36,48,0.02);
+  }
+
+  /* Surface levels */
+  .surface-inset { background: var(--ink-03); }
+  .surface-inset:hover { background: rgba(28,36,48,0.05); }
+  .surface-featured { background: var(--ink-06); }
+  .surface-featured:hover { background: rgba(28,36,48,0.08); }
+  .surface-recessed { background: var(--ink-05); }
+  .surface-recessed:hover { background: rgba(28,36,48,0.07); }
+  .surface-base { background: var(--canvas); }
+
+  /* ─── TYPOGRAPHY ─── */
+  .zone-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-45);
+    font-weight: 500;
+    margin-bottom: var(--sp-2);
+  }
+
+  .name {
+    font-family: 'Zilla Slab', serif;
+    font-weight: 700;
+    font-size: clamp(24px, 3.5vw, 32px);
+    line-height: 1.1;
+    color: var(--ink-100);
+  }
+
+  .title-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-45);
+    margin-top: 6px;
+  }
+
+  .summary {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-65);
+    margin-top: var(--sp-2);
+  }
+
+  .project-title {
+    font-family: 'Zilla Slab', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(16px, 2vw, 22px);
+    color: var(--ink-100);
+    line-height: 1.2;
+  }
+
+  .project-desc {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink-65);
+    margin-top: 6px;
+  }
+
+  .company {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-50);
+  }
+
+  .role {
+    font-family: 'Zilla Slab', serif;
+    font-weight: 400;
+    font-size: 16px;
+    color: var(--ink-100);
+    margin-top: 2px;
+  }
+
+  .meta {
+    font-size: 10px;
+    color: var(--ink-45);
+    margin-top: 4px;
+  }
+
+  /* ─── TAGS ─── */
+  .tags {
+    display: flex;
+    gap: 6px;
+    margin-top: var(--sp-2);
+    flex-wrap: wrap;
+  }
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    background: var(--ink-06);
+    color: var(--ink-50);
+    font-size: 8px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn-primary {
+    display: inline-block;
+    padding: 12px 28px;
+    background: var(--ink-100);
+    color: var(--canvas);
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.3s ease-out;
+    text-decoration: none;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+
+  /* ─── ICONS ─── */
+  .icon-link {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .icon-link svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--ink-35);
+    transition: fill 0.3s ease-out;
+  }
+  .icon-link:hover svg {
+    fill: var(--ink-100);
+  }
+
+  /* ─── CONTACT ─── */
+  .contact-email {
+    font-size: 12px;
+    color: var(--ink-50);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  .contact-email:hover { color: var(--ink-100); }
+
+  /* ─── SKILL LINKS ─── */
+  .skill-link {
+    font-size: 11px;
+    color: var(--ink-50);
+    cursor: default;
+  }
+
+  /* ─── BREATHING HINT (hover on featured) ─── */
+  .breathing-extra {
+    opacity: 0;
+    transition: opacity 0.45s ease-out 0.15s;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.45s ease-out 0.15s, max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .zone-featured:hover .breathing-extra {
+    opacity: 1;
+    max-height: 200px;
+  }
+
+  /* ─── CMD+K HINT ─── */
+  .cmdk-hint {
+    font-size: 10px;
+    color: var(--ink-20);
+  }
+  .cmdk-label {
+    font-size: 9px;
+    color: var(--ink-20);
+    margin-top: 2px;
+  }
+
+  /* ─── ZONE GRID POSITIONS ─── */
+  .zone-identity { grid-column: 1 / 5; grid-row: 1; }
+  .zone-featured { grid-column: 5 / 13; grid-row: 1; cursor: pointer; }
+  .zone-experience { grid-column: 1 / 5; grid-row: 2; }
+  .zone-other { grid-column: 5 / 9; grid-row: 2; }
+  .zone-skills { grid-column: 9 / 13; grid-row: 2; }
+  .zone-contact { grid-column: 1 / 5; grid-row: 3; }
+  .zone-education { grid-column: 5 / 9; grid-row: 3; }
+  .zone-cmdk { grid-column: 9 / 13; grid-row: 3; display: flex; align-items: flex-end; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<div class="surface">
+
+  <!-- ─── ROW 1 ─── -->
+
+  <!-- Identity -->
+  <div class="zone zone-identity surface-inset">
+    <div class="zone-label">Identity</div>
+    <div class="name">Firaaz Farook</div>
+    <div class="title-label">Senior Software Engineer &middot; AI Systems</div>
+    <div class="summary">6+ years building production AI systems. Currently shipping agentic platforms at scale.</div>
+    <div style="display: flex; gap: 8px; margin-top: 16px;">
+      <a class="icon-link" title="LinkedIn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+        </svg>
+      </a>
+      <a class="icon-link" title="GitHub">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Featured Work -->
+  <div class="zone zone-featured surface-featured">
+    <div class="zone-label">Featured Work</div>
+    <div class="project-title">Salama AI Platform</div>
+    <div class="project-desc">LangGraph-powered agentic platform serving 25K+ queries/month with real-time content moderation and edge inference.</div>
+    <div class="tags">
+      <span class="tag">LangGraph</span>
+      <span class="tag">Python</span>
+      <span class="tag">FastAPI</span>
+    </div>
+    <!-- Breathing hint: extra content appears on hover (suggests dwell-expand) -->
+    <div class="breathing-extra">
+      <div class="project-desc" style="margin-top: 16px;">Multi-agent graph architecture with edge inference nodes for first-pass classification. Tiered approach keeps latency under 200ms while maintaining accuracy on edge cases.</div>
+      <div style="margin-top: 12px;">
+        <span class="tag">Edge Inference</span>
+        <span class="tag">Content Safety</span>
+        <span class="tag">Multi-Agent</span>
+      </div>
+      <div style="margin-top: 12px; font-size: 11px; color: var(--ink-50); text-decoration: underline; text-underline-offset: 3px; cursor: pointer;">View details &rarr;</div>
+    </div>
+  </div>
+
+  <!-- ─── ROW 2 ─── -->
+
+  <!-- Experience -->
+  <div class="zone zone-experience surface-inset">
+    <div class="zone-label">Experience</div>
+    <div class="company">Emaratech</div>
+    <div class="role">Senior Software Engineer</div>
+    <div class="meta">Current</div>
+    <div style="margin-top: 16px;">
+      <div class="company">Deloitte</div>
+      <div class="role" style="font-size: 14px;">Senior Consultant</div>
+      <div class="meta">4 years</div>
+    </div>
+  </div>
+
+  <!-- Other Work -->
+  <div class="zone zone-other surface-base">
+    <div class="zone-label">Other Work</div>
+    <div class="project-title" style="font-size: 16px; color: var(--ink-65);">GenAI Code Migration</div>
+    <div class="meta">Led 4-6 engineers on large-scale code migration using LLMs</div>
+    <div class="tags" style="margin-top: 8px;">
+      <span class="tag">Python</span>
+      <span class="tag">LLMs</span>
+      <span class="tag">AST</span>
+    </div>
+  </div>
+
+  <!-- Skills -->
+  <div class="zone zone-skills surface-base">
+    <div class="zone-label">Skills</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+      <span class="tag">Python</span>
+      <span class="tag">TypeScript</span>
+      <span class="tag">LangGraph</span>
+      <span class="tag">Docker</span>
+      <span class="tag">Kubernetes</span>
+      <span class="tag">AWS ML</span>
+    </div>
+  </div>
+
+  <!-- ─── ROW 3 ─── -->
+
+  <!-- Contact -->
+  <div class="zone zone-contact surface-recessed">
+    <div class="zone-label">Contact</div>
+    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+      <button class="btn-primary">Let's Talk</button>
+      <a class="contact-email">firaazfarook19@gmail.com</a>
+    </div>
+  </div>
+
+  <!-- Education -->
+  <div class="zone zone-education surface-base">
+    <div class="zone-label">Education</div>
+    <div style="font-size: 12px; color: var(--ink-65);">B.E. Computer Science</div>
+    <div class="meta">University of Peradeniya</div>
+  </div>
+
+  <!-- Cmd+K -->
+  <div class="zone zone-cmdk surface-base">
+    <div style="text-align: right;">
+      <div class="cmdk-hint">&#8984;K</div>
+      <div class="cmdk-label">Ask me anything</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     DEPTH REFERENCE (below viewport)
+     Scroll down to see the command bar and
+     case study depth layer mockup.
+     ═══════════════════════════════════════════ -->
+
+<div style="padding: 64px; background: var(--canvas); border-top: 2px solid var(--ink-06);">
+
+  <div style="font-family: 'Zilla Slab', serif; font-size: 24px; font-weight: 700; color: var(--ink-100); margin-bottom: 8px;">
+    Reference: Command Bar (&#8984;K)
+  </div>
+  <div style="font-size: 12px; color: var(--ink-45); margin-bottom: 32px;">
+    Not part of the surface — shown here for visual reference only.
+  </div>
+
+  <!-- Command bar -->
+  <div style="background: rgba(243,244,246,0.90); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 32px; display: flex; justify-content: center;">
+    <div style="background: var(--canvas); width: 100%; max-width: 560px; box-shadow: 0 0 60px var(--ink-06);">
+      <div style="padding: 24px 24px 20px; display: flex; align-items: center; gap: 12px;">
+        <span style="color: var(--ink-35); font-size: 16px;">&#9906;</span>
+        <span style="font-family: 'Zilla Slab', serif; font-style: italic; font-weight: 300; font-size: 22px; color: var(--ink-20);">Ask me anything...</span>
+      </div>
+      <div style="height: 1px; background: var(--ink-06); margin: 0 24px;"></div>
+      <div style="padding: 8px 0;">
+        <div style="padding: 12px 24px; display: flex; align-items: center; gap: 12px; cursor: pointer;" onmouseover="this.style.background='var(--ink-03)'" onmouseout="this.style.background='transparent'">
+          <span style="color: var(--ink-20); font-size: 14px;">&#10132;</span>
+          <span style="font-size: 14px; color: var(--ink-50);">Show me your distributed systems experience</span>
+        </div>
+        <div style="padding: 12px 24px; display: flex; align-items: center; gap: 12px; cursor: pointer;" onmouseover="this.style.background='var(--ink-03)'" onmouseout="this.style.background='transparent'">
+          <span style="color: var(--ink-20); font-size: 14px;">&#10132;</span>
+          <span style="font-size: 14px; color: var(--ink-50);">What tech stack do you prefer?</span>
+        </div>
+        <div style="padding: 12px 24px; display: flex; align-items: center; gap: 12px; cursor: pointer;" onmouseover="this.style.background='var(--ink-03)'" onmouseout="this.style.background='transparent'">
+          <span style="color: var(--ink-20); font-size: 14px;">&#10132;</span>
+          <span style="font-size: 14px; color: var(--ink-50);">Tell me about the Salama project</span>
+        </div>
+      </div>
+      <div style="padding: 12px 24px; background: var(--ink-03); display: flex; gap: 16px;">
+        <span style="font-size: 9px; color: var(--ink-20); text-transform: uppercase; letter-spacing: 0.08em;">
+          <span style="display: inline-block; padding: 2px 6px; background: var(--ink-06); font-size: 9px; color: var(--ink-40); margin-right: 4px;">&#9166;</span> Execute
+        </span>
+        <span style="font-size: 9px; color: var(--ink-20); text-transform: uppercase; letter-spacing: 0.08em;">
+          <span style="display: inline-block; padding: 2px 6px; background: var(--ink-06); font-size: 9px; color: var(--ink-40); margin-right: 4px;">&#8593;&#8595;</span> Navigate
+        </span>
+        <span style="font-size: 9px; color: var(--ink-20); text-transform: uppercase; letter-spacing: 0.08em;">
+          <span style="display: inline-block; padding: 2px 6px; background: var(--ink-06); font-size: 9px; color: var(--ink-40); margin-right: 4px;">Esc</span> Close
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Depth layer reference -->
+  <div style="margin-top: 64px;">
+    <div style="font-family: 'Zilla Slab', serif; font-size: 24px; font-weight: 700; color: var(--ink-100); margin-bottom: 8px;">
+      Reference: Depth Layer (Page 1 of Case Study)
+    </div>
+    <div style="font-size: 12px; color: var(--ink-45); margin-bottom: 32px;">
+      Opens when a zone is clicked. Fades in over frozen surface. Arrow keys / edge clicks to paginate.
+    </div>
+
+    <div style="background: var(--canvas); padding: 64px; position: relative; min-height: 500px; box-shadow: 0 0 60px var(--ink-06);">
+      <!-- Close -->
+      <div style="position: absolute; top: 32px; right: 32px; font-size: 14px; color: var(--ink-50); cursor: pointer;">&#10005;</div>
+
+      <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--ink-45);">Case Study</div>
+      <div style="font-family: 'Zilla Slab', serif; font-weight: 700; font-size: 48px; line-height: 1.1; color: var(--ink-100); margin-top: 16px; max-width: 700px;">
+        Salama AI Platform
+      </div>
+      <div style="font-size: 16px; line-height: 1.7; color: var(--ink-65); max-width: 640px; margin-top: 32px;">
+        LangGraph-powered agentic platform for real-time content moderation, serving 25,000+ queries per month. Built with a focus on edge inference, low latency, and regulatory compliance across multiple jurisdictions.
+      </div>
+
+      <div style="display: flex; gap: 64px; margin-top: 48px;">
+        <div>
+          <div style="font-family: 'Zilla Slab', serif; font-weight: 700; font-size: 36px; color: var(--ink-100);">25K+</div>
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-45); margin-top: 8px;">Monthly Queries</div>
+        </div>
+        <div>
+          <div style="font-family: 'Zilla Slab', serif; font-weight: 700; font-size: 36px; color: var(--ink-100);">&lt;200ms</div>
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-45); margin-top: 8px;">Avg Latency</div>
+        </div>
+        <div>
+          <div style="font-family: 'Zilla Slab', serif; font-weight: 700; font-size: 36px; color: var(--ink-100);">4</div>
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-45); margin-top: 8px;">Jurisdictions</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 24px;">
+        <span class="tag">LangGraph</span>
+        <span class="tag">Python</span>
+        <span class="tag">FastAPI</span>
+        <span class="tag">Edge Inference</span>
+        <span class="tag">Content Safety</span>
+      </div>
+
+      <!-- Counter -->
+      <div style="position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--ink-40); letter-spacing: 0.1em;">
+        1 / 4
+      </div>
+
+      <!-- Progress bar -->
+      <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--ink-06);">
+        <div style="height: 100%; width: 25%; background: var(--ink-20);"></div>
+      </div>
+
+      <!-- Keyboard hint -->
+      <div style="position: absolute; bottom: 24px; right: 32px; font-size: 9px; color: var(--ink-20);">
+        <span style="display: inline-block; padding: 2px 6px; background: var(--ink-06); font-size: 9px; color: var(--ink-40); margin: 0 2px;">&#8592;</span>
+        <span style="display: inline-block; padding: 2px 6px; background: var(--ink-06); font-size: 9px; color: var(--ink-40); margin: 0 2px;">&#8594;</span>
+        Navigate &nbsp;&middot;&nbsp;
+        <span style="display: inline-block; padding: 2px 6px; background: var(--ink-06); font-size: 9px; color: var(--ink-40); margin: 0 2px;">Esc</span>
+        Close
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

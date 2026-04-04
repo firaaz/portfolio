@@ -40,9 +40,9 @@ Warm editorial — not dark-mode startup, not default white. The feel of a high-
 
 ### Palette
 
-- **Canvas:** #F6F5F2 — warm neutral, lighter than original. Warm but clean, no yellow bias.
-- **Ink:** #141210 — near-black with warm undertone. High contrast against canvas without harshness of pure #000.
-- **All grays derived from Ink at opacity stops:** 50% (body text), 45% (descriptions), 35% (labels/metadata), 12% (hints/ghost UI), 6% (surface tints), 4% (subtle backgrounds).
+- **Canvas:** #F3F4F6 — cool-warm neutral with faint blue cast from Ink.
+- **Ink:** #1C2430 — iron-gall ink blue-black. The historical color of European manuscript ink. The AI writes content; the color IS writing. High contrast against canvas.
+- **All grays derived from Ink at opacity stops:** 100% (headlines), 65% (body text), 50% (tags, icons default), 45% (labels/metadata), 40% (counter/kbd hints), 20% (ghost UI/hints), 6% (surface tints/tag backgrounds).
 - **No accent color for agent.** The agent's presence is communicated through size and detail density, not color. No blue, no color markers.
 - **Surface stepping (no borders):** Zones differentiated by Ink-tinted backgrounds at different opacities:
   - Canvas: #F6F5F2 (base)
@@ -163,7 +163,7 @@ FEAT-001 already implemented:
 - 89 backend tests + 61 frontend tests + 6 e2e + 11 EDD evals
 
 What changes:
-- **Visual layer** — replace current Geist/OKLCH/rounded styling with Playfair+Inter/warm-neutral/sharp-edge editorial design.
+- **Visual layer** — replace current Geist/OKLCH/rounded styling with Zilla Slab+Inter/iron-gall-ink/sharp-edge editorial design.
 - **Layout model** — replace scrolling canvas with true single-viewport CSS grid. Breathing mechanics via grid-template transitions.
 - **Content rendering** — molecule system evolves from uniform cards to variable-sized zones with agent-controlled internal content.
 - **Agent output** — expand manifest to include content variants (different descriptions per visitor context), not just importance scores.
@@ -184,18 +184,131 @@ What stays:
 - Editorial layout research: `docs/research/editorial-layout-design.md`
 - UX philosophy: agent guides and supports, not invisible manipulation. User feels in control.
 
+## Spacing System
+
+- **Base unit:** 8px
+- **Scale:** 4 / 8 / 16 / 24 / 32 / 48 / 64px
+- **Viewport grid:** `100vh × 100vw`, 32px outer margin (16px mobile), 12-column CSS grid, 2px gap
+- **Zone internal padding:** 24px (16px mobile)
+- **Content gaps within zones:** 16px between elements
+- **Row distribution:** `grid-template-rows: 1.4fr 1fr auto` — top row (identity+featured) gets more vertical weight
+- **Depth layer padding:** 64px all sides (48px tablet, 24px mobile)
+- **Architectural spacing (inside depth layers only):** 64 / 80 / 128px between major sections
+- **Short viewport (<800px):** padding reduces from 32px to 16px
+
+Default zone allocation (before agent adjustment):
+
+| Zone | Grid columns | Row |
+|------|-------------|-----|
+| Identity | 1–4 | 1 |
+| Featured work | 5–12 | 1 |
+| Experience | 1–4 | 2 |
+| Other work | 5–8 | 2 |
+| Skills | 9–12 | 2 |
+| Contact | 1–4 | 3 |
+| Education | 5–8 | 3 |
+| ⌘K hint | 9–12 | 3 |
+
+## Breathing Animation
+
+See ADR-0007 for the motion language that enables these transitions.
+
+- **Dwell threshold:** 2000ms (2 seconds)
+- **Expand:** 600ms, `cubic-bezier(0.4, 0, 0.2, 1)` on grid-template-rows/columns/gap. Content inside fades in 450ms with 150ms delay.
+- **Contract on leave:** 300ms linger (zone holds expanded size), then 600ms contract with same easing. Content clipped by `overflow: hidden` (per ADR-0007).
+- **Short hover (<2s):** Subtle opacity/tonal lift on the zone — acknowledges attention without committing to breathing. No grid resize.
+- **Skip-contract debounce:** <1000ms hover = nothing. 1000–2000ms = contract 400ms. >2000ms (breathing triggered) = 300ms hold then 600ms contract.
+- **Deprioritized zones:** 45% opacity default, hover → 100% (300ms ease-out), leave → 45% (500ms ease-out).
+- **`prefers-reduced-motion`:** Grid/gap transitions snap instantly. Opacity transitions remain. Overflow clipping still works.
+
+Two-layer focus model:
+1. **Agent-driven importance** — sets default surface layout (zone sizes at rest) based on visitor signals.
+2. **Visitor-driven breathing** — triggered by dwell, any zone can expand regardless of importance score. Visitor intent always overrides agent arrangement.
+
+## Zone Content Map (Design Language)
+
+Per-molecule rendering at Surface vs. Breathing state:
+
+| Molecule | Surface (compact) | Breathing (dwell 2s+) |
+|----------|-------------------|----------------------|
+| **hero** | Name (Zilla 700 32px), title + subtitle (Inter 12px upper), summary (Inter 13px, Ink 65%) | No change — hero stability per ADR-0004 |
+| **project** | Title (Zilla 300i 20px), one-line description (Inter 12px, Ink 65%), 2–3 tech tags | +full description, additional tags, "View details" link |
+| **experience** | Company (Inter 700 10px upper), role (Zilla 400 16px), duration (Inter 10px, Ink 45%) | +description text appears below role |
+| **contact** | Email (Inter, underlined) + CTA button (Ink fill) | No change — already complete |
+| **skill** | Name as tag (Inter 8px upper, Ink 50%, Ink 6% bg) | No expansion — skills are atomic |
+| **education** | Degree + institution (Inter 12px, Ink 45%) | No change — compact by nature |
+
+Grid allocation is importance-driven, not hardcoded per zone. The agent assigns scores; the grid sorts items into rows by importance bands.
+
+## Component Styles
+
+All monochromatic (Iron-Gall Ink palette), 0px border radius, no borders.
+
+**Buttons:**
+- Primary (CTA): Ink bg, Canvas text, Inter 9px uppercase tracking +0.15em, 12×28px padding. Hover: opacity 0.85.
+- Secondary: Underline text link, Inter 10px uppercase. Ink 50% → 100% on hover, bottom border Ink 12% → Ink 100%.
+- Ghost: Ink 4% bg, Ink 50% text. Hover: Ink 8% bg, Ink 100% text.
+
+**Tags/chips:** Ink 6% bg, Ink 50% text, Inter 8px uppercase, 3×10px padding.
+
+**Icons (LinkedIn, GitHub):** Monochromatic SVGs at Ink 35% default, Ink 100% on hover. 16px size, 28px hit area.
+
+**Input fields:** Bottom-border only (Ink 12%, 1px). Focus: Ink 50%, 2px. No radius.
+
+**Contact zone:** Recessed surface (Ink 5% bg). Inline layout: CTA button + email underlined + icon links. Stacked layout as fallback for constrained zones.
+
+**⌘K command bar:**
+- Overlay: Canvas at 35% opacity on top of surface blurred at 2px (`filter: blur(2px)`).
+- Modal: Canvas bg, box-shadow 4px+80px spread. No border.
+- Input: Zilla Slab italic 300, 24px. Placeholder at Ink 20%.
+- Suggestions: Inter 15px, Ink 50%. Hover/active: Ink 3% bg, text → Ink 65%.
+- Footer: Ink 3% bg. Keyboard hints in Inter 10px, Ink 20%. Kbd badges: Ink 6% bg, Ink 40% text.
+
+## Depth Layer Layout
+
+Entry: fade-in (opacity 0→1) over frozen surface. Surface stays visible but receives no pointer events.
+
+**Structure:**
+- Opaque Canvas background covering frozen surface
+- 64px padding (48px tablet, 24px mobile)
+- Content paginated into viewport-sized pages
+
+**Pagination:**
+- Keyboard arrows (←/→) + invisible 80px edge hit areas (arrows appear on hover at Ink 40%)
+- Linear counter bottom-center: "1 / 4" in Inter 10px, Ink 40%
+- 2px progress bar at very bottom: Ink 6% track, Ink 20% fill
+- Close: ✕ top-right in Inter 14px, Ink 50%. Escape key also closes.
+- Keyboard hints bottom-right: kbd badges + labels at Ink 20%
+
+**Content layouts by type:**
+- Case study: Page 1 (title 48px + overview + metrics row) → Page 2 (architecture + tech tags) → Page 3 (technical decisions) → Page 4 (results + outcome metrics)
+- Experience: Page 1 (full timeline, all roles expanded)
+- Education: Single page (degree details)
+
+**`prefers-reduced-motion`:** Depth layer appears instantly (no fade). Pagination transitions snap.
+
+## Design Prototype
+
+Surface state prototype: `docs/design/prototypes/feat-002-surface-state.html`
+Standalone mockups (⌘K, depth layer, component styles): `.superpowers/brainstorm/` session directory
+
 ## Open Questions
 
-1. **Pagination UX for depth** — Page dots? Arrow keys? Swipe? Need to prototype what feels natural for viewport-sized case study pages within expanded zones.
-2. **Mobile breathing** — How does dwell-expand work on touch? Long-press? Scroll-stop detection? Needs testing on real devices.
-3. **Content generation scope** — How much text does the AI generate vs. select from variants? Token cost vs. quality trade-off. Needs EDD evals to measure whether generated content outperforms pre-written variants.
-4. **The "holy shit" moment** — Is the behavioral intelligence (size + detail density shifts) enough to be theatrical, or do we need an explicit reveal mechanism (e.g., ⌘K → "show what others see" comparison)?
-5. **Breathing animation specifics** — What are the exact transition durations, easing curves, and thresholds for dwell-expand and skip-contract? Needs prototyping to find the sweet spot between "responsive" and "distracting."
+1. **Mobile breathing** — How does dwell-expand work on touch? Long-press? Scroll-stop detection? Direction: scroll-stop detection. Needs testing on real devices.
+2. **Content generation scope** — How much text does the AI generate vs. select from variants? Token cost vs. quality trade-off. Needs EDD evals.
+3. **The "holy shit" moment** — Deferred to implementation. Build without explicit reveal mechanism first. If behavioral intelligence isn't theatrical enough, add ⌘K "show default view" command later.
 
 ## Resolved Questions
 
 - **Agent signal mechanism:** Size + detail density. No color, no symbols. (Resolved: color felt default and out of place.)
 - **Headline font:** Zilla Slab. Slab serif = engineering authority. (Resolved: Playfair too decorative, DM Serif too literary, Sora too neutral.)
-- **Contrast level:** Punchy — Canvas #F6F5F2, Ink #141210, labels at 30%, body at 45%. (Resolved: original #F4F3F0/#1E1C1A was too washed out.)
+- **Palette:** Iron-Gall Ink (#1C2430 → #F3F4F6). Colored monochromatic replacing warm black. (Resolved: the AI writes content — the color IS writing. Blue-black manuscript ink. Evaluated navy, indigo, umber, graphite, warm black. Iron-gall scored highest on competence + intelligence + productive disfluency.)
+- **Opacity scale:** Revised for light background readability. Headlines 100%, body 65%, tags 50%, labels 45%, chrome 40-50%, hints 20%. (Resolved: original 50%/35%/12% stops were calibrated for dark mode reference.)
+- **Breathing animation:** 2s dwell threshold, 600ms expand/contract, cubic-bezier(0.4,0,0.2,1), 300ms linger on leave. (Resolved: prototyped 400/600/800ms, 600ms felt calm and editorial.)
+- **Breathing motion language:** ADR-0007. Grid-template + gap transitions for container, opacity-only for content (ADR-0004). Content clipping via overflow:hidden on contraction. (Resolved: extends ADR-0004, doesn't supersede.)
+- **Pagination UX:** Keyboard arrows + invisible edge-click hit areas + linear counter "1/4" + 2px progress bar. No dots. (Resolved: dots too playful for editorial. Progress bar adds spatial awareness.)
+- **⌘K overlay:** Surface blurred at 2px with 35% Canvas overlay. Surface visible but defocused. (Resolved: iterated from 88%/no-blur → 55%/blur(8px) → 35%/blur(2px). Light blur preserves spatial context.)
+- **Spacing system:** 8px base, scale 4/8/16/24/32/48/64. 12-column grid, 3 rows. (Resolved: Fibonacci was elegant but non-standard; 8px aligns with Tailwind defaults.)
+- **Component styles:** Three button levels (primary/secondary/ghost), bottom-border inputs, monochromatic SVG icons at Ink 35%. (Resolved: inline contact layout preferred, stacked as fallback.)
 - **Agent-generated content styling:** No visual distinction from static content. Same fonts, same colors. The intelligence is in WHAT appears, not how it's styled. (Resolved: separate styling draws attention to the system, not the content.)
 - **Dark vs. light mode:** Light. Warmth + competence drives admiration/FOMO. Dark mode is "startup trying to look cool." (Resolved early in design exploration.)
