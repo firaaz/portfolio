@@ -2,23 +2,21 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ContactCard } from "../molecules/ContactCard";
 
-afterEach(() => {
-  cleanup();
-});
+afterEach(cleanup);
 
 describe("ContactCard", () => {
-  it("renders an email link", () => {
+  it("renders email link", () => {
     render(<ContactCard email="firaaz@example.com" cta="Let's talk" />);
-
-    const link = screen.getByRole("link", { name: /firaaz@example.com/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "mailto:firaaz@example.com");
+    const links = screen.getAllByRole("link");
+    const emailLink = links.find((l) => l.textContent === "firaaz@example.com");
+    expect(emailLink).toBeInTheDocument();
+    expect(emailLink).toHaveAttribute("href", "mailto:firaaz@example.com");
   });
 
-  it("renders a CTA button with accessible label", () => {
+  it("renders CTA as primary button link", () => {
     render(<ContactCard email="firaaz@example.com" cta="Get in touch" />);
-
-    const button = screen.getByRole("link", { name: /get in touch/i });
-    expect(button).toBeInTheDocument();
+    const cta = screen.getByRole("link", { name: /get in touch/i });
+    expect(cta).toBeInTheDocument();
+    expect(cta).toHaveAttribute("href", "mailto:firaaz@example.com");
   });
 });
