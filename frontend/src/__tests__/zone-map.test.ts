@@ -17,7 +17,7 @@ describe("mapItemsToZones", () => {
     const items = [item({ id: "hero", group: "identity", molecule: "hero" })];
     const zones = mapItemsToZones(items);
     expect(zones.get("identity")).toHaveLength(1);
-    expect(zones.get("identity")![0].id).toBe("hero");
+    expect(zones.get("identity")![0]!.id).toBe("hero");
   });
 
   it("maps highest-salience project to featured zone", () => {
@@ -27,9 +27,9 @@ describe("mapItemsToZones", () => {
     ];
     const zones = mapItemsToZones(items);
     expect(zones.get("featured")).toHaveLength(1);
-    expect(zones.get("featured")![0].id).toBe("p1");
+    expect(zones.get("featured")![0]!.id).toBe("p1");
     expect(zones.get("other-work")).toHaveLength(1);
-    expect(zones.get("other-work")![0].id).toBe("p2");
+    expect(zones.get("other-work")![0]!.id).toBe("p2");
   });
 
   it("maps work experiences to experience zone", () => {
