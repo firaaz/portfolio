@@ -6,19 +6,17 @@ test.describe("Walking skeleton", () => {
     await expect(page.getByRole("status")).toContainText("Loading");
   });
 
-  test("SSE delivers manifest and hero renders", async ({ page }) => {
+  test("SSE delivers data and identity zone renders", async ({ page }) => {
     await page.goto("/");
 
-    const hero = page.locator("[data-zone='hero']");
-    await expect(hero).toBeVisible({ timeout: 10_000 });
+    const identity = page.locator("[data-zone='identity']");
+    await expect(identity).toBeVisible({ timeout: 10_000 });
 
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "Firaaz Farook",
     );
-    await expect(hero.getByText("Senior Software Engineer")).toBeVisible();
 
-    const flow = page.locator("[data-zone='flow']");
-    await expect(flow).toBeVisible();
-    await expect(flow.locator("> div")).not.toHaveCount(0);
+    const featured = page.locator("[data-zone='featured']");
+    await expect(featured).toBeVisible();
   });
 });

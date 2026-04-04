@@ -21,7 +21,9 @@ describe("MoleculeResolver", () => {
     );
 
     expect(screen.getByText("Firaaz Farook")).toBeInTheDocument();
-    expect(screen.getByText("Senior AI Engineer")).toBeInTheDocument();
+    expect(
+      screen.getByText("Senior AI Engineer · AI Systems"),
+    ).toBeInTheDocument();
   });
 
   it("renders ProjectCard for molecule='project'", () => {
