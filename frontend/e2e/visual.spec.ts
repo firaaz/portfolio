@@ -8,19 +8,19 @@ test.describe("Visual regression", () => {
     });
   });
 
-  test("full page layout", async ({ page }) => {
-    await expect(page).toHaveScreenshot("full-page.png", {
+  test("full surface", async ({ page }) => {
+    await expect(page).toHaveScreenshot("full-surface.png", {
       fullPage: true,
     });
   });
 
-  test("identity zone", async ({ page }) => {
-    const zone = page.locator("[data-zone='identity']");
-    await expect(zone).toHaveScreenshot("zone-identity.png");
-  });
-
-  test("featured zone", async ({ page }) => {
-    const zone = page.locator("[data-zone='featured']");
-    await expect(zone).toHaveScreenshot("zone-featured.png");
-  });
+  for (const zone of [
+    "identity", "featured", "experience", "other-work",
+    "skills", "contact", "education", "command",
+  ]) {
+    test(`zone: ${zone}`, async ({ page }) => {
+      const el = page.locator(`[data-zone='${zone}']`);
+      await expect(el).toHaveScreenshot(`zone-${zone}.png`);
+    });
+  }
 });
