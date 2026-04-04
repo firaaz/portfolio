@@ -57,9 +57,7 @@ describe("MoleculeResolver", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Deloitte" }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Deloitte")).toBeInTheDocument();
   });
 
   it("renders fallback for unknown molecule type", () => {
@@ -68,5 +66,11 @@ describe("MoleculeResolver", () => {
     );
 
     expect(screen.getByText("unknown-type")).toBeInTheDocument();
+  });
+
+  it("renders SkillTag for molecule='skill'", () => {
+    render(<MoleculeResolver molecule="skill" data={{ name: "TypeScript" }} />);
+
+    expect(screen.getByText("TypeScript")).toBeInTheDocument();
   });
 });
