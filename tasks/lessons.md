@@ -28,6 +28,8 @@ Last reviewed: 2026-04-01
 
 - E2e tests catch contract mismatches that unit tests miss. Both sides had passing tests but the SSE wire format (named vs unnamed events, snapshot shape) was wrong. Add e2e coverage as soon as there's a working walking skeleton.
 - Use `127.0.0.1` not `localhost` in dev proxy configs. macOS resolves `localhost` to `::1` (IPv6) first; uvicorn only binds IPv4. The proxy silently fails.
+- 2s dwell threshold for breathing feels too long. Tune down — try 1.2–1.5s. The `useDwell` hook accepts a custom threshold as first argument.
+- Walking skeleton had `class="dark"` on `<html>` (shadcn default). Iron-Gall Ink is light-only — must remove dark class when switching palettes.
 
 ## Archived
 - Zustand selectors as standalone functions — promoted to `frontend/CLAUDE.md` (2026-04-01).
