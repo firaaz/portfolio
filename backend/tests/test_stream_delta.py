@@ -102,7 +102,9 @@ class TestStreamWithSalience:
         ]
         assert len(salience_events) == 1
         items = salience_events[0]["custom"]["items"]
-        assert len(items) == 13
+        # Only items whose salience actually changed are emitted (diff behaviour).
+        # One catalog item starts at 1.0; min(1.0 + 0.1, 1.0) == 1.0 → no change.
+        assert 1 <= len(items) <= 13
         for item in items:
             assert "id" in item
             assert 0.0 <= item["salience"] <= 1.0

@@ -13,6 +13,7 @@ from app.adapters.content.yaml_loader import load_catalog
 from app.domain.agent import assemble_ux_state
 from app.domain.content import content_to_ux_state
 from app.domain.context import VisitorContext
+from app.domain.ux import UXState
 
 router = APIRouter(prefix="/api/agent")
 
@@ -67,11 +68,16 @@ async def _generate_stream(context: VisitorContext) -> AsyncGenerator[str]:
         yield ux_salience_event(changes)
 
 
-def _salience_changes(default: object, refined: object) -> list[dict[str, object]]:
+def _salience_changes(
+    default: UXState,
+    refined: UXState,
+) -> list[dict[str, float | str]]:
     """Compute salience differences between default and refined UX states."""
+    default_map = {item.id: item.salience for item in default.items}
     return [
         {"id": item.id, "salience": item.salience}
-        for item in refined.items  # type: ignore[attr-defined]
+        for item in refined.items
+        if item.salience != default_map.get(item.id)
     ]
 
 

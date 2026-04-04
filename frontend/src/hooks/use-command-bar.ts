@@ -2,18 +2,23 @@
  * Hook for submitting command bar requests via POST-based SSE.
  */
 import { useCallback, useState } from "react";
-import { useAuditStore } from "../store/audit-store";
-import { useManifestStore } from "../store/manifest-store";
-import { isDecisionEvent, isStateDelta, isStateSnapshot } from "./sse-parsers";
+import { useUXStore } from "../store/ux-store";
+import {
+  isUXAgency,
+  isUXSalience,
+  isUXSnapshot,
+  isUXTempo,
+} from "./ux-parsers";
 
 export function useCommandBar(): {
   submitCommand: (text: string) => void;
   isLoading: boolean;
 } {
   const [isLoading, setIsLoading] = useState(false);
-  const setManifest = useManifestStore((s) => s.setManifest);
-  const applyDelta = useManifestStore((s) => s.applyDelta);
-  const addDecision = useAuditStore((s) => s.addDecision);
+  const setSnapshot = useUXStore((s) => s.setSnapshot);
+  const applySalience = useUXStore((s) => s.applySalience);
+  const setTempo = useUXStore((s) => s.setTempo);
+  const setAgency = useUXStore((s) => s.setAgency);
 
   const submitCommand = useCallback(
     async (text: string) => {
@@ -41,15 +46,14 @@ export function useCommandBar(): {
             if (!match?.[1]) continue;
             try {
               const data: unknown = JSON.parse(match[1]);
-              if (isStateSnapshot(data)) {
-                setManifest(data.snapshot.manifest.items);
-              } else if (isDecisionEvent(data)) {
-                addDecision({
-                  ...data.custom.decision,
-                  timestamp: new Date().toISOString(),
-                });
-              } else if (isStateDelta(data)) {
-                applyDelta(data.delta.updates);
+              if (isUXSnapshot(data)) {
+                setSnapshot(data.snapshot);
+              } else if (isUXSalience(data)) {
+                applySalience(data.custom.items);
+              } else if (isUXTempo(data)) {
+                setTempo(data.custom.value);
+              } else if (isUXAgency(data)) {
+                setAgency(data.custom.value);
               }
             } catch {
               /* ignore malformed */
@@ -60,7 +64,7 @@ export function useCommandBar(): {
         setIsLoading(false);
       }
     },
-    [setManifest, applyDelta, addDecision],
+    [setSnapshot, applySalience, setTempo, setAgency],
   );
 
   return { submitCommand, isLoading };
