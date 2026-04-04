@@ -238,6 +238,47 @@
   grid-row: 3;
 }
 
+/* Breathing: grid-template transitions (ADR-0007 allowlist) */
+.surface-grid {
+  transition:
+    grid-template-rows 600ms cubic-bezier(0.4, 0, 0.2, 1),
+    gap 600ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Content reveal during breathing */
+.breathing-extra {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 450ms ease-out 150ms;
+}
+[data-breathing="true"] .breathing-extra {
+  opacity: 1;
+  max-height: none;
+}
+
+/* Deprioritized zone dimming */
+.zone-dimmed {
+  opacity: 0.45;
+  transition: opacity 500ms ease-out;
+}
+.zone-dimmed:hover {
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-grid {
+    transition: none;
+  }
+  .surface-inset,
+  .surface-featured,
+  .surface-recessed,
+  .surface-base {
+    transition: none;
+  }
+}
+
 @media (max-height: 800px) {
   .surface-grid {
     padding: 16px;
