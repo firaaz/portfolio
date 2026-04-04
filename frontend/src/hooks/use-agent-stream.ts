@@ -1,6 +1,11 @@
 import { useEffect } from "react";
 import { useUXStore } from "../store/ux-store";
-import { isUXAgency, isUXSalience, isUXSnapshot, isUXTempo } from "./ux-parsers";
+import {
+  isUXAgency,
+  isUXSalience,
+  isUXSnapshot,
+  isUXTempo,
+} from "./ux-parsers";
 
 export function useAgentStream(url = "/api/agent/stream") {
   const setSnapshot = useUXStore((s) => s.setSnapshot);

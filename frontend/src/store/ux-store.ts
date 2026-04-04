@@ -37,7 +37,9 @@ export const useUXStore = create<UXState>((set) => ({
       return {
         items: state.items.map((item) => {
           const newSalience = updateMap.get(item.id);
-          return newSalience !== undefined ? { ...item, salience: newSalience } : item;
+          return newSalience !== undefined
+            ? { ...item, salience: newSalience }
+            : item;
         }),
       };
     }),

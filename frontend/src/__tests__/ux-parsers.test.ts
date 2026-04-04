@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  isUXSnapshot,
-  isUXSalience,
-  isUXTempo,
   isUXAgency,
+  isUXSalience,
+  isUXSnapshot,
+  isUXTempo,
 } from "../hooks/ux-parsers";
 
 describe("isUXSnapshot", () => {
@@ -33,7 +33,10 @@ describe("isUXSalience", () => {
   it("matches salience event", () => {
     const data = {
       type: "CUSTOM",
-      custom: { eventType: "ux:salience", items: [{ id: "hero", salience: 0.9 }] },
+      custom: {
+        eventType: "ux:salience",
+        items: [{ id: "hero", salience: 0.9 }],
+      },
     };
     expect(isUXSalience(data)).toBe(true);
   });
@@ -49,14 +52,20 @@ describe("isUXSalience", () => {
 
 describe("isUXTempo", () => {
   it("matches tempo event", () => {
-    const data = { type: "CUSTOM", custom: { eventType: "ux:tempo", value: 0.7 } };
+    const data = {
+      type: "CUSTOM",
+      custom: { eventType: "ux:tempo", value: 0.7 },
+    };
     expect(isUXTempo(data)).toBe(true);
   });
 });
 
 describe("isUXAgency", () => {
   it("matches agency event", () => {
-    const data = { type: "CUSTOM", custom: { eventType: "ux:agency", value: 0.8 } };
+    const data = {
+      type: "CUSTOM",
+      custom: { eventType: "ux:agency", value: 0.8 },
+    };
     expect(isUXAgency(data)).toBe(true);
   });
 });
