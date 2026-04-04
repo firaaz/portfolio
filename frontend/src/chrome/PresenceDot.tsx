@@ -9,9 +9,6 @@ export function PresenceDot({ onClick }: { onClick: () => void }) {
       aria-label="AI agent active"
       onClick={onClick}
       style={{
-        position: "fixed",
-        bottom: "1.5rem",
-        right: "1.5rem",
         width: "0.5rem",
         height: "0.5rem",
         borderRadius: "50%",
@@ -22,6 +19,7 @@ export function PresenceDot({ onClick }: { onClick: () => void }) {
         border: "none",
         padding: 0,
         cursor: "pointer",
+        flexShrink: 0,
       }}
     />
   );

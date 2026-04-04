@@ -73,4 +73,15 @@ describe("MoleculeResolver", () => {
 
     expect(screen.getByText("TypeScript")).toBeInTheDocument();
   });
+
+  it("renders EducationMolecule for molecule='education'", () => {
+    render(
+      <MoleculeResolver
+        molecule="education"
+        data={{ degree: "B.E. Computer Science", institution: "University" }}
+      />,
+    );
+
+    expect(screen.getByText("B.E. Computer Science")).toBeInTheDocument();
+  });
 });
