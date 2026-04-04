@@ -15,7 +15,9 @@ export function ExperienceCard({
         {company}
       </span>
       <h3 className="text-base font-heading text-ink">{role}</h3>
-      <span className="block text-[10px] font-sans text-ink-45">{duration}</span>
+      <span className="block text-[10px] font-sans text-ink-45">
+        {duration}
+      </span>
       <div className="breathing-extra opacity-0 max-h-0 overflow-hidden">
         <p className="text-xs font-sans text-ink-65 leading-relaxed pt-1">
           {description}
