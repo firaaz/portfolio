@@ -1,16 +1,14 @@
 import { PresenceDot } from "../chrome/PresenceDot";
 import { MoleculeResolver } from "../molecules/MoleculeResolver";
-import { getHero, useManifestStore } from "../store/manifest-store";
-import { AnimatedMolecule } from "./AnimatedMolecule";
-import { FlowZone } from "./FlowZone";
+import type { UXItem } from "../store/ux-store";
+import { useUXStore } from "../store/ux-store";
 
 export function Canvas({
   onPresenceDotClick,
 }: {
   onPresenceDotClick: () => void;
 }) {
-  const items = useManifestStore((s) => s.items);
-  const hero = useManifestStore(getHero);
+  const items = useUXStore((s) => s.items);
 
   if (items.length === 0) {
     return (
@@ -24,40 +22,28 @@ export function Canvas({
     );
   }
 
-  const rest = items.filter((item) => item.id !== hero?.id);
-  const flowItems = rest.filter((item) => item.importance >= 0.4);
-  const bgItems = rest.filter((item) => item.importance < 0.4);
+  const groups = new Map<string, UXItem[]>();
+  for (const item of items) {
+    const list = groups.get(item.group) ?? [];
+    list.push(item);
+    groups.set(item.group, list);
+  }
 
   return (
     <main className="max-w-5xl mx-auto px-6 md:px-10 py-6 md:py-10 antialiased">
-      {hero && (
-        <section data-zone="hero" className="pb-6 md:pb-8">
-          <MoleculeResolver molecule={hero.molecule} data={hero.data} />
-        </section>
-      )}
-      {flowItems.length > 0 && (
-        <section data-zone="flow" className="pb-5 md:pb-6">
-          <FlowZone>
-            {flowItems.map((item) => (
-              <AnimatedMolecule key={item.id} importance={item.importance}>
-                <MoleculeResolver molecule={item.molecule} data={item.data} />
-              </AnimatedMolecule>
-            ))}
-          </FlowZone>
-        </section>
-      )}
-      {bgItems.length > 0 && (
-        <section
-          data-zone="background"
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-1.5"
-        >
-          {bgItems.map((item) => (
-            <AnimatedMolecule key={item.id} importance={item.importance}>
+      {[...groups.entries()].map(([group, groupItems]) => (
+        <section key={group} data-zone={group} className="mb-8">
+          {groupItems.map((item) => (
+            <div
+              key={item.id}
+              style={{ opacity: item.salience }}
+              className="transition-opacity duration-500 ease-out mb-4"
+            >
               <MoleculeResolver molecule={item.molecule} data={item.data} />
-            </AnimatedMolecule>
+            </div>
           ))}
         </section>
-      )}
+      ))}
       <PresenceDot onClick={onPresenceDotClick} />
     </main>
   );

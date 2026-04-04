@@ -1,12 +1,12 @@
 import { useEffect } from "react";
-import { useAuditStore } from "../store/audit-store";
-import { useManifestStore } from "../store/manifest-store";
-import { isDecisionEvent, isStateDelta, isStateSnapshot } from "./sse-parsers";
+import { useUXStore } from "../store/ux-store";
+import { isUXAgency, isUXSalience, isUXSnapshot, isUXTempo } from "./ux-parsers";
 
 export function useAgentStream(url = "/api/agent/stream") {
-  const setManifest = useManifestStore((s) => s.setManifest);
-  const applyDelta = useManifestStore((s) => s.applyDelta);
-  const addDecision = useAuditStore((s) => s.addDecision);
+  const setSnapshot = useUXStore((s) => s.setSnapshot);
+  const applySalience = useUXStore((s) => s.applySalience);
+  const setTempo = useUXStore((s) => s.setTempo);
+  const setAgency = useUXStore((s) => s.setAgency);
 
   useEffect(() => {
     const source = new EventSource(url);
@@ -14,15 +14,14 @@ export function useAgentStream(url = "/api/agent/stream") {
     source.onmessage = (event: MessageEvent<string>) => {
       try {
         const data: unknown = JSON.parse(event.data);
-        if (isStateSnapshot(data)) {
-          setManifest(data.snapshot.manifest.items);
-        } else if (isDecisionEvent(data)) {
-          addDecision({
-            ...data.custom.decision,
-            timestamp: new Date().toISOString(),
-          });
-        } else if (isStateDelta(data)) {
-          applyDelta(data.delta.updates);
+        if (isUXSnapshot(data)) {
+          setSnapshot(data.snapshot);
+        } else if (isUXSalience(data)) {
+          applySalience(data.custom.items);
+        } else if (isUXTempo(data)) {
+          setTempo(data.custom.value);
+        } else if (isUXAgency(data)) {
+          setAgency(data.custom.value);
         }
       } catch {
         // Ignore malformed events
@@ -32,5 +31,5 @@ export function useAgentStream(url = "/api/agent/stream") {
     return () => {
       source.close();
     };
-  }, [url, setManifest, applyDelta, addDecision]);
+  }, [url, setSnapshot, applySalience, setTempo, setAgency]);
 }

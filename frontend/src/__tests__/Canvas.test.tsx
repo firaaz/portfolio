@@ -1,20 +1,21 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Canvas } from "../canvas/Canvas";
-import { useManifestStore } from "../store/manifest-store";
+import { useUXStore } from "../store/ux-store";
 
 afterEach(() => {
-  useManifestStore.setState({ items: [] });
+  useUXStore.setState({ items: [], ux: { tempo: 0.5, agency: 0.5 } });
   cleanup();
 });
 
 describe("Canvas", () => {
-  it("renders hero name and title when manifest has hero item", () => {
-    useManifestStore.setState({
+  it("renders hero name and title when store has hero item", () => {
+    useUXStore.setState({
       items: [
         {
           id: "hero",
-          importance: 1.0,
+          salience: 1.0,
+          group: "hero",
           molecule: "hero",
           data: { name: "Firaaz Farook", title: "Senior AI Engineer" },
         },
@@ -26,17 +27,18 @@ describe("Canvas", () => {
     expect(screen.getByText("Senior AI Engineer")).toBeInTheDocument();
   });
 
-  it("renders loading state when manifest is empty", () => {
+  it("renders loading state when store is empty", () => {
     render(<Canvas onPresenceDotClick={() => {}} />);
     expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
-  it("renders flow items via MoleculeResolver with opacity", () => {
-    useManifestStore.setState({
+  it("renders items via MoleculeResolver with opacity from salience", () => {
+    useUXStore.setState({
       items: [
         {
           id: "hero",
-          importance: 1.0,
+          salience: 1.0,
+          group: "hero",
           molecule: "hero",
           data: {
             name: "Firaaz Farook",
@@ -47,7 +49,8 @@ describe("Canvas", () => {
         },
         {
           id: "proj",
-          importance: 0.5,
+          salience: 0.7,
+          group: "work",
           molecule: "project",
           data: {
             title: "Salama AI",
@@ -64,35 +67,13 @@ describe("Canvas", () => {
     ).toBeInTheDocument();
   });
 
-  it("places items with importance >= 0.85 in hero zone", () => {
-    useManifestStore.setState({
+  it("groups items into data-zone sections by group", () => {
+    useUXStore.setState({
       items: [
         {
           id: "hero",
-          importance: 1.0,
-          molecule: "hero",
-          data: {
-            name: "Firaaz",
-            title: "Engineer",
-            subtitle: "AI",
-            summary: "Building",
-          },
-        },
-      ],
-    });
-
-    render(<Canvas onPresenceDotClick={() => {}} />);
-    const heroZone = document.querySelector('[data-zone="hero"]');
-    expect(heroZone).toBeInTheDocument();
-    expect(heroZone).toHaveTextContent("Firaaz");
-  });
-
-  it("places items with importance 0.4–0.84 in flow zone", () => {
-    useManifestStore.setState({
-      items: [
-        {
-          id: "hero",
-          importance: 1.0,
+          salience: 1.0,
+          group: "hero",
           molecule: "hero",
           data: {
             name: "Firaaz",
@@ -103,7 +84,8 @@ describe("Canvas", () => {
         },
         {
           id: "proj",
-          importance: 0.7,
+          salience: 0.7,
+          group: "work",
           molecule: "project",
           data: {
             title: "Salama AI",
@@ -113,7 +95,8 @@ describe("Canvas", () => {
         },
         {
           id: "contact",
-          importance: 0.6,
+          salience: 0.6,
+          group: "work",
           molecule: "contact",
           data: { email: "test@example.com", cta: "Let's talk" },
         },
@@ -121,44 +104,35 @@ describe("Canvas", () => {
     });
 
     render(<Canvas onPresenceDotClick={() => {}} />);
-    const flowZone = document.querySelector('[data-zone="flow"]');
-    expect(flowZone).toBeInTheDocument();
-    expect(flowZone).toHaveTextContent("Salama AI");
-    expect(flowZone).toHaveTextContent("Let's talk");
+    const heroZone = document.querySelector('[data-zone="hero"]');
+    const workZone = document.querySelector('[data-zone="work"]');
+    expect(heroZone).toBeInTheDocument();
+    expect(heroZone).toHaveTextContent("Firaaz");
+    expect(workZone).toBeInTheDocument();
+    expect(workZone).toHaveTextContent("Salama AI");
+    expect(workZone).toHaveTextContent("Let's talk");
   });
 
-  it("places items with importance < 0.4 in background zone", () => {
-    useManifestStore.setState({
+  it("applies salience as opacity style", () => {
+    useUXStore.setState({
       items: [
         {
-          id: "hero",
-          importance: 1.0,
-          molecule: "hero",
+          id: "proj",
+          salience: 0.6,
+          group: "work",
+          molecule: "project",
           data: {
-            name: "Firaaz",
-            title: "Engineer",
-            subtitle: "AI",
-            summary: "Building",
+            title: "Salama AI",
+            description: "Platform",
+            tech: ["Python"],
           },
-        },
-        {
-          id: "skill-python",
-          importance: 0.3,
-          molecule: "skill",
-          data: { name: "Python" },
-        },
-        {
-          id: "education-be",
-          importance: 0.2,
-          molecule: "education",
-          data: { degree: "B.E. CS", institution: "UoP" },
         },
       ],
     });
 
     render(<Canvas onPresenceDotClick={() => {}} />);
-    const bgZone = document.querySelector('[data-zone="background"]');
-    expect(bgZone).toBeInTheDocument();
-    expect(bgZone).toHaveTextContent("Python");
+    const heading = screen.getByRole("heading", { name: "Salama AI" });
+    const wrapper = heading.closest("[style]");
+    expect(wrapper).toHaveStyle({ opacity: "0.6" });
   });
 });
