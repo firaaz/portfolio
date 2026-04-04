@@ -54,7 +54,7 @@ class TestAssembleManifest:
         items = [
             ManifestItem(
                 id=item.id,
-                importance=min(item.default_importance + 0.1, 1.0),
+                importance=min(item.default_salience + 0.1, 1.0),
                 molecule=item.molecule,
                 data=item.data,
             )

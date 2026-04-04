@@ -2,6 +2,7 @@ items:
   - id: hero
     molecule: hero
     default_importance: 1.0
+    default_group: identity
     data:
       name: Firaaz Farook
       title: Senior Software Engineer
@@ -13,6 +14,7 @@ items:
   - id: project-salama
     molecule: project
     default_importance: 0.75
+    default_group: work
     data:
       title: Salama AI Platform
       description: LangGraph-powered agentic platform serving 25K+ queries/month
@@ -24,6 +26,7 @@ items:
   - id: project-genai-migration
     molecule: project
     default_importance: 0.65
+    default_group: work
     data:
       title: GenAI Code Migration
       description: Led 4-6 engineers on large-scale code migration using LLMs
@@ -35,6 +38,7 @@ items:
   - id: experience-deloitte
     molecule: experience
     default_importance: 0.7
+    default_group: work
     data:
       company: Deloitte
       role: Senior Consultant
@@ -44,6 +48,7 @@ items:
   - id: experience-current
     molecule: experience
     default_importance: 0.7
+    default_group: work
     data:
       company: Emaratech
       role: Senior Software Engineer
@@ -53,6 +58,7 @@ items:
   - id: contact
     molecule: contact
     default_importance: 0.6
+    default_group: background
     data:
       email: firaazfarook19@gmail.com
       cta: Let's talk
@@ -60,42 +66,49 @@ items:
   - id: skill-python
     molecule: skill
     default_importance: 0.3
+    default_group: background
     data:
       name: Python
 
   - id: skill-typescript
     molecule: skill
     default_importance: 0.3
+    default_group: background
     data:
       name: TypeScript
 
   - id: skill-langgraph
     molecule: skill
     default_importance: 0.3
+    default_group: background
     data:
       name: LangGraph
 
   - id: skill-docker
     molecule: skill
     default_importance: 0.25
+    default_group: background
     data:
       name: Docker
 
   - id: skill-kubernetes
     molecule: skill
     default_importance: 0.25
+    default_group: background
     data:
       name: Kubernetes
 
   - id: skill-aws
     molecule: skill
     default_importance: 0.25
+    default_group: background
     data:
       name: AWS ML
 
   - id: education-be
     molecule: education
     default_importance: 0.2
+    default_group: background
     data:
       degree: B.E. Computer Science
       institution: University of Peradeniya

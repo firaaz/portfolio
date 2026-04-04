@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import BaseModel, Field, model_validator
 
 from app.domain.manifest import Manifest, ManifestItem
+from app.domain.ux import UXGlobals, UXItem, UXState
 
 
 class HeroData(BaseModel):
@@ -68,8 +69,11 @@ class ContentItem(BaseModel):
 
     id: str
     molecule: str
-    default_importance: float = Field(ge=0.0, le=1.0)
+    default_salience: float = Field(ge=0.0, le=1.0, alias="default_importance")
+    default_group: str = "default"
     data: dict[str, Any]
+
+    model_config = {"populate_by_name": True}
 
     @model_validator(mode="after")
     def _validate_data_shape(self) -> "ContentItem":
@@ -87,10 +91,27 @@ def content_to_manifest(items: list[ContentItem]) -> Manifest:
         items=[
             ManifestItem(
                 id=item.id,
-                importance=item.default_importance,
+                importance=item.default_salience,
                 molecule=item.molecule,
                 data=item.data,
             )
             for item in items
         ]
+    )
+
+
+def content_to_ux_state(items: list[ContentItem]) -> UXState:
+    """Convert content catalog items to a UXState with default salience."""
+    return UXState(
+        ux=UXGlobals(),
+        items=[
+            UXItem(
+                id=item.id,
+                salience=item.default_salience,
+                group=item.default_group,
+                molecule=item.molecule,
+                data=item.data,
+            )
+            for item in items
+        ],
     )

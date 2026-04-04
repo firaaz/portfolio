@@ -29,7 +29,7 @@ class TestStreamServesContentCatalog:
     def test_stream_importance_matches_catalog_defaults(self) -> None:
         """Given catalog / When stream / Then importance = default_importance."""
         catalog = load_catalog()
-        expected = {item.id: item.default_importance for item in catalog}
+        expected = {item.id: item.default_salience for item in catalog}
 
         response = client.get("/api/agent/stream")
         lines = response.text.strip().split("\n")

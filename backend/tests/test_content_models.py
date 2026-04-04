@@ -181,3 +181,39 @@ class TestContentItemConstraints:
                 default_importance=0.5,
                 data={"foo": "bar"},
             )
+
+
+class TestContentItemUXFields:
+    """ContentItem supports salience alias and group field."""
+
+    def test_default_salience_and_group(self) -> None:
+        item = ContentItem(
+            id="hero",
+            molecule="hero",
+            default_salience=0.95,
+            default_group="identity",
+            data={"name": "F", "title": "T", "subtitle": "S", "summary": "Sum"},
+        )
+        assert item.default_salience == 0.95
+        assert item.default_group == "identity"
+
+    def test_salience_bounds(self) -> None:
+        with pytest.raises(ValidationError):
+            ContentItem(
+                id="x",
+                molecule="hero",
+                default_salience=1.5,
+                default_group="g",
+                data={"name": "F", "title": "T", "subtitle": "S", "summary": "Sum"},
+            )
+
+    def test_backward_compat_importance_alias(self) -> None:
+        """default_importance still works as alias during migration."""
+        item = ContentItem(
+            id="hero",
+            molecule="hero",
+            default_importance=0.9,
+            default_group="identity",
+            data={"name": "F", "title": "T", "subtitle": "S", "summary": "Sum"},
+        )
+        assert item.default_salience == 0.9
