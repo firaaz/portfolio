@@ -1,5 +1,3 @@
-import { AnimatePresence, motion } from "motion/react";
-
 export function HeroMolecule({
   name,
   title,
@@ -12,28 +10,19 @@ export function HeroMolecule({
   summary: string;
 }) {
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={name}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="space-y-3"
+    <div className="space-y-3">
+      <h1
+        className="font-heading font-bold text-ink"
+        style={{ fontSize: "clamp(24px, 3.5vw, 32px)" }}
       >
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tighter text-foreground">
-          {name}
-        </h1>
-        <p className="text-base md:text-lg text-muted-foreground font-light">
-          {title}
-        </p>
-        <p className="text-sm md:text-base font-light text-muted-foreground/70">
-          {subtitle}
-        </p>
-        <p className="text-xs md:text-sm font-light text-muted-foreground/50 leading-relaxed max-w-xl">
-          {summary}
-        </p>
-      </motion.div>
-    </AnimatePresence>
+        {name}
+      </h1>
+      <p className="text-[11px] font-sans uppercase tracking-[0.12em] text-ink-45">
+        {title} &middot; {subtitle}
+      </p>
+      <p className="text-[13px] font-sans text-ink-65 leading-relaxed max-w-md">
+        {summary}
+      </p>
+    </div>
   );
 }

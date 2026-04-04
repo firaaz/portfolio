@@ -2,9 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ProjectCard } from "../molecules/ProjectCard";
 
-afterEach(() => {
-  cleanup();
-});
+afterEach(cleanup);
 
 describe("ProjectCard", () => {
   it("renders title, description, and tech tags", () => {
@@ -37,5 +35,14 @@ describe("ProjectCard", () => {
     expect(
       screen.getByRole("heading", { name: "GenAI Migration" }),
     ).toBeInTheDocument();
+  });
+
+  it("pre-wires hidden breathing-extra slot", () => {
+    const { container } = render(
+      <ProjectCard title="P" description="D" tech={[]} />,
+    );
+    const extra = container.querySelector(".breathing-extra");
+    expect(extra).toBeInTheDocument();
+    expect(extra).toHaveClass("opacity-0");
   });
 });
