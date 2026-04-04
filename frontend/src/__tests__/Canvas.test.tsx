@@ -8,131 +8,115 @@ afterEach(() => {
   cleanup();
 });
 
+const FULL_ITEMS = [
+  {
+    id: "hero",
+    salience: 1.0,
+    group: "identity",
+    molecule: "hero",
+    data: {
+      name: "Firaaz Farook",
+      title: "Senior Software Engineer",
+      subtitle: "AI Systems",
+      summary: "Building production AI",
+    },
+  },
+  {
+    id: "p1",
+    salience: 0.8,
+    group: "work",
+    molecule: "project",
+    data: {
+      title: "Salama AI",
+      description: "Agentic platform",
+      tech: ["Python"],
+    },
+  },
+  {
+    id: "p2",
+    salience: 0.6,
+    group: "work",
+    molecule: "project",
+    data: {
+      title: "GenAI Migration",
+      description: "Code migration",
+      tech: ["LLMs"],
+    },
+  },
+  {
+    id: "exp1",
+    salience: 0.7,
+    group: "work",
+    molecule: "experience",
+    data: {
+      company: "Deloitte",
+      role: "Senior Consultant",
+      duration: "4 years",
+      description: "Led GenAI",
+    },
+  },
+  {
+    id: "contact",
+    salience: 0.5,
+    group: "background",
+    molecule: "contact",
+    data: { email: "test@example.com", cta: "Talk" },
+  },
+  {
+    id: "skill-py",
+    salience: 0.3,
+    group: "background",
+    molecule: "skill",
+    data: { name: "Python" },
+  },
+];
+
 describe("Canvas", () => {
-  it("renders hero name and title when store has hero item", () => {
-    useUXStore.setState({
-      items: [
-        {
-          id: "hero",
-          salience: 1.0,
-          group: "hero",
-          molecule: "hero",
-          data: { name: "Firaaz Farook", title: "Senior AI Engineer" },
-        },
-      ],
-    });
-
-    render(<Canvas onPresenceDotClick={() => {}} />);
-    expect(screen.getByText("Firaaz Farook")).toBeInTheDocument();
-    expect(screen.getByText("Senior AI Engineer")).toBeInTheDocument();
-  });
-
   it("renders loading state when store is empty", () => {
     render(<Canvas onPresenceDotClick={() => {}} />);
     expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
-  it("renders items via MoleculeResolver with opacity from salience", () => {
-    useUXStore.setState({
-      items: [
-        {
-          id: "hero",
-          salience: 1.0,
-          group: "hero",
-          molecule: "hero",
-          data: {
-            name: "Firaaz Farook",
-            title: "Senior AI Engineer",
-            subtitle: "AI",
-            summary: "Building AI",
-          },
-        },
-        {
-          id: "proj",
-          salience: 0.7,
-          group: "work",
-          molecule: "project",
-          data: {
-            title: "Salama AI",
-            description: "Agentic platform",
-            tech: ["Python"],
-          },
-        },
-      ],
-    });
-
+  it("renders content zones with data-zone attributes", () => {
+    useUXStore.setState({ items: FULL_ITEMS });
     render(<Canvas onPresenceDotClick={() => {}} />);
-    expect(
-      screen.getByRole("heading", { name: "Salama AI" }),
-    ).toBeInTheDocument();
+
+    expect(document.querySelector('[data-zone="identity"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-zone="featured"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-zone="experience"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-zone="other-work"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-zone="skills"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-zone="contact"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-zone="education"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-zone="command"]')).toBeInTheDocument();
   });
 
-  it("groups items into data-zone sections by group", () => {
-    useUXStore.setState({
-      items: [
-        {
-          id: "hero",
-          salience: 1.0,
-          group: "hero",
-          molecule: "hero",
-          data: {
-            name: "Firaaz",
-            title: "Engineer",
-            subtitle: "AI",
-            summary: "Building",
-          },
-        },
-        {
-          id: "proj",
-          salience: 0.7,
-          group: "work",
-          molecule: "project",
-          data: {
-            title: "Salama AI",
-            description: "Platform",
-            tech: ["Python"],
-          },
-        },
-        {
-          id: "contact",
-          salience: 0.6,
-          group: "work",
-          molecule: "contact",
-          data: { email: "test@example.com", cta: "Let's talk" },
-        },
-      ],
-    });
-
+  it("places highest-salience project in featured zone", () => {
+    useUXStore.setState({ items: FULL_ITEMS });
     render(<Canvas onPresenceDotClick={() => {}} />);
-    const heroZone = document.querySelector('[data-zone="hero"]');
-    const workZone = document.querySelector('[data-zone="work"]');
-    expect(heroZone).toBeInTheDocument();
-    expect(heroZone).toHaveTextContent("Firaaz");
-    expect(workZone).toBeInTheDocument();
-    expect(workZone).toHaveTextContent("Salama AI");
-    expect(workZone).toHaveTextContent("Let's talk");
+
+    const featured = document.querySelector('[data-zone="featured"]');
+    expect(featured).toHaveTextContent("Salama AI");
+
+    const otherWork = document.querySelector('[data-zone="other-work"]');
+    expect(otherWork).toHaveTextContent("GenAI Migration");
   });
 
   it("applies salience as opacity style", () => {
-    useUXStore.setState({
-      items: [
-        {
-          id: "proj",
-          salience: 0.6,
-          group: "work",
-          molecule: "project",
-          data: {
-            title: "Salama AI",
-            description: "Platform",
-            tech: ["Python"],
-          },
-        },
-      ],
-    });
-
+    useUXStore.setState({ items: FULL_ITEMS });
     render(<Canvas onPresenceDotClick={() => {}} />);
+
     const heading = screen.getByRole("heading", { name: "Salama AI" });
     const wrapper = heading.closest("[style]");
-    expect(wrapper).toHaveStyle({ opacity: "0.6" });
+    expect(wrapper).toHaveStyle({ opacity: "0.8" });
+  });
+
+  it("renders command zone with keyboard hint", () => {
+    useUXStore.setState({ items: FULL_ITEMS });
+    render(<Canvas onPresenceDotClick={() => {}} />);
+
+    const command = document.querySelector('[data-zone="command"]');
+    expect(command).toHaveTextContent("⌘K");
+    expect(command).toHaveTextContent("Ask me anything");
   });
 });
