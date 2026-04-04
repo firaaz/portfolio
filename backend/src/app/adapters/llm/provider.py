@@ -1,16 +1,22 @@
-"""LLM provider adapter — calls OpenAI-compatible API for manifest scoring."""
+"""LLM provider adapter — calls OpenAI-compatible API for manifest and UX."""
+
+from __future__ import annotations
 
 import asyncio
 import json
 import logging
 import os
 import re
+from typing import TYPE_CHECKING
 
 from openai import AsyncOpenAI, RateLimitError
 
 from app.domain.content import ContentItem
 from app.domain.context import VisitorContext
 from app.domain.manifest import Manifest, ManifestItem
+
+if TYPE_CHECKING:
+    from app.domain.ux import UXState
 
 _log = logging.getLogger(__name__)
 _MAX_RETRIES = 3
@@ -76,6 +82,61 @@ def _parse_scores(
     return Manifest(items=items)
 
 
+_UX_SYSTEM_PROMPT = """\
+You are a portfolio UX agent. Given a visitor context and content catalog, \
+decide the experience for this visitor.
+
+Output a JSON object with:
+1. "ux": {"tempo": 0.0-1.0, "agency": 0.0-1.0}
+   - tempo: how fast the experience adapts (0.2=calm, 0.5=moderate, 0.8=direct)
+   - agency: who drives (0.3=agent-led, 0.5=collaborative, 0.7=visitor-led)
+2. "items": array of {"id": string, "salience": 0.0-1.0, "group": string}
+   - salience: contextual relevance for THIS visitor
+   - group: semantic cluster ("identity", "work", "background")
+
+Rules:
+- The "hero" item MUST have salience >= 0.9
+- LinkedIn visitors: tempo 0.4 (patient), agency 0.4 (agent guides toward contact)
+- GitHub visitors: tempo 0.6, agency 0.6 (let them explore code)
+- Direct/unknown: tempo 0.5, agency 0.5 (balanced)
+- ALL catalog item IDs must appear — no more, no fewer
+- Keep existing groups unless context demands a change
+
+Output ONLY valid JSON, no explanation, no markdown fences.
+"""
+
+
+def _parse_ux_scores(
+    raw: str,
+    catalog: list[ContentItem],
+) -> UXState:
+    """Parse LLM JSON response into a UXState."""
+    from app.domain.ux import UXGlobals, UXItem, UXState
+
+    cleaned = re.sub(r"```(?:json)?\s*|\s*```", "", raw).strip()
+    parsed = json.loads(cleaned)
+    catalog_map = {item.id: item for item in catalog}
+
+    ux = UXGlobals(
+        tempo=float(parsed["ux"]["tempo"]),
+        agency=float(parsed["ux"]["agency"]),
+    )
+    items = []
+    for entry in parsed["items"]:
+        item_id = str(entry["id"])
+        source = catalog_map[item_id]
+        items.append(
+            UXItem(
+                id=item_id,
+                salience=float(entry["salience"]),
+                group=str(entry.get("group", source.default_group)),
+                molecule=source.molecule,
+                data=source.data,
+            ),
+        )
+    return UXState(ux=ux, items=items)
+
+
 class LLMProvider:
     """OpenAI-compatible LLM adapter implementing LLMPort."""
 
@@ -106,6 +167,35 @@ class LLMProvider:
                 )
                 raw = response.choices[0].message.content or ""
                 return _parse_scores(raw, catalog)
+            except RateLimitError:
+                if attempt == _MAX_RETRIES - 1:
+                    raise
+                wait = 2 ** (attempt + 1)
+                _log.warning("Rate limited, retrying in %ds", wait)
+                await asyncio.sleep(wait)
+        msg = "Unreachable"
+        raise RuntimeError(msg)
+
+    async def assemble_ux_state(
+        self,
+        context: VisitorContext,
+        catalog: list[ContentItem],
+    ) -> UXState:
+        """Call the LLM with UX prompt and parse into UXState."""
+        user_prompt = _build_user_prompt(context, catalog)
+        for attempt in range(_MAX_RETRIES):
+            try:
+                response = await self._client.chat.completions.create(
+                    model=self._model,
+                    messages=[
+                        {"role": "system", "content": _UX_SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=0.1,
+                    max_tokens=2048,
+                )
+                raw = response.choices[0].message.content or ""
+                return _parse_ux_scores(raw, catalog)
             except RateLimitError:
                 if attempt == _MAX_RETRIES - 1:
                     raise
