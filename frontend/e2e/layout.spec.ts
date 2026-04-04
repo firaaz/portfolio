@@ -48,6 +48,28 @@ test.describe("Layout assertions", () => {
     expect(bg).toBe("rgba(28, 36, 48, 0.06)");
   });
 
+  test("mobile: single column stack", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/");
+    await expect(page.locator("[data-zone='identity']")).toBeVisible({
+      timeout: 10_000,
+    });
+
+    const grid = page.locator(".surface-grid");
+    const cols = await grid.evaluate(
+      (el) => getComputedStyle(el).gridTemplateColumns,
+    );
+    expect(cols.split(" ")).toHaveLength(1);
+
+    const scrollWidth = await page.evaluate(
+      () => document.documentElement.scrollWidth,
+    );
+    const clientWidth = await page.evaluate(
+      () => document.documentElement.clientWidth,
+    );
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+  });
+
   test("all 8 zones are visible", async ({ page }) => {
     const zoneNames = [
       "identity", "featured", "experience", "other-work",

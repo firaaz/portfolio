@@ -24,6 +24,17 @@ test.describe("Surface visual capture", () => {
     }
   });
 
+  test("mobile rest state", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/");
+    await expect(page.locator("[data-zone='identity']")).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page).toHaveScreenshot("capture-mobile-rest.png", {
+      fullPage: true,
+    });
+  });
+
   test("reduced motion", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");

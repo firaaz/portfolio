@@ -288,6 +288,38 @@
   }
 }
 
+@media (max-width: 767px) {
+  html {
+    overflow: auto;
+  }
+  .surface-grid {
+    height: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    padding: 16px;
+    overflow-y: auto;
+    transition: none !important;
+  }
+  .zone {
+    padding: 16px;
+  }
+  .zone-identity,
+  .zone-featured,
+  .zone-experience,
+  .zone-other-work,
+  .zone-skills,
+  .zone-contact,
+  .zone-education,
+  .zone-command {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  [data-breathing="true"] .breathing-extra {
+    opacity: 0;
+    max-height: 0;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
