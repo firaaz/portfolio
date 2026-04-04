@@ -81,13 +81,23 @@ describe("Canvas", () => {
     useUXStore.setState({ items: FULL_ITEMS });
     render(<Canvas onPresenceDotClick={() => {}} />);
 
-    expect(document.querySelector('[data-zone="identity"]')).toBeInTheDocument();
-    expect(document.querySelector('[data-zone="featured"]')).toBeInTheDocument();
-    expect(document.querySelector('[data-zone="experience"]')).toBeInTheDocument();
-    expect(document.querySelector('[data-zone="other-work"]')).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-zone="identity"]'),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-zone="featured"]'),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-zone="experience"]'),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-zone="other-work"]'),
+    ).toBeInTheDocument();
     expect(document.querySelector('[data-zone="skills"]')).toBeInTheDocument();
     expect(document.querySelector('[data-zone="contact"]')).toBeInTheDocument();
-    expect(document.querySelector('[data-zone="education"]')).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-zone="education"]'),
+    ).toBeInTheDocument();
     expect(document.querySelector('[data-zone="command"]')).toBeInTheDocument();
   });
 

@@ -4,16 +4,16 @@ import { ExperienceCard } from "../molecules/ExperienceCard";
 
 afterEach(cleanup);
 
+const DATA = {
+  company: "Deloitte",
+  role: "Senior Consultant",
+  duration: "4 years",
+  description: "Led GenAI initiatives",
+};
+
 describe("ExperienceCard", () => {
   it("renders company, role, and duration in compact view", () => {
-    render(
-      <ExperienceCard
-        company="Deloitte"
-        role="Senior Consultant"
-        duration="4 years"
-        description="Led GenAI initiatives"
-      />,
-    );
+    render(<ExperienceCard {...DATA} />);
 
     expect(screen.getByText("Deloitte")).toBeInTheDocument();
     expect(screen.getByText("Senior Consultant")).toBeInTheDocument();
@@ -21,14 +21,14 @@ describe("ExperienceCard", () => {
   });
 
   it("has accessible heading for role", () => {
-    render(
-      <ExperienceCard
-        company="Emaratech"
-        role="Senior Software Engineer"
-        duration="Current"
-        description="Building AI systems"
-      />,
-    );
+    const emaratech = {
+      ...DATA,
+      company: "Emaratech",
+      role: "Senior Software Engineer",
+      duration: "Current",
+      description: "Building AI systems",
+    };
+    render(<ExperienceCard {...emaratech} />);
 
     expect(
       screen.getByRole("heading", { name: "Senior Software Engineer" }),
@@ -36,17 +36,10 @@ describe("ExperienceCard", () => {
   });
 
   it("hides description in breathing-extra slot", () => {
-    const { container } = render(
-      <ExperienceCard
-        company="Co"
-        role="Dev"
-        duration="1y"
-        description="Did things"
-      />,
-    );
+    const { container } = render(<ExperienceCard {...DATA} />);
     const extra = container.querySelector(".breathing-extra");
     expect(extra).toBeInTheDocument();
     expect(extra).toHaveClass("opacity-0");
-    expect(extra).toHaveTextContent("Did things");
+    expect(extra).toHaveTextContent("Led GenAI initiatives");
   });
 });

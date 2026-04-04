@@ -195,7 +195,6 @@
   grid-template-columns: repeat(12, 1fr);
   grid-template-rows: 1.4fr 1fr auto;
   gap: 2px;
-  height: 100vh;
   height: 100dvh;
   max-width: 64rem;
   margin: 0 auto;
