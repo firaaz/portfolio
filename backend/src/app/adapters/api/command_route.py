@@ -7,12 +7,11 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.adapters.api.sse import decision_event, state_delta_event, state_snapshot_event
+from app.adapters.api.ux_events import ux_salience_event, ux_snapshot_event
 from app.adapters.content.yaml_loader import load_catalog
-from app.domain.agent import assemble_manifest
-from app.domain.content import content_to_manifest
+from app.domain.agent import assemble_ux_state
+from app.domain.content import content_to_ux_state
 from app.domain.context import VisitorContext
-from app.domain.decision import build_decision
 
 router = APIRouter(prefix="/api/agent")
 
@@ -33,31 +32,25 @@ def _get_llm_port() -> object | None:
 
 
 async def _generate_command_stream(text: str) -> AsyncGenerator[str]:
-    """Yield AG-UI events for a command: snapshot, then optional delta."""
+    """Yield AG-UI events for a command: UX snapshot, then optional salience."""
     catalog = load_catalog()
-    default_manifest = content_to_manifest(catalog)
-    yield state_snapshot_event(default_manifest)
+    default_state = content_to_ux_state(catalog)
+    yield ux_snapshot_event(default_state)
 
     llm = _get_llm_port()
     if llm is None:
         return
 
     context = VisitorContext(command=text)
-    refined = await assemble_manifest(context, catalog, llm)
-    if refined != default_manifest:
-        record = build_decision(
-            default=default_manifest,
-            refined=refined,
-            referrer_type=context.referrer_type,
-            command=text,
-        )
-        yield decision_event(record)
-        yield state_delta_event(refined)
+    refined = await assemble_ux_state(context, catalog, llm)
+    if refined != default_state:
+        changes = [{"id": item.id, "salience": item.salience} for item in refined.items]
+        yield ux_salience_event(changes)
 
 
 @router.post("/command")
 async def command(body: CommandRequest) -> StreamingResponse:
-    """Process a visitor command and stream updated manifest."""
+    """Process a visitor command and stream updated UX state."""
     return StreamingResponse(
         _generate_command_stream(body.text),
         media_type="text/event-stream",

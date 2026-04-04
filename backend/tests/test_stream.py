@@ -10,7 +10,7 @@ client = TestClient(app)
 
 
 class TestStreamEndpoint:
-    """GET /api/agent/stream returns AG-UI StateSnapshot via SSE."""
+    """GET /api/agent/stream returns AG-UI UX StateSnapshot via SSE."""
 
     def test_returns_event_stream_content_type(self) -> None:
         response = client.get("/api/agent/stream")
@@ -22,7 +22,7 @@ class TestStreamEndpoint:
         assert "data:" in body
         assert "STATE_SNAPSHOT" in body
 
-    def test_snapshot_has_valid_manifest(self) -> None:
+    def test_snapshot_has_valid_ux_state(self) -> None:
         response = client.get("/api/agent/stream")
         lines = response.text.strip().split("\n")
         data_line = None
@@ -35,10 +35,11 @@ class TestStreamEndpoint:
         payload = json.loads(data_line)
 
         assert payload["type"] == "STATE_SNAPSHOT"
-        manifest_items = payload["snapshot"]["manifest"]["items"]
-        assert len(manifest_items) == 13
+        assert "ux" in payload["snapshot"]
+        items = payload["snapshot"]["items"]
+        assert len(items) == 13
 
-        for item in manifest_items:
-            assert 0.0 <= item["importance"] <= 1.0
+        for item in items:
+            assert 0.0 <= item["salience"] <= 1.0
             assert item["id"]
             assert item["molecule"]

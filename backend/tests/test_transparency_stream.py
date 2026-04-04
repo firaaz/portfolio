@@ -1,12 +1,12 @@
-"""Tests for CUSTOM decision events in SSE streams."""
+"""Tests verifying decision events are not emitted in UX protocol streams."""
 
 import json
 from unittest.mock import patch
 
 from starlette.testclient import TestClient
 
-from app.domain.content import ContentItem, content_to_manifest
-from app.domain.manifest import Manifest, ManifestItem
+from app.domain.content import ContentItem
+from app.domain.ux import UXGlobals, UXItem, UXState
 from app.main import app
 
 client = TestClient(app)
@@ -28,48 +28,39 @@ class _FakeLLM:
     def __init__(self, catalog: list[ContentItem]) -> None:
         self._catalog = catalog
 
-    async def assemble_manifest(
+    async def assemble_ux_state(
         self,
         context: object,
         catalog: list[ContentItem],
-    ) -> Manifest:
+    ) -> UXState:
         items = []
         for item in catalog:
-            importance = 0.85 if item.id == "contact" else 0.5
+            salience = 0.85 if item.id == "contact" else 0.5
             if item.molecule == "hero":
-                importance = 0.95
+                salience = 0.95
             items.append(
-                ManifestItem(
+                UXItem(
                     id=item.id,
-                    importance=importance,
+                    salience=salience,
+                    group=item.default_group,
                     molecule=item.molecule,
                     data=item.data,
                 ),
             )
-        return Manifest(items=items)
+        return UXState(ux=UXGlobals(), items=items)
 
 
-class _FakeDefaultLLM:
-    """Fake LLM that returns default-equivalent scores."""
-
-    async def assemble_manifest(
-        self,
-        context: object,
-        catalog: list[ContentItem],
-    ) -> Manifest:
-        return content_to_manifest(catalog)
-
-
-class TestStreamDecisionEvent:
-    """GET /api/agent/stream emits CUSTOM decision events."""
+class TestStreamNoDecisionEvent:
+    """UX protocol streams do not emit DECISION events."""
 
     @patch("app.adapters.api.stream_route._get_cache")
     @patch("app.adapters.api.stream_route._get_llm_port")
-    def test_emits_decision_event_with_delta(
+    def test_no_decision_event_in_stream(
         self,
         mock_llm_port: object,
         mock_cache: object,
     ) -> None:
+        """Stream emits snapshot and salience but no DECISION event."""
         from app.adapters.cache.memory_cache import MemoryCache
         from app.adapters.content.yaml_loader import load_catalog
 
@@ -84,40 +75,20 @@ class TestStreamDecisionEvent:
         assert response.status_code == 200
         events = _parse_events(response.text)
 
-        custom_events = [e for e in events if e.get("type") == "CUSTOM"]
-        assert len(custom_events) == 1
-        decision = custom_events[0]["custom"]
-        assert decision["eventType"] == "DECISION"
-        assert "reasoning" in decision["decision"]
-        assert len(decision["decision"]["reasoning"]) > 0
-
-    @patch("app.adapters.api.stream_route._get_cache")
-    @patch("app.adapters.api.stream_route._get_llm_port")
-    def test_no_decision_event_when_unchanged(
-        self,
-        mock_llm_port: object,
-        mock_cache: object,
-    ) -> None:
-        from app.adapters.cache.memory_cache import MemoryCache
-
-        mock_llm_port.return_value = _FakeDefaultLLM()
-        mock_cache.return_value = MemoryCache(capacity=32)
-
-        response = client.get("/api/agent/stream")
-        events = _parse_events(response.text)
-
-        custom_events = [e for e in events if e.get("type") == "CUSTOM"]
-        assert len(custom_events) == 0
-
-
-class TestCommandDecisionEvent:
-    """POST /api/agent/command emits CUSTOM decision events."""
+        decision_events = [
+            e
+            for e in events
+            if e.get("type") == "CUSTOM"
+            and e.get("custom", {}).get("eventType") == "DECISION"
+        ]
+        assert len(decision_events) == 0
 
     @patch("app.adapters.api.command_route._get_llm_port")
-    def test_emits_decision_event_for_command(
+    def test_no_decision_event_in_command(
         self,
         mock_llm_port: object,
     ) -> None:
+        """Command stream emits snapshot and salience but no DECISION."""
         from app.adapters.content.yaml_loader import load_catalog
 
         catalog = load_catalog()
@@ -130,8 +101,10 @@ class TestCommandDecisionEvent:
         assert response.status_code == 200
         events = _parse_events(response.text)
 
-        custom_events = [e for e in events if e.get("type") == "CUSTOM"]
-        assert len(custom_events) == 1
-        decision = custom_events[0]["custom"]["decision"]
-        reasoning = decision["reasoning"].lower()
-        assert "command" in reasoning or "contact" in reasoning
+        decision_events = [
+            e
+            for e in events
+            if e.get("type") == "CUSTOM"
+            and e.get("custom", {}).get("eventType") == "DECISION"
+        ]
+        assert len(decision_events) == 0

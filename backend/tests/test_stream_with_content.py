@@ -1,4 +1,4 @@
-"""BDD: SSE stream serves manifest built from content catalog."""
+"""BDD: SSE stream serves UX state built from content catalog."""
 
 import json
 
@@ -11,7 +11,7 @@ client = TestClient(app)
 
 
 class TestStreamServesContentCatalog:
-    """Given catalog loaded / When SSE stream / Then manifest matches catalog."""
+    """Given catalog loaded / When SSE stream / Then UX state matches catalog."""
 
     def test_stream_item_ids_match_catalog(self) -> None:
         """Given catalog / When stream / Then IDs match exactly."""
@@ -22,12 +22,12 @@ class TestStreamServesContentCatalog:
         lines = response.text.strip().split("\n")
         data_line = next(line for line in lines if line.startswith("data: "))
         payload = json.loads(data_line.removeprefix("data: "))
-        stream_ids = {item["id"] for item in payload["snapshot"]["manifest"]["items"]}
+        stream_ids = {item["id"] for item in payload["snapshot"]["items"]}
 
         assert stream_ids == catalog_ids
 
-    def test_stream_importance_matches_catalog_defaults(self) -> None:
-        """Given catalog / When stream / Then importance = default_importance."""
+    def test_stream_salience_matches_catalog_defaults(self) -> None:
+        """Given catalog / When stream / Then salience = default_salience."""
         catalog = load_catalog()
         expected = {item.id: item.default_salience for item in catalog}
 
@@ -35,8 +35,8 @@ class TestStreamServesContentCatalog:
         lines = response.text.strip().split("\n")
         data_line = next(line for line in lines if line.startswith("data: "))
         payload = json.loads(data_line.removeprefix("data: "))
-        manifest_items = payload["snapshot"]["manifest"]["items"]
-        actual = {item["id"]: item["importance"] for item in manifest_items}
+        items = payload["snapshot"]["items"]
+        actual = {item["id"]: item["salience"] for item in items}
 
         assert actual == expected
 
@@ -49,7 +49,7 @@ class TestStreamServesContentCatalog:
         lines = response.text.strip().split("\n")
         data_line = next(line for line in lines if line.startswith("data: "))
         payload = json.loads(data_line.removeprefix("data: "))
-        manifest_items = payload["snapshot"]["manifest"]["items"]
-        actual = {item["id"]: item["data"] for item in manifest_items}
+        items = payload["snapshot"]["items"]
+        actual = {item["id"]: item["data"] for item in items}
 
         assert actual == expected

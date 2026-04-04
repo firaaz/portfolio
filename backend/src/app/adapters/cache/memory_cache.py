@@ -4,9 +4,9 @@ import threading
 import time
 from collections import OrderedDict
 
-from app.domain.manifest import Manifest
+from app.domain.ux import UXState
 
-_CacheEntry = tuple[Manifest, float]  # (value, expires_at)
+_CacheEntry = tuple[UXState, float]  # (value, expires_at)
 
 
 class MemoryCache:
@@ -18,8 +18,8 @@ class MemoryCache:
         self._store: OrderedDict[str, _CacheEntry] = OrderedDict()
         self._lock = threading.Lock()
 
-    def get(self, key: str) -> Manifest | None:
-        """Return cached manifest if present and not expired, else None."""
+    def get(self, key: str) -> UXState | None:
+        """Return cached UX state if present and not expired, else None."""
         with self._lock:
             entry = self._store.get(key)
             if entry is None:
@@ -31,8 +31,8 @@ class MemoryCache:
             self._store.move_to_end(key)
             return value
 
-    def set(self, key: str, value: Manifest, ttl_seconds: int) -> None:
-        """Store manifest with TTL, evicting LRU entry if at capacity."""
+    def set(self, key: str, value: UXState, ttl_seconds: int) -> None:
+        """Store UX state with TTL, evicting LRU entry if at capacity."""
         expires_at = time.monotonic() + ttl_seconds
         with self._lock:
             if key in self._store:

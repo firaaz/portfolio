@@ -1,4 +1,4 @@
-"""Tests for StateDelta emission when LLM refines importance scores."""
+"""Tests for ux:salience event emission when LLM refines salience scores."""
 
 import json
 from unittest.mock import patch
@@ -7,51 +7,52 @@ from fastapi.testclient import TestClient
 
 from app.domain.content import ContentItem
 from app.domain.context import VisitorContext
-from app.domain.manifest import Manifest, ManifestItem
+from app.domain.ux import UXGlobals, UXItem, UXState
 from app.main import app
 
 client = TestClient(app)
 
 
-def _fake_llm_port(manifest: Manifest) -> object:
-    """Create a fake LLM port that returns a predetermined manifest."""
+def _fake_llm_port(ux_state: UXState) -> object:
+    """Create a fake LLM port that returns a predetermined UX state."""
 
     class _Fake:
-        async def assemble_manifest(
+        async def assemble_ux_state(
             self,
             context: VisitorContext,
             catalog: list[ContentItem],
-        ) -> Manifest:
-            return manifest
+        ) -> UXState:
+            return ux_state
 
     return _Fake()
 
 
-def _refined_manifest(items: list[ManifestItem]) -> Manifest:
-    """Build a manifest with tweaked importance scores."""
+def _refined_state(items: list[UXItem]) -> UXState:
+    """Build a UX state with tweaked salience scores."""
     tweaked = [
-        ManifestItem(
+        UXItem(
             id=item.id,
-            importance=min(item.importance + 0.1, 1.0),
+            salience=min(item.salience + 0.1, 1.0),
+            group=item.group,
             molecule=item.molecule,
             data=item.data,
         )
         for item in items
     ]
-    return Manifest(items=tweaked)
+    return UXState(ux=UXGlobals(), items=tweaked)
 
 
-class TestStreamWithDelta:
-    """When an LLM is available, stream emits both snapshot and delta."""
+class TestStreamWithSalience:
+    """When an LLM is available, stream emits snapshot and salience event."""
 
-    def test_emits_snapshot_and_delta(self) -> None:
+    def test_emits_snapshot_and_salience(self) -> None:
         response = client.get("/api/agent/stream")
         default_items = json.loads(
             response.text.strip().split("\n")[0][len("data:") :],
-        )["snapshot"]["manifest"]["items"]
+        )["snapshot"]["items"]
 
-        refined = _refined_manifest(
-            [ManifestItem(**item) for item in default_items],
+        refined = _refined_state(
+            [UXItem(**item) for item in default_items],
         )
         fake = _fake_llm_port(refined)
 
@@ -67,19 +68,19 @@ class TestStreamWithDelta:
             if line.startswith("data:")
         ]
 
-        assert len(events) == 3
+        assert len(events) == 2
         assert events[0]["type"] == "STATE_SNAPSHOT"
         assert events[1]["type"] == "CUSTOM"
-        assert events[2]["type"] == "STATE_DELTA"
+        assert events[1]["custom"]["eventType"] == "ux:salience"
 
-    def test_delta_contains_updates(self) -> None:
+    def test_salience_event_contains_items(self) -> None:
         response = client.get("/api/agent/stream")
         default_items = json.loads(
             response.text.strip().split("\n")[0][len("data:") :],
-        )["snapshot"]["manifest"]["items"]
+        )["snapshot"]["items"]
 
-        refined = _refined_manifest(
-            [ManifestItem(**item) for item in default_items],
+        refined = _refined_state(
+            [UXItem(**item) for item in default_items],
         )
         fake = _fake_llm_port(refined)
 
@@ -94,15 +95,19 @@ class TestStreamWithDelta:
             for line in response.text.strip().split("\n")
             if line.startswith("data:")
         ]
-        deltas = [e for e in events if e["type"] == "STATE_DELTA"]
-        assert len(deltas) == 1
-        updates = deltas[0]["delta"]["updates"]
-        assert len(updates) == 13
-        for update in updates:
-            assert "id" in update
-            assert 0.0 <= update["importance"] <= 1.0
+        salience_events = [
+            e
+            for e in events
+            if e["type"] == "CUSTOM" and e["custom"]["eventType"] == "ux:salience"
+        ]
+        assert len(salience_events) == 1
+        items = salience_events[0]["custom"]["items"]
+        assert len(items) == 13
+        for item in items:
+            assert "id" in item
+            assert 0.0 <= item["salience"] <= 1.0
 
-    def test_no_delta_when_llm_unavailable(self) -> None:
+    def test_no_salience_event_when_llm_unavailable(self) -> None:
         with patch(
             "app.adapters.api.stream_route._get_llm_port",
             return_value=None,

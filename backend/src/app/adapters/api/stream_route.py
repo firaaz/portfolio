@@ -1,4 +1,4 @@
-"""SSE stream route — serves AG-UI StateSnapshot and optional StateDelta."""
+"""SSE stream route — serves AG-UI UX protocol StateSnapshot and salience events."""
 
 import os
 from collections.abc import AsyncGenerator
@@ -7,13 +7,12 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
 from app.adapters.api.referrer import get_visitor_context
-from app.adapters.api.sse import decision_event, state_delta_event, state_snapshot_event
+from app.adapters.api.ux_events import ux_salience_event, ux_snapshot_event
 from app.adapters.cache.memory_cache import MemoryCache
 from app.adapters.content.yaml_loader import load_catalog
-from app.domain.agent import assemble_manifest
-from app.domain.content import content_to_manifest
+from app.domain.agent import assemble_ux_state
+from app.domain.content import content_to_ux_state
 from app.domain.context import VisitorContext
-from app.domain.decision import build_decision
 
 router = APIRouter(prefix="/api/agent")
 
@@ -44,10 +43,10 @@ def _get_llm_port() -> object | None:
 
 
 async def _generate_stream(context: VisitorContext) -> AsyncGenerator[str]:
-    """Yield AG-UI events: StateSnapshot immediately, StateDelta after LLM."""
+    """Yield AG-UI events: UX snapshot immediately, salience delta after LLM."""
     catalog = load_catalog()
-    default_manifest = content_to_manifest(catalog)
-    yield state_snapshot_event(default_manifest)
+    default_state = content_to_ux_state(catalog)
+    yield ux_snapshot_event(default_state)
 
     llm = _get_llm_port()
     if llm is None:
@@ -56,28 +55,31 @@ async def _generate_stream(context: VisitorContext) -> AsyncGenerator[str]:
     cache = _get_cache()
     cached = cache.get(context.referrer_type)
     if cached is not None:
-        if cached != default_manifest:
-            yield state_delta_event(cached)
+        if cached != default_state:
+            changes = _salience_changes(default_state, cached)
+            yield ux_salience_event(changes)
         return
 
-    refined = await assemble_manifest(context, catalog, llm)
-    if refined != default_manifest:
+    refined = await assemble_ux_state(context, catalog, llm)
+    if refined != default_state:
         cache.set(context.referrer_type, refined, _cache_ttl())
-        record = build_decision(
-            default=default_manifest,
-            refined=refined,
-            referrer_type=context.referrer_type,
-            command=context.command,
-        )
-        yield decision_event(record)
-        yield state_delta_event(refined)
+        changes = _salience_changes(default_state, refined)
+        yield ux_salience_event(changes)
+
+
+def _salience_changes(default: object, refined: object) -> list[dict[str, object]]:
+    """Compute salience differences between default and refined UX states."""
+    return [
+        {"id": item.id, "salience": item.salience}
+        for item in refined.items  # type: ignore[attr-defined]
+    ]
 
 
 @router.get("/stream")
 async def stream(
     context: VisitorContext = Depends(get_visitor_context),  # noqa: B008
 ) -> StreamingResponse:
-    """SSE endpoint serving AG-UI events with the current manifest."""
+    """SSE endpoint serving AG-UI UX protocol events."""
     return StreamingResponse(
         _generate_stream(context),
         media_type="text/event-stream",

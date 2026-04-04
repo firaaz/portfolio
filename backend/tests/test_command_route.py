@@ -39,17 +39,18 @@ class TestCommandEndpoint:
         types = [e["type"] for e in events]
         assert "STATE_SNAPSHOT" in types
 
-    def test_snapshot_has_valid_manifest(self) -> None:
+    def test_snapshot_has_valid_ux_state(self) -> None:
         response = client.post(
             "/api/agent/command",
             json={"text": "show contact"},
         )
         events = _parse_sse_events(response.text)
         snapshot = next(e for e in events if e["type"] == "STATE_SNAPSHOT")
-        items = snapshot["snapshot"]["manifest"]["items"]
+        assert "ux" in snapshot["snapshot"]
+        items = snapshot["snapshot"]["items"]
         assert len(items) == 13
         for item in items:
-            assert 0.0 <= item["importance"] <= 1.0
+            assert 0.0 <= item["salience"] <= 1.0
             assert item["id"]
             assert item["molecule"]
 
@@ -61,22 +62,24 @@ class TestCommandEndpoint:
         response = client.post("/api/agent/command", json={"text": ""})
         assert response.status_code == 422
 
-    def test_emits_delta_when_llm_available(self) -> None:
-        """When an LLM is available, response includes both snapshot and delta."""
-        from app.domain.manifest import Manifest, ManifestItem
+    def test_emits_salience_event_when_llm_available(self) -> None:
+        """When an LLM is available, response includes snapshot and salience."""
+        from app.domain.ux import UXGlobals, UXItem, UXState
 
-        mock_manifest = Manifest(
+        mock_state = UXState(
+            ux=UXGlobals(tempo=0.8, agency=0.3),
             items=[
-                ManifestItem(
+                UXItem(
                     id="contact",
-                    importance=0.9,
+                    salience=0.9,
+                    group="identity",
                     molecule="detail",
                     data={"name": "Contact"},
                 ),
             ],
         )
         mock_llm = AsyncMock()
-        mock_llm.assemble_manifest = AsyncMock(return_value=mock_manifest)
+        mock_llm.assemble_ux_state = AsyncMock(return_value=mock_state)
 
         with patch(
             "app.adapters.api.command_route._get_llm_port",
@@ -90,4 +93,6 @@ class TestCommandEndpoint:
         events = _parse_sse_events(response.text)
         types = [e["type"] for e in events]
         assert "STATE_SNAPSHOT" in types
-        assert "STATE_DELTA" in types
+        assert "CUSTOM" in types
+        custom = next(e for e in events if e["type"] == "CUSTOM")
+        assert custom["custom"]["eventType"] == "ux:salience"
