@@ -1,37 +1,38 @@
 # Status
 
 ## Current State
-FEAT-001 complete on `develop`. FEAT-002 design spec complete — all component styles, spacing, breathing animation, depth layer layout, and pagination defined. Palette changed from warm black to Iron-Gall Ink (#1C2430 → #F3F4F6). ADR-0007 written (breathing motion language). HTML prototype built at `docs/design/prototypes/feat-002-surface-state.html`. No implementation started.
+FEAT-001 complete. FEAT-002 Scope 1 (UX Protocol Layer) complete on `develop`. The four-dimensional UX protocol (salience, organization, tempo, agency) flows end-to-end: backend domain models → AG-UI transport adapter → SSE stream → frontend Zustand store → Canvas rendering (walking skeleton: items grouped by `group`, opacity from `salience`). FEAT-002 design spec (Iron-Gall Ink palette, breathing, depth layer) locked. Protocol spec at `.claude/plans/functional-growing-cascade.md`. Implementation plan at `docs/superpowers/plans/2026-04-04-ux-protocol-layer.md`.
 
 ## Accomplished This Session
-- **ADR-0007** — Evolved motion language for breathing. Grid-template + gap transitions allowed on container; content stays opacity-only (ADR-0004). Content clipping via `overflow: hidden` on contraction. `prefers-reduced-motion` snaps grid instantly.
-- **Spacing system** — 8px base, scale 4/8/16/24/32/48/64. 12-column grid, 3 rows (1.4fr 1fr auto). 32px outer margin, 2px gap, 24px zone padding.
-- **Breathing animation** — 2s dwell threshold, 600ms expand/contract with cubic-bezier(0.4,0,0.2,1). 300ms linger on leave. Short hover (<2s) gets subtle opacity lift. Two-layer model: agent sets default layout, visitor overrides via dwell.
-- **Zone content map** — Molecule-based design language (per-type rendering at Surface vs Breathing). Grid allocation is importance-driven, not hardcoded.
-- **Component styles** — Three button levels (primary/secondary/ghost), tags (Ink 6% bg), bottom-border inputs, monochromatic LinkedIn/GitHub SVGs at Ink 35%. ⌘K bar: surface blur(2px), overlay 35%, Zilla Slab italic input.
-- **Depth layer** — Fade-in entry over frozen surface. Keyboard arrows + edge-click pagination. Linear counter + 2px progress bar. 64px padding.
-- **Palette change** — Iron-Gall Ink (#1C2430) replaces warm black (#141210). Canvas #F3F4F6. Chosen via color psychology analysis: competence + intelligence + productive disfluency. Evaluated navy, indigo, umber, graphite, warm black.
-- **Opacity scale revised** — Headlines 100%, body 65%, tags 50%, labels 45%, chrome 50%, counter 40%, hints 20%. Original stops were too light for light background.
-- **HTML prototype** — Single-file surface state with all locked decisions. Hover on Featured Work zone suggests breathing.
+- **UX Protocol designed** — four fundamental cognitive dimensions (salience, organization, tempo, agency) as a standalone protocol orthogonal to AG-UI/A2UI/MCP. Agent speaks experience intent, frontend interprets into pixels.
+- **FEAT-002 scoped** — five Shape Up scopes discovered: Protocol Layer, The Surface, Breathing, The Depth, Chrome.
+- **Scope 1 implemented** — 9 tasks via subagent-driven development:
+  - `UXGlobals`, `UXItem`, `UXState` domain models (`backend/src/app/domain/ux.py`)
+  - Content catalog evolved: `default_salience` (aliased from `default_importance`) + `default_group` per item
+  - AG-UI transport adapter: `ux_snapshot_event`, `ux_salience_event`, `ux_tempo_event`, `ux_agency_event`
+  - LLM prompt redesigned for UX-aware scoring (salience + group + tempo + agency)
+  - SSE stream routes emit UX protocol events
+  - Frontend `useUXStore` (Zustand) + `ux-parsers` type guards
+  - `use-agent-stream` and `use-command-bar` hooks consume UX events
+  - Canvas renders items grouped by `group` with `opacity` from `salience`
+- **192 tests passing** (118 backend + 74 frontend), all lint clean, typecheck clean
+- **Dead code noted** — old `sse.py`, `manifest.py`, `manifest-store.ts`, `sse-parsers.ts` remain for backward compat but are unused by routes/canvas
 
 ## Key Decisions
-- Iron-Gall Ink over warm black — the AI writes content; the color IS writing. Blue-black manuscript ink. Cool ink on warm paper mirrors the precision + warmth tension.
-- ADR-0007 extends ADR-0004 (not supersedes) — container can animate spatially, content stays opacity-only.
-- 600ms breathing duration — "calm" editorial pace over snappy (400ms) or deliberate (800ms).
-- Content clip on contraction, opacity fade on expansion — asymmetry is psychologically sound (expansion = discovery, contraction = physical boundary).
-- ⌘K overlay: blur(2px) + 35% opacity — light enough to see surface, focused enough on modal.
-- "Holy shit" reveal deferred — build without it, evaluate behavioral intelligence first.
+- UX protocol is standalone and transport-agnostic — AG-UI adapter is one integration, not a dependency
+- `importance` renamed to `salience` (contextual relevance, not absolute importance)
+- Decision events (transparency) dropped from routes — transparency panel will be reworked in Chrome scope
+- `_salience_changes` computes actual diff (only sends items where salience changed)
+- Catalog YAML keeps `default_importance` key (alias) for migration compatibility
 
 ## Blockers
 None.
 
 ## Next Step
-Story map — break FEAT-002 into vertical slices for implementation (spec → plan → ship cycle). The visual design is fully specified; now decompose into shippable increments.
+Scope 2: **The Surface** — build the Iron-Gall Ink design language interpreter. This is the frontend code that maps the four UX dimensions to the editorial canvas: palette (`--ink-*` custom properties), typography (Zilla Slab + Inter), 8px spacing, 12-column grid, 3-row layout, surface hierarchy (inset/featured/recessed/base), zone content rendering via molecules. The HTML prototype at `docs/design/prototypes/feat-002-surface-state.html` is the reference. Start with a spec/plan session — the Surface is large enough to need its own slice decomposition.
 
 ## Remaining Decisions
-1. **Mobile breathing** — scroll-stop detection vs long-press. Needs real device testing.
-2. **Content generation scope** — generative vs variant selection. Needs EDD evals.
-3. **"Holy shit" reveal** — deferred to post-implementation evaluation.
-
-## Story Map
-No story map yet — FEAT-002 needs slicing after this session.
+1. Mobile breathing — scroll-stop vs long-press (needs device testing)
+2. Content generation scope — generative vs variant selection (needs EDD evals)
+3. "Holy shit" reveal — deferred to post-implementation evaluation
+4. Dead code cleanup — old manifest infrastructure (chore task)
