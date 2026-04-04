@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdbd1",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-tertiary": "#601400",
+                        "primary-fixed": "#dce1ff",
+                        "tertiary-fixed-dim": "#ffb5a0",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-bright": "#393939",
+                        "on-surface-variant": "#c3c5d9",
+                        "surface-tint": "#b6c4ff",
+                        "on-primary-fixed-variant": "#0039b3",
+                        "inverse-primary": "#004dea",
+                        "on-secondary-fixed": "#001551",
+                        "secondary-container": "#2d4490",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-background": "#e5e2e1",
+                        "secondary-fixed": "#dce1ff",
+                        "on-tertiary-fixed": "#3b0900",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "secondary": "#b6c4ff",
+                        "outline-variant": "#434656",
+                        "surface": "#131313",
+                        "on-secondary": "#0e2976",
+                        "surface-variant": "#353534",
+                        "on-primary-container": "#e3e6ff",
+                        "inverse-on-surface": "#313030",
+                        "primary": "#b6c4ff",
+                        "tertiary": "#ffb5a0",
+                        "on-secondary-container": "#a3b5ff",
+                        "primary-container": "#0055ff",
+                        "on-secondary-fixed-variant": "#2b418d",
+                        "tertiary-container": "#c13301",
+                        "surface-container-high": "#2a2a2a",
+                        "on-primary": "#002780",
+                        "surface-container-highest": "#353534",
+                        "surface-dim": "#131313",
+                        "on-tertiary-fixed-variant": "#872100",
+                        "surface-container": "#201f1f",
+                        "on-error": "#690005",
+                        "outline": "#8d90a2",
+                        "on-primary-fixed": "#001551",
+                        "on-tertiary-container": "#ffe1d9",
+                        "secondary-fixed-dim": "#b6c4ff",
+                        "background": "#131313",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .newsreader-italic { font-family: 'Newsreader'; font-style: italic; }
+    </style>
+</head>
+<body class="antialiased selection:bg-primary-container selection:text-white">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 bg-[#131313]/70 backdrop-blur-xl no-border flex justify-between items-center px-12 py-6">
+<div class="font-['Newsreader'] text-2xl font-light italic text-white">Firaaz Farook</div>
+<div class="hidden md:flex items-center gap-10">
+<a class="text-[#0055FF] font-medium border-b-2 border-[#0055FF] pb-1 font-['Inter'] text-xs uppercase tracking-widest transition-colors duration-300" href="#">Experience</a>
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Projects</a>
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Contact</a>
+</div>
+</nav>
+<!-- Side Navigation Bar (Audit Trail) -->
+<aside class="fixed right-0 h-screen w-80 z-40 border-l border-white/5 bg-[#1C1B1B] hidden lg:flex flex-col py-24">
+<div class="px-8 mb-12">
+<div class="font-['Inter'] font-black text-white text-xl tracking-tighter">AUDIT TRAIL</div>
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/40 mt-1">V2.0.4 ARCHITECTURAL LEDGER</div>
+</div>
+<nav class="flex-grow">
+<div class="bg-[#0055FF] text-white p-4 flex items-center gap-3 cursor-pointer">
+<span class="material-symbols-outlined text-sm" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">System Status</span>
+</div>
+<div class="text-white/40 p-4 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="memory">memory</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">Neural Weights</span>
+</div>
+<div class="text-white/40 p-4 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="architecture">architecture</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">Architecture</span>
+</div>
+<div class="text-white/40 p-4 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">Active Logs</span>
+</div>
+</nav>
+<div class="px-8 mt-auto">
+<button class="w-full bg-white/5 hover:bg-white/10 text-white font-['Inter'] text-[10px] uppercase tracking-[0.2em] py-4 border border-white/10 transition-all active:scale-[0.98]">
+                EXPORT LOGS
+            </button>
+</div>
+</aside>
+<main class="lg:mr-80 pt-32 px-6 md:px-12 lg:px-20 pb-40">
+<!-- Hero Section -->
+<header class="mb-32">
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.3em] text-primary mb-6">Principal Solution Architect // AI Lead</div>
+<h1 class="font-headline text-6xl md:text-8xl lg:text-9xl tracking-tight leading-[0.85] text-white">
+                Firaaz <span class="italic text-primary">Farook</span>
+</h1>
+<div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-12 border-t border-white/10 pt-12">
+<p class="font-body text-xl text-on-surface-variant leading-relaxed">
+                    Engineering intelligence at the intersection of infrastructure and cognitive modeling. Specialized in high-scale enterprise transformations and architectural governance.
+                </p>
+<div class="flex flex-col justify-end items-start md:items-end">
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/40">Current Node</div>
+<div class="font-['Inter'] text-sm font-bold text-white mt-1">EMARATECH / DUBAI, UAE</div>
+</div>
+</div>
+</header>
+<!-- Section: Operations Executed -->
+<section class="mb-40">
+<div class="flex items-center gap-6 mb-16">
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.4em] text-white/30">Section 01</span>
+<h2 class="font-headline text-4xl italic text-white">Operations Executed</h2>
+</div>
+<div class="space-y-1">
+<!-- Emaratech -->
+<article class="group bg-surface-container-low hover:bg-surface-container transition-colors p-10 flex flex-col md:grid md:grid-cols-12 gap-8">
+<div class="md:col-span-3">
+<div class="font-['Inter'] text-2xl font-black text-white">2021—PRESENT</div>
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-primary mt-2">Active Deployment</div>
+</div>
+<div class="md:col-span-9">
+<h3 class="font-headline text-3xl text-white mb-4">Lead Solution Architect @ Emaratech</h3>
+<p class="font-body text-on-surface-variant mb-8 leading-relaxed">
+                            Orchestrating the transition of legacy border control systems into a distributed, AI-enabled microservices ecosystem. Spearheading the integration of biometric authentication pipelines and real-time data ingestion for government-scale digital identities.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-container-highest px-4 py-1 text-[10px] font-['Inter'] uppercase tracking-widest text-white border-l-4 border-primary">Cloud Native</span>
+<span class="bg-surface-container-highest px-4 py-1 text-[10px] font-['Inter'] uppercase tracking-widest text-white border-l-4 border-primary">Distributed Systems</span>
+<span class="bg-surface-container-highest px-4 py-1 text-[10px] font-['Inter'] uppercase tracking-widest text-white border-l-4 border-primary">Biometrics</span>
+</div>
+</div>
+</article>
+<!-- Deloitte -->
+<article class="group bg-surface-container-low hover:bg-surface-container transition-colors p-10 flex flex-col md:grid md:grid-cols-12 gap-8">
+<div class="md:col-span-3">
+<div class="font-['Inter'] text-2xl font-black text-white/40">2018—2021</div>
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/20 mt-2">Legacy Archive</div>
+</div>
+<div class="md:col-span-9">
+<h3 class="font-headline text-3xl text-white mb-4">Senior Consultant @ Deloitte</h3>
+<p class="font-body text-on-surface-variant mb-8 leading-relaxed">
+                            Guided Fortune 500 digital transformation journeys. Focused on SAP infrastructure modernization and multi-cloud strategy implementation. Developed proprietary risk assessment frameworks for high-fidelity technical audits.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-container-highest px-4 py-1 text-[10px] font-['Inter'] uppercase tracking-widest text-white border-l-4 border-white/20">Enterprise ERP</span>
+<span class="bg-surface-container-highest px-4 py-1 text-[10px] font-['Inter'] uppercase tracking-widest text-white border-l-4 border-white/20">Cloud Strategy</span>
+</div>
+</div>
+</article>
+</div>
+</section>
+<!-- Section: Technical Stack (Bento Grid) -->
+<section class="mb-40">
+<div class="flex items-center gap-6 mb-16">
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.4em] text-white/30">Section 02</span>
+<h2 class="font-headline text-4xl italic text-white">Technical Stack</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-1">
+<!-- AI/ML -->
+<div class="bg-surface-container-lowest p-10 border-l-4 border-primary">
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-primary mb-6">Cognitive Compute</div>
+<h4 class="font-headline text-2xl text-white mb-6">AI &amp; Machine Learning</h4>
+<ul class="space-y-4 font-['Inter'] text-xs tracking-widest text-on-surface-variant uppercase">
+<li>LLM Orchestration (LangChain)</li>
+<li>Computer Vision Pipelines</li>
+<li>Neural Architecture Search</li>
+<li>Predictive Analytics Engines</li>
+</ul>
+</div>
+<!-- Infra -->
+<div class="bg-surface-container-low p-10">
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/40 mb-6">Structural Integrity</div>
+<h4 class="font-headline text-2xl text-white mb-6">Infrastructure</h4>
+<ul class="space-y-4 font-['Inter'] text-xs tracking-widest text-on-surface-variant uppercase">
+<li>Kubernetes (EKS/GKE)</li>
+<li>Terraform / IaC</li>
+<li>Event-Driven Architecture</li>
+<li>GCP / Azure / AWS</li>
+</ul>
+</div>
+<!-- Data -->
+<div class="bg-surface-container-lowest p-10">
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/40 mb-6">Data Persistence</div>
+<h4 class="font-headline text-2xl text-white mb-6">Data Systems</h4>
+<ul class="space-y-4 font-['Inter'] text-xs tracking-widest text-on-surface-variant uppercase">
+<li>Redis / In-Memory Cache</li>
+<li>PostgreSQL / Vector DB</li>
+<li>Kafka Streams</li>
+<li>BigQuery / Data Lake</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- Section: Publications & Verification -->
+<section class="mb-40">
+<div class="flex items-center gap-6 mb-16">
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.4em] text-white/30">Section 03</span>
+<h2 class="font-headline text-4xl italic text-white">Publications &amp; Verification</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+<!-- IEEE Publication -->
+<div class="group relative bg-surface-container-low p-12 overflow-hidden">
+<div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-8xl" data-icon="menu_book">menu_book</span>
+</div>
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-primary mb-6">Research Ledger</div>
+<h4 class="font-headline text-3xl text-white mb-4">IEEE Access Publication</h4>
+<p class="font-body text-on-surface-variant mb-10 leading-relaxed max-w-md">
+                        "Optimizing High-Frequency Data Pipelines in Decentralized Environments." Peer-reviewed research on latency reduction and architectural throughput.
+                    </p>
+<a class="inline-flex items-center gap-3 text-primary font-['Inter'] text-[10px] uppercase tracking-[0.2em] hover:gap-6 transition-all" href="#">
+                        View Journal <span class="material-symbols-outlined text-sm" data-icon="north_east">north_east</span>
+</a>
+</div>
+<!-- Certifications -->
+<div class="bg-surface-container-high p-12">
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/40 mb-10">Credential Verification</div>
+<div class="space-y-8">
+<div class="flex justify-between items-end border-b border-white/5 pb-4">
+<div>
+<div class="font-headline text-xl text-white">Google Professional Architect</div>
+<div class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 mt-1">Cloud Certification</div>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="flex justify-between items-end border-b border-white/5 pb-4">
+<div>
+<div class="font-headline text-xl text-white">AWS Solutions Architect Pro</div>
+<div class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 mt-1">Cloud Certification</div>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="flex justify-between items-end border-b border-white/5 pb-4">
+<div>
+<div class="font-headline text-xl text-white">Azure Solutions Expert</div>
+<div class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 mt-1">Cloud Certification</div>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA / Contact -->
+<section class="border-t border-white/10 pt-32 pb-20">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+<div class="md:col-span-7">
+<h2 class="font-headline text-5xl md:text-7xl text-white leading-tight">Initiate Technical <span class="italic text-primary">Consultation</span></h2>
+</div>
+<div class="md:col-span-5 flex flex-col gap-6">
+<button class="bg-primary-container text-on-primary-container px-12 py-6 font-['Inter'] font-bold text-xs uppercase tracking-[0.3em] transition-all hover:bg-on-secondary-fixed-variant active:scale-[0.98]">
+                        REQUEST DOSSIER (PDF)
+                    </button>
+<button class="border border-white/10 text-white px-12 py-6 font-['Inter'] font-bold text-xs uppercase tracking-[0.3em] transition-all hover:bg-white/5">
+                        SECURE MESSAGE
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="lg:mr-80 w-full border-t border-white/5 bg-[#131313] flex flex-col md:flex-row justify-between items-center px-12 py-20 mt-40">
+<div class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 mb-8 md:mb-0">
+            © 2024 FIRAAZ FAROOK. BUILT ON THE ARCHITECTURAL LEDGER SYSTEM.
+        </div>
+<div class="flex gap-10">
+<a class="text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest hover:text-white transition-colors active:underline" href="#">LinkedIn</a>
+<a class="text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest hover:text-white transition-colors active:underline" href="#">GitHub</a>
+<a class="text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest hover:text-white transition-colors active:underline" href="#">Email</a>
+</div>
+</footer>
+</body></html>

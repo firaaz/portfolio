@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Salama: The AI Residency Agent | Firaaz Farook</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Newsreader:ital,wght@0,200..800;1,200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "tertiary-fixed": "#ffdbd1",
+                "error-container": "#93000a",
+                "error": "#ffb4ab",
+                "on-tertiary": "#601400",
+                "primary-fixed": "#dce1ff",
+                "tertiary-fixed-dim": "#ffb5a0",
+                "inverse-surface": "#e5e2e1",
+                "surface-bright": "#393939",
+                "on-surface-variant": "#c3c5d9",
+                "surface-tint": "#b6c4ff",
+                "on-primary-fixed-variant": "#0039b3",
+                "inverse-primary": "#004dea",
+                "on-secondary-fixed": "#001551",
+                "secondary-container": "#2d4490",
+                "primary-fixed-dim": "#b6c4ff",
+                "surface-container-lowest": "#0e0e0e",
+                "on-background": "#e5e2e1",
+                "secondary-fixed": "#dce1ff",
+                "on-tertiary-fixed": "#3b0900",
+                "on-surface": "#e5e2e1",
+                "surface-container-low": "#1c1b1b",
+                "secondary": "#b6c4ff",
+                "outline-variant": "#434656",
+                "surface": "#131313",
+                "on-secondary": "#0e2976",
+                "surface-variant": "#353534",
+                "on-primary-container": "#e3e6ff",
+                "inverse-on-surface": "#313030",
+                "primary": "#b6c4ff",
+                "tertiary": "#ffb5a0",
+                "on-secondary-container": "#a3b5ff",
+                "primary-container": "#0055ff",
+                "on-secondary-fixed-variant": "#2b418d",
+                "tertiary-container": "#c13301",
+                "surface-container-high": "#2a2a2a",
+                "on-primary": "#002780",
+                "surface-container-highest": "#353534",
+                "surface-dim": "#131313",
+                "on-tertiary-fixed-variant": "#872100",
+                "surface-container": "#201f1f",
+                "on-error": "#690005",
+                "outline": "#8d90a2",
+                "on-primary-fixed": "#001551",
+                "on-tertiary-container": "#ffe1d9",
+                "secondary-fixed-dim": "#b6c4ff",
+                "background": "#131313",
+                "on-error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                "DEFAULT": "0px",
+                "lg": "0px",
+                "xl": "0px",
+                "full": "9999px"
+            },
+            "fontFamily": {
+                "headline": ["Newsreader"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+        .serif-italic { font-family: 'Newsreader'; font-style: italic; }
+        .sharp-edge { border-radius: 0px !important; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#131313]/70 backdrop-blur-xl flex justify-between items-center px-12 py-6">
+<div class="font-['Newsreader'] text-2xl font-light italic text-white">Firaaz Farook</div>
+<div class="hidden md:flex gap-12 items-center">
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Experience</a>
+<a class="text-[#0055FF] font-medium border-b-2 border-[#0055FF] pb-1 font-['Inter'] text-xs uppercase tracking-widest transition-colors duration-300" href="#">Projects</a>
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Contact</a>
+</div>
+<button class="md:hidden text-white">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</nav>
+<!-- SideNavBar (Audit Trail) -->
+<aside class="fixed right-0 h-screen w-80 z-40 border-l border-white/5 bg-[#1C1B1B] hidden lg:flex flex-col py-24 shadow-[40px_0_60px_rgba(0,21,81,0.12)]">
+<div class="px-8 mb-12">
+<h3 class="font-['Inter'] font-black text-white text-sm tracking-tighter">AUDIT TRAIL</h3>
+<p class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/40 mt-1">V2.0.4 ARCHITECTURAL LEDGER</p>
+</div>
+<nav class="flex-grow">
+<div class="bg-[#0055FF] text-white p-4 flex items-center gap-3 font-['Inter'] text-[10px] uppercase tracking-[0.2em] cursor-pointer">
+<span class="material-symbols-outlined">analytics</span>
+<span>System Status</span>
+</div>
+<div class="text-white/40 p-4 flex items-center gap-3 font-['Inter'] text-[10px] uppercase tracking-[0.2em] hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined">memory</span>
+<span>Neural Weights</span>
+</div>
+<div class="text-white/40 p-4 flex items-center gap-3 font-['Inter'] text-[10px] uppercase tracking-[0.2em] hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined">architecture</span>
+<span>Architecture</span>
+</div>
+<div class="text-white/40 p-4 flex items-center gap-3 font-['Inter'] text-[10px] uppercase tracking-[0.2em] hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined">terminal</span>
+<span>Active Logs</span>
+</div>
+</nav>
+<div class="px-8 mt-auto">
+<button class="w-full py-4 border border-[#0055FF] text-[#0055FF] font-['Inter'] text-[10px] uppercase tracking-widest hover:bg-[#0055FF] hover:text-white transition-all">
+                EXPORT LOGS
+            </button>
+</div>
+</aside>
+<main class="lg:pr-80">
+<!-- Hero Section -->
+<section class="relative h-[819px] w-full flex items-end px-12 pb-24 overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-60" data-alt="abstract architectural 3D render of glass and steel structures with blue light accents and deep shadows in a dark void" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjqYqmPqXCx39urDxiPTXCGOplpuVU2rhku6s-oF2C6VxXbBTvoNe66eJXtsV-KqzlprDxpRNIsb-yKiaVDN12l2OyyQszI7fTIqJ9cAXDfDrd62JBHBqLGpD_r-jtg_AC_Zcpp4157Mcxax8ZawOkOqOPgZ4yRM779ij_yRyL_c-gZMH6uaCK8Hwrc2AFmCuRElnln3rH9defAJfAOfo2TTlwjcQQA-otZLvE93eMl1xHqxBBhcuVeaujhKIVPX32M6_d9qi7oB3U"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 max-w-5xl">
+<div class="flex items-center gap-4 mb-6">
+<span class="bg-primary-container text-on-primary-container px-3 py-1 text-[10px] font-bold uppercase tracking-widest">Case Study 01</span>
+<div class="h-[1px] w-24 bg-outline-variant/30"></div>
+</div>
+<h1 class="font-headline text-6xl md:text-8xl leading-tight text-white mb-8">
+                    SALAMA: THE AI <br/>
+<span class="serif-italic">RESIDENCY AGENT</span>
+</h1>
+</div>
+</section>
+<!-- Metric Bar -->
+<section class="bg-surface-container-low border-y border-white/5 px-12 py-10 flex flex-wrap gap-12 md:gap-24">
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">Processing Speed</span>
+<span class="text-2xl font-mono text-primary">10-20<span class="text-sm">s</span></span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">Monthly Queries</span>
+<span class="text-2xl font-mono text-primary">25k+</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">Model Engine</span>
+<span class="text-2xl font-mono text-primary">Llama-3</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-white/40 uppercase tracking-widest">Deployment</span>
+<span class="text-2xl font-mono text-primary">Edge/Cloud</span>
+</div>
+</section>
+<!-- Project Narrative -->
+<section class="px-12 py-32 grid grid-cols-1 md:grid-cols-12 gap-16">
+<div class="md:col-span-5">
+<h2 class="font-headline text-4xl text-white mb-12">The Blueprint of <br/><span class="serif-italic">Intelligence</span></h2>
+<div class="space-y-8 text-on-surface-variant leading-relaxed">
+<p class="font-headline text-xl italic text-white/80">
+                        Salama was engineered to navigate the labyrinthine complexities of medical residency workflows, shifting from simple task automation to a holistic architectural agent.
+                    </p>
+<p class="font-body text-sm">
+                        The core challenge resided in the volatile nature of residency data—a chaotic blend of clinical logs, schedule variances, and cognitive load demands. Traditional systems failed to account for the neural density of these workflows.
+                    </p>
+<p class="font-body text-sm">
+                        By implementing a custom-tuned Llama-3 backbone, we established a system that doesn't just respond, but anticipates structural bottlenecks in hospital administration.
+                    </p>
+</div>
+</div>
+<div class="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-8">
+<!-- Autonomous Refactoring -->
+<div class="bg-surface-container-lowest p-10 flex flex-col gap-6">
+<div class="w-8 h-[2px] bg-primary"></div>
+<h3 class="font-['Inter'] text-[12px] uppercase tracking-[0.2em] text-white">Autonomous Refactoring</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                        Continuous optimization of the underlying data structures. As the agent encounters new residency constraints, it dynamically refactors its internal logic gates to ensure pathfinding efficiency remains within sub-second thresholds.
+                    </p>
+<div class="mt-auto pt-4 flex gap-2">
+<span class="bg-surface-container-highest px-2 py-1 text-[9px] uppercase tracking-tighter border-l-4 border-primary">RECURSIVE-LOGIC</span>
+<span class="bg-surface-container-highest px-2 py-1 text-[9px] uppercase tracking-tighter border-l-4 border-primary">AUTO-SYNC</span>
+</div>
+</div>
+<!-- Neural Load Balancing -->
+<div class="bg-surface-container-low p-10 flex flex-col gap-6">
+<div class="w-8 h-[2px] bg-primary"></div>
+<h3 class="font-['Inter'] text-[12px] uppercase tracking-[0.2em] text-white">Neural Load Balancing</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                        Distributing cognitive load across a multi-agent cluster. By segregating administrative processing from clinical reasoning, Salama achieves a balanced throughput that prevents LLM hallucination during peak hospital hours.
+                    </p>
+<div class="mt-auto pt-4 flex gap-2">
+<span class="bg-surface-container-highest px-2 py-1 text-[9px] uppercase tracking-tighter border-l-4 border-primary">LATENCY-CONTROL</span>
+<span class="bg-surface-container-highest px-2 py-1 text-[9px] uppercase tracking-tighter border-l-4 border-primary">CLUSTER-MAPPING</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Visual Documentation Grid -->
+<section class="px-12 py-20">
+<div class="mb-16">
+<span class="text-[10px] text-white/40 uppercase tracking-[0.3em]">Visual Documentation // System Logic</span>
+<div class="h-[1px] w-full bg-white/5 mt-4"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-1">
+<div class="aspect-square bg-surface-container overflow-hidden group relative">
+<img class="w-full h-full object-cover opacity-80 grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="high-fidelity technical diagram of a neural network architecture with glowing blue nodes and interconnected server lines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeFKX-CaHc-rmUyeUVisNCBnGLy4-IQlCZOi0YWC2pLS96lxeIYRLVLmFbMAkKg1GVFSCRsyiS6QXtaabNV-wTv_lnRCwF7hhrTSbiB2QVeH4SqrIS8XSOwJcXXESq0MTnv8R-mSPnQ9-CXK7LGifKIc2ruee3KK-aVXQSedIRa92smuwyYRfbi4ayOjXZUySHT3ZZehNnYmllP5GStNhfoJQMDbbYx3F6bjlERarWhsoCtjrcVY1yWJSmINFWAG4HKO9SehRiRNrb"/>
+<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="text-[10px] font-mono bg-primary text-white px-2 py-1">LOGIC_FLOW_01</span>
+</div>
+</div>
+<div class="aspect-square bg-surface-container overflow-hidden group relative">
+<img class="w-full h-full object-cover opacity-80 grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="abstract complex mathematical data visualization with thousands of white particles forming a central core on a black background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf2fqgEVLYKRKjKOP9UUCIOMvwQkRQQFyO8j-_EUAoEUueS0gyIXxaezPlq4jYZ_U9vXebGR3qk3Aw_lXzBWC8dPhoWvnc-_mwRW4efO5AilIaBHZ4TeCG1BIlAQ9V8ngHPyFvW99ZGQoe3MpVHUAv7tG3trc_wbwaz8P1h3-Ii8m6Q3dxKla01L1EnG_3UvM0_h08Imapy-dvKYVN6hhETtgQw0BJUDlnGgD8xfRmTcJM4u8PJ31SVq9Xo74NBCyZO6Ot-IH5Kwbx"/>
+<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="text-[10px] font-mono bg-primary text-white px-2 py-1">NEURAL_DENSITY_MAP</span>
+</div>
+</div>
+<div class="aspect-square bg-surface-container overflow-hidden group relative">
+<img class="w-full h-full object-cover opacity-80 grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="macro photograph of fiber optic cables glowing electric blue and violet representing high-speed data transmission" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBicatU6HaiXUwyRZtn7SRl-xvTmDFPQaHhqo3nlLOdwrDriMAZ95ehGOCfvBe4pozMAU3GBHGFVO9lHktpfkrXng1cEyRvoXY8STbol1P2m9YYt6VjxYb00IwHNARXXbhI4i-UZo2GMWr9uO4Mah5FBvVq7UMi_JLNqBYyog6Rt4Yw7xbrXkvVV8feNL4Z8AZtDUI62bNNU6Vyw5ZGEV6UEurAxO45FnGHqBt9o65fuqYhzjWknG0EK3Kz2JGMwRfLjCbfq_dSKA0v"/>
+<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="text-[10px] font-mono bg-primary text-white px-2 py-1">LOAD_BALANCE_PROTOCOL</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Technical Deep Dive (Editorial Style) -->
+<section class="px-12 py-40 bg-[#0E0E0E]">
+<div class="max-w-4xl mx-auto">
+<h2 class="font-headline text-5xl text-white mb-20 leading-tight">Implementing <span class="serif-italic">The Ledger System</span> for Residency Logistics</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-20">
+<div class="space-y-6">
+<span class="text-primary font-mono text-sm">01 / ARCHITECTURE</span>
+<p class="text-on-surface-variant text-sm leading-relaxed">
+                            Salama's backbone utilizes a persistent vector store optimized for retrieval-augmented generation (RAG). This allows the agent to reference historical clinical decisions while maintaining strict adherence to residency policy.
+                        </p>
+</div>
+<div class="space-y-6">
+<span class="text-primary font-mono text-sm">02 / COMPLIANCE</span>
+<p class="text-on-surface-variant text-sm leading-relaxed">
+                            Every decision made by the agent is logged within an immutable audit trail—the Architectural Ledger. This provides institutional transparency and ensures that automated workflows meet rigorous medical standards.
+                        </p>
+</div>
+</div>
+<div class="mt-20 border-t border-white/10 pt-12">
+<a class="inline-flex items-center gap-4 group" href="#">
+<span class="text-white font-['Inter'] text-[10px] uppercase tracking-[0.3em]">View Technical Repository</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-2 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full border-t border-white/5 bg-[#131313] flex flex-col md:flex-row justify-between items-center px-12 py-20 mt-40">
+<div class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 mb-8 md:mb-0">
+                © 2024 FIRAAZ FAROOK. BUILT ON THE ARCHITECTURAL LEDGER SYSTEM.
+            </div>
+<div class="flex gap-8">
+<a class="text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest hover:text-white transition-colors" href="#">LinkedIn</a>
+<a class="text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest hover:text-white transition-colors" href="#">GitHub</a>
+<a class="text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest hover:text-white transition-colors" href="#">Email</a>
+</div>
+</footer>
+</main>
+</body></html>

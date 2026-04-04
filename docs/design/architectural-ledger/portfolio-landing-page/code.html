@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Firaaz Farook | Senior AI Engineer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdbd1",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-tertiary": "#601400",
+                        "primary-fixed": "#dce1ff",
+                        "tertiary-fixed-dim": "#ffb5a0",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-bright": "#393939",
+                        "on-surface-variant": "#c3c5d9",
+                        "surface-tint": "#b6c4ff",
+                        "on-primary-fixed-variant": "#0039b3",
+                        "inverse-primary": "#004dea",
+                        "on-secondary-fixed": "#001551",
+                        "secondary-container": "#2d4490",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-background": "#e5e2e1",
+                        "secondary-fixed": "#dce1ff",
+                        "on-tertiary-fixed": "#3b0900",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "secondary": "#b6c4ff",
+                        "outline-variant": "#434656",
+                        "surface": "#131313",
+                        "on-secondary": "#0e2976",
+                        "surface-variant": "#353534",
+                        "on-primary-container": "#e3e6ff",
+                        "inverse-on-surface": "#313030",
+                        "primary": "#b6c4ff",
+                        "tertiary": "#ffb5a0",
+                        "on-secondary-container": "#a3b5ff",
+                        "primary-container": "#0055ff",
+                        "on-secondary-fixed-variant": "#2b418d",
+                        "tertiary-container": "#c13301",
+                        "surface-container-high": "#2a2a2a",
+                        "on-primary": "#002780",
+                        "surface-container-highest": "#353534",
+                        "surface-dim": "#131313",
+                        "on-tertiary-fixed-variant": "#872100",
+                        "surface-container": "#201f1f",
+                        "on-error": "#690005",
+                        "outline": "#8d90a2",
+                        "on-primary-fixed": "#001551",
+                        "on-tertiary-container": "#ffe1d9",
+                        "secondary-fixed-dim": "#b6c4ff",
+                        "background": "#131313",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+        }
+    </style>
+</head>
+<body class="font-body selection:bg-primary-container selection:text-white">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#131313]/70 backdrop-blur-xl no-border flex justify-between items-center px-6 md:px-12 py-6">
+<div class="font-['Newsreader'] text-2xl font-light italic text-white">Firaaz Farook</div>
+<div class="hidden md:flex gap-8 items-center">
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Experience</a>
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Projects</a>
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Contact</a>
+<button class="bg-primary-container text-on-primary-container px-6 py-2 text-[10px] uppercase tracking-widest font-bold">Query the Dossier</button>
+</div>
+<div class="md:hidden">
+<span class="material-symbols-outlined text-white">menu</span>
+</div>
+</nav>
+<!-- SideNavBar (Desktop Shell Context) -->
+<aside class="hidden xl:flex fixed right-0 h-screen w-80 z-40 bg-[#1C1B1B] border-l border-white/5 flex-col py-24 shadow-[40px_0_60px_rgba(0,21,81,0.12)]">
+<div class="px-8 mb-12">
+<div class="font-['Inter'] font-black text-white text-xs tracking-[0.2em] mb-1">AUDIT TRAIL</div>
+<div class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/40">V2.0.4 ARCHITECTURAL LEDGER</div>
+</div>
+<nav class="flex flex-col gap-1">
+<div class="bg-[#0055FF] text-white p-6 flex items-center gap-4 cursor-pointer scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">System Status</span>
+</div>
+<div class="text-white/40 p-6 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="Memory">memory</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">Neural Weights</span>
+</div>
+<div class="text-white/40 p-6 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="architecture">architecture</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">Architecture</span>
+</div>
+<div class="text-white/40 p-6 flex items-center gap-4 hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">Active Logs</span>
+</div>
+</nav>
+<div class="mt-auto px-8">
+<button class="w-full bg-transparent border border-white/10 hover:border-primary-container text-white py-4 text-[10px] uppercase tracking-[0.2em] transition-all">
+                EXPORT LOGS
+            </button>
+</div>
+</aside>
+<main class="md:pr-80">
+<!-- Hero Section -->
+<section class="min-h-screen flex flex-col justify-center px-6 md:px-12 pt-32 pb-16">
+<div class="max-w-5xl">
+<div class="inline-flex items-center gap-3 bg-surface-container-highest px-4 py-1 mb-8 border-l-4 border-primary-container">
+<span class="font-label text-[10px] uppercase tracking-[0.15em] font-semibold text-primary">Status: Deploying Sovereignty</span>
+</div>
+<h1 class="font-headline text-5xl md:text-8xl leading-[1.05] tracking-tight mb-10 italic">
+                    Senior AI Engineer &amp; <br/> Agentic Systems Architect.
+                </h1>
+<p class="font-body text-lg md:text-xl text-on-surface-variant max-w-2xl mb-12 leading-relaxed">
+                    Building high-fidelity production AI at GDRFA Dubai &amp; Deloitte. Engineering sovereignty into every decision.
+                </p>
+<div class="flex flex-wrap gap-6">
+<button class="bg-primary-container text-on-primary-container px-8 py-5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity">
+                        Query the Dossier <span class="ml-2 text-white/50">⌘K</span>
+</button>
+<button class="bg-transparent border border-outline/15 text-primary px-8 py-5 text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-colors">
+                        View Experience
+                    </button>
+</div>
+</div>
+</section>
+<!-- Active Deployments -->
+<section class="px-6 md:px-12 py-32 bg-surface-container-low">
+<div class="mb-20 flex flex-col md:flex-row md:items-end justify-between gap-8">
+<div>
+<span class="font-label text-[10px] uppercase tracking-[0.2em] text-primary mb-4 block">Deployment Registry</span>
+<h2 class="font-headline text-4xl md:text-5xl italic">Active Deployments</h2>
+</div>
+<div class="text-right hidden md:block">
+<span class="font-label text-[10px] uppercase tracking-[0.2em] text-white/30">LATEST_COMMIT: 4A7F92B</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<!-- Project 1: Salama -->
+<div class="group cursor-pointer">
+<div class="aspect-[4/5] bg-surface-container-lowest overflow-hidden mb-6">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="abstract architectural geometry of a modern glass building reflecting clear blue sky with sharp geometric angles and shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBABiaKku3eWQRXowFZZra5j33pTogluLxLogF7YZpsCAvYCIccxfFSxdMGEXeCAImW1fIrS1Lahd5rraV6YYpqfKNPs52DrJN18epHyCc32TZf8ELiwpWlqDLnRyOmK564FVhoDO5vz4XZCSONiZzVUPHrodHJSwZgpCU0_rszPY9BjIc3cDx-vR40mCIMjrBBrFERdrouyqBO5XS1IrHtn37WlGFUygM-xFOyusbzafVeb0POjYpIjIB-aadL5T1FqQnY9XfCWxQy"/>
+</div>
+<div class="px-2">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-headline text-2xl italic">Salama (GDRFA)</h3>
+<span class="font-label text-[9px] uppercase tracking-widest text-primary border border-primary/20 px-2 py-0.5">Production</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant leading-relaxed mb-6">
+                            Architected LLM-driven migration frameworks for government infrastructure, reducing technical debt by 40% across mission-critical services.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-container-highest px-3 py-1 text-[9px] uppercase tracking-tighter border-l-2 border-primary">LLM MIGRATION</span>
+<span class="bg-surface-container-highest px-3 py-1 text-[9px] uppercase tracking-tighter border-l-2 border-primary">GOVERNMENT TECH</span>
+</div>
+</div>
+</div>
+<!-- Project 2: Macy's -->
+<div class="group cursor-pointer">
+<div class="aspect-[4/5] bg-surface-container-lowest overflow-hidden mb-6">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="macro photograph of crystalline electronic circuits glowing with deep blue light through thick refractive glass texture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZcegeL2U9yp1_d6GNb3a-O2OilqX6cuvfK6i2snI6yAeTqHY5YjAnskfBD1QXciDp80qOoGbG6MoqTVZi2c5n69j9x-XrCQWZIlBlWFABJQh7q2kpCn0pDlFk4WinYjUbx1U6ty5scITZz5CMWGAJ7qwE0bVddRldIEqLiEJeKvAqzuA_LRzlD4ehbW-9QWQZtFjmIlXORFy0GSND39jCz75ww-hxo2Dp0Oc95SvalFOhvQ1vQ9epkVTIQNPhKlOr8ccs0KaxkEP2"/>
+</div>
+<div class="px-2">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-headline text-2xl italic">Macy's Migration</h3>
+<span class="font-label text-[9px] uppercase tracking-widest text-white/40 border border-white/10 px-2 py-0.5">Automated</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant leading-relaxed mb-6">
+                            Engineered an automated Java-to-modern-stack pipeline using agentic workflows, processing 2M+ lines of legacy COBOL and Java code.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-container-highest px-3 py-1 text-[9px] uppercase tracking-tighter border-l-2 border-primary">AGENTIC AI</span>
+<span class="bg-surface-container-highest px-3 py-1 text-[9px] uppercase tracking-tighter border-l-2 border-primary">LEGACY SYSTEMS</span>
+</div>
+</div>
+</div>
+<!-- Project 3: Dollar Tree -->
+<div class="group cursor-pointer">
+<div class="aspect-[4/5] bg-surface-container-lowest overflow-hidden mb-6">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="digital topography map rendered in monochrome deep charcoal with bright neon blue grid lines highlighting peak elevations" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAu_LJFd-cdPUNMJQRy7HJ1WMeoSNJ5wn9-vfT7seV6loBslB9E-rBDJWdgzn0UvoMXtJi8oGa8BJ42GMaFiTOW4vQqDTbMM4AJRuJ0d0m7bstUU9qoapQL5tupWEZwcnxCa8zR62T2ZUnUPEuiFKQ3UQ1BzWCSxWsK75lkzhhuvZV4nbfUho05th8HcJ363J8mP-9sqxTdY5w0ASRxAGGwybsuf8el25bQsh4XP_3KE-ykQSRJDnWvkkSg_3NUivJS-MOxb8Kfo04Q"/>
+</div>
+<div class="px-2">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-headline text-2xl italic">Dollar Tree Landing Zone</h3>
+<span class="font-label text-[9px] uppercase tracking-widest text-white/40 border border-white/10 px-2 py-0.5">Architecture</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant leading-relaxed mb-6">
+                            Cloud-native AI landing zone design for hyper-scale retail logistics, integrating real-time predictive demand forecasting.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-container-highest px-3 py-1 text-[9px] uppercase tracking-tighter border-l-2 border-primary">RETAIL AI</span>
+<span class="bg-surface-container-highest px-3 py-1 text-[9px] uppercase tracking-tighter border-l-2 border-primary">CLOUD ARCHITECTURE</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- The Engineering Ethos -->
+<section class="px-6 md:px-12 py-40 bg-surface">
+<div class="max-w-4xl mx-auto">
+<div class="text-center mb-32">
+<span class="font-label text-[10px] uppercase tracking-[0.3em] text-primary mb-4 block">The Ledger Philosophy</span>
+<h2 class="font-headline text-5xl md:text-7xl italic">The Engineering Ethos</h2>
+</div>
+<div class="space-y-40">
+<!-- Ethos 1 -->
+<div class="flex flex-col md:flex-row gap-12 items-start">
+<div class="md:w-1/3">
+<span class="font-headline text-6xl text-primary/20 italic">01</span>
+</div>
+<div class="md:w-2/3">
+<h4 class="font-headline text-3xl mb-6 italic">Precision over Persistence</h4>
+<p class="font-body text-lg text-on-surface-variant leading-relaxed italic">
+                                AI systems should not merely 'hallucinate until correct'. We build deterministic anchors within stochastic systems, ensuring every agentic output is grounded in verifiable architectural logic.
+                            </p>
+</div>
+</div>
+<!-- Ethos 2 -->
+<div class="flex flex-col md:flex-row gap-12 items-start">
+<div class="md:w-1/3">
+<span class="font-headline text-6xl text-primary/20 italic">02</span>
+</div>
+<div class="md:w-2/3">
+<h4 class="font-headline text-3xl mb-6 italic">Agentic Sovereignty</h4>
+<p class="font-body text-lg text-on-surface-variant leading-relaxed italic">
+                                Autonomy is a liability without constraints. Our frameworks prioritize governance, observability, and the 'kill-switch' as primary features, not afterthoughts.
+                            </p>
+</div>
+</div>
+<!-- Ethos 3 -->
+<div class="flex flex-col md:flex-row gap-12 items-start">
+<div class="md:w-1/3">
+<span class="font-headline text-6xl text-primary/20 italic">03</span>
+</div>
+<div class="md:w-2/3">
+<h4 class="font-headline text-3xl mb-6 italic">Structural Integrity</h4>
+<p class="font-body text-lg text-on-surface-variant leading-relaxed italic">
+                                Code is the ledger of intent. Whether migrating legacy COBOL or deploying neural networks, the structural elegance of the solution determines its lifespan in production.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full border-t border-white/5 bg-[#131313] flex flex-col md:flex-row justify-between items-center px-6 md:px-12 py-20 mt-40">
+<div class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 mb-8 md:mb-0">
+                © 2024 FIRAAZ FAROOK. BUILT ON THE ARCHITECTURAL LEDGER SYSTEM.
+            </div>
+<div class="flex gap-12">
+<a class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 hover:text-white transition-colors" href="#">LinkedIn</a>
+<a class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 hover:text-white transition-colors" href="#">GitHub</a>
+<a class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 hover:text-white transition-colors" href="#">Email</a>
+</div>
+</footer>
+</main>
+<!-- Bottom Navigation (Mobile Only) -->
+<div class="md:hidden fixed bottom-0 left-0 w-full bg-surface-container-high border-t border-white/5 px-6 py-4 flex justify-between items-center z-50">
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-[9px] uppercase font-bold tracking-tighter">Home</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-white/40">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+<span class="text-[9px] uppercase font-bold tracking-tighter">Projects</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-white/40">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[9px] uppercase font-bold tracking-tighter">Profile</span>
+</div>
+</div>
+</body></html>

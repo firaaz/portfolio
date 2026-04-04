@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&amp;family=Newsreader:ital,wght@0,300;0,400;1,300;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .cursor-blink {
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { border-color: transparent }
+            50% { border-color: #0055FF }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdbd1",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-tertiary": "#601400",
+                        "primary-fixed": "#dce1ff",
+                        "tertiary-fixed-dim": "#ffb5a0",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-bright": "#393939",
+                        "on-surface-variant": "#c3c5d9",
+                        "surface-tint": "#b6c4ff",
+                        "on-primary-fixed-variant": "#0039b3",
+                        "inverse-primary": "#004dea",
+                        "on-secondary-fixed": "#001551",
+                        "secondary-container": "#2d4490",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-background": "#e5e2e1",
+                        "secondary-fixed": "#dce1ff",
+                        "on-tertiary-fixed": "#3b0900",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "secondary": "#b6c4ff",
+                        "outline-variant": "#434656",
+                        "surface": "#131313",
+                        "on-secondary": "#0e2976",
+                        "surface-variant": "#353534",
+                        "on-primary-container": "#e3e6ff",
+                        "inverse-on-surface": "#313030",
+                        "primary": "#b6c4ff",
+                        "tertiary": "#ffb5a0",
+                        "on-secondary-container": "#a3b5ff",
+                        "primary-container": "#0055ff",
+                        "on-secondary-fixed-variant": "#2b418d",
+                        "tertiary-container": "#c13301",
+                        "surface-container-high": "#2a2a2a",
+                        "on-primary": "#002780",
+                        "surface-container-highest": "#353534",
+                        "surface-dim": "#131313",
+                        "on-tertiary-fixed-variant": "#872100",
+                        "surface-container": "#201f1f",
+                        "on-error": "#690005",
+                        "outline": "#8d90a2",
+                        "on-primary-fixed": "#001551",
+                        "on-tertiary-container": "#ffe1d9",
+                        "secondary-fixed-dim": "#b6c4ff",
+                        "background": "#131313",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-white">
+<!-- TOP NAVIGATION SHELL -->
+<header class="fixed top-0 w-full z-50 bg-[#131313]/70 backdrop-blur-xl no-border flex justify-between items-center w-full px-12 py-6">
+<div class="font-['Newsreader'] text-2xl font-light italic text-white">Firaaz Farook</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Experience</a>
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Projects</a>
+<a class="text-white/60 font-['Inter'] text-xs uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Contact</a>
+<div class="ml-4 px-3 py-1 bg-surface-container-highest border-l-4 border-primary-container">
+<span class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40">SYSTEM ACTIVE</span>
+</div>
+</nav>
+</header>
+<!-- SIDE NAV SHELL (AUDIT TRAIL) -->
+<aside class="fixed right-0 h-screen w-80 z-40 border-l border-white/5 tonal-shift bg-[#131313] flex flex-col h-full py-24">
+<div class="px-8 mb-12">
+<h3 class="font-['Inter'] font-black text-white text-sm">AUDIT TRAIL</h3>
+<p class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/40 mt-1">V2.0.4 ARCHITECTURAL LEDGER</p>
+</div>
+<div class="flex-grow">
+<div class="text-white/40 p-4 flex items-center gap-3 hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">System Status</span>
+</div>
+<div class="text-white/40 p-4 flex items-center gap-3 hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="Memory">memory</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">Neural Weights</span>
+</div>
+<div class="text-white/40 p-4 flex items-center gap-3 hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="architecture">architecture</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">Architecture</span>
+</div>
+<div class="bg-[#0055FF] text-white p-4 flex items-center gap-3 Active: scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em]">Active Logs</span>
+</div>
+</div>
+<div class="px-8 mt-auto">
+<button class="w-full py-4 bg-primary-container text-white font-['Inter'] text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity">
+                EXPORT LOGS
+            </button>
+</div>
+</aside>
+<!-- MAIN BACKGROUND CONTENT (BLURRED) -->
+<main class="min-h-screen pt-32 px-12 md:mr-80">
+<section class="max-w-4xl">
+<div class="mb-16">
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-primary-container mb-4 block">Selected Works</span>
+<h1 class="font-headline italic text-7xl md:text-8xl tracking-tight leading-none text-white mb-8">Structural Intelligence.</h1>
+<p class="font-body text-xl text-on-surface-variant max-w-2xl leading-relaxed">
+                    Bridging the gap between neural complexity and architectural permanence. A ledger of engineering milestones and cognitive research.
+                </p>
+</div>
+<!-- Bento Grid of Projects -->
+<div class="grid grid-cols-12 gap-8 mb-40">
+<div class="col-span-12 md:col-span-8 h-96 bg-surface-container-lowest relative overflow-hidden group">
+<img class="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-700" data-alt="abstract architectural geometry with sharp 3d angles and deep shadows in shades of dark charcoal and deep blue" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB24tFBQ8vwJ9_5d-lqaago-ClpufaLN9CiAR-Op0f2-5OM0cUNVIww_B23EfJ3yaKeyTc5NbGdIX1AfFL-sDue_eJlbr0pof6UKzL18aT08iYZHmywXUK3gzobhFMw8FaBApgvNH-dVWhvD916ZrnUzN2i3FgdFF2WogyMC8DBZpzLDnq7LE1060I3yGTtwvYjRTemGMvAuUxzcegZY8g_7dHcCvaS82YJxZ9p4htXMrCdWeEw3TaszSxCSdTt7hS-1cH8S67jIfFN"/>
+<div class="absolute bottom-0 left-0 p-8">
+<div class="flex items-center gap-4 mb-2">
+<div class="bg-primary-container text-white px-3 py-1 font-['Inter'] text-[10px] uppercase tracking-widest">Case Study 01</div>
+</div>
+<h2 class="font-headline italic text-4xl text-white">Project Salama</h2>
+</div>
+</div>
+<div class="col-span-12 md:col-span-4 h-96 bg-surface-container-low p-8 flex flex-col justify-end">
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/40 mb-4">Neural Architecture</span>
+<p class="font-body text-lg text-white">Optimizing large language model inference for edge computing environments.</p>
+<div class="mt-6 pt-6 border-t border-white/5">
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-primary-container">View Research →</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- CMD+K OVERLAY MODAL -->
+<div class="fixed inset-0 z-[100] flex items-start justify-center pt-[153px] px-4 bg-[#0e0e0e]/90 backdrop-blur-sm">
+<div class="w-full max-w-2xl bg-surface-container-lowest shadow-[40px_0_60px_rgba(0,21,81,0.12)] ring-1 ring-white/5 border-0">
+<!-- Command Input Header -->
+<div class="p-8 border-b border-white/5 flex items-center gap-6">
+<span class="material-symbols-outlined text-primary-container text-3xl" data-icon="search">search</span>
+<div class="relative flex-grow">
+<span class="font-headline italic text-3xl md:text-4xl text-on-surface/90">Query the portfolio...</span>
+<span class="absolute inline-block w-[2px] h-8 bg-primary-container ml-2 cursor-blink translate-y-1"></span>
+</div>
+<div class="hidden md:flex items-center gap-2">
+<kbd class="px-2 py-1 bg-surface-container-highest text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest">ESC</kbd>
+</div>
+</div>
+<!-- Suggestions List -->
+<div class="py-4">
+<div class="px-8 py-3">
+<h4 class="font-['Inter'] text-[10px] uppercase tracking-[0.2em] text-white/20">Recommended Commands</h4>
+</div>
+<div class="group px-8 py-4 flex items-center justify-between hover:bg-surface-container-high cursor-pointer transition-colors">
+<div class="flex items-center gap-5">
+<span class="material-symbols-outlined text-white/40 group-hover:text-primary" data-icon="rocket_launch">rocket_launch</span>
+<span class="font-body text-on-surface group-hover:translate-x-1 transition-transform">Show Salama Project</span>
+</div>
+<span class="font-['Inter'] text-[10px] text-white/20 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Select</span>
+</div>
+<div class="group px-8 py-4 flex items-center justify-between hover:bg-surface-container-high cursor-pointer transition-colors">
+<div class="flex items-center gap-5">
+<span class="material-symbols-outlined text-white/40 group-hover:text-primary" data-icon="description">description</span>
+<span class="font-body text-on-surface group-hover:translate-x-1 transition-transform">Generate PDF Resume</span>
+</div>
+<span class="font-['Inter'] text-[10px] text-white/20 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Select</span>
+</div>
+<div class="group px-8 py-4 flex items-center justify-between hover:bg-surface-container-high cursor-pointer transition-colors">
+<div class="flex items-center gap-5">
+<span class="material-symbols-outlined text-white/40 group-hover:text-primary" data-icon="psychology">psychology</span>
+<span class="font-body text-on-surface group-hover:translate-x-1 transition-transform">List AI Skills</span>
+</div>
+<span class="font-['Inter'] text-[10px] text-white/20 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Select</span>
+</div>
+<div class="group px-8 py-4 flex items-center justify-between hover:bg-surface-container-high cursor-pointer transition-colors">
+<div class="flex items-center gap-5">
+<span class="material-symbols-outlined text-white/40 group-hover:text-primary" data-icon="history_edu">history_edu</span>
+<span class="font-body text-on-surface group-hover:translate-x-1 transition-transform">View System Logs</span>
+</div>
+<span class="font-['Inter'] text-[10px] text-white/20 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Select</span>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-6 bg-surface-container-low flex justify-between items-center">
+<div class="flex gap-4 items-center">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-white/20" data-icon="keyboard_arrow_up">keyboard_arrow_up</span>
+<span class="material-symbols-outlined text-sm text-white/20" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+<span class="font-['Inter'] text-[9px] uppercase tracking-widest text-white/40 ml-1">Navigate</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-white/20" data-icon="keyboard_return">keyboard_return</span>
+<span class="font-['Inter'] text-[9px] uppercase tracking-widest text-white/40 ml-1">Execute</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-primary-container"></span>
+<span class="font-['Inter'] text-[9px] uppercase tracking-[0.2em] text-white/40">Ledger Interface V1.0</span>
+</div>
+</div>
+</div>
+</div>
+<!-- FOOTER SHELL -->
+<footer class="w-full border-t border-white/5 tonal-step-up bg-[#131313] flex flex-col md:flex-row justify-between items-center w-full px-12 py-20 mt-40">
+<div class="font-['Inter'] text-[10px] uppercase tracking-widest text-white/40 mb-8 md:mb-0">
+            © 2024 FIRAAZ FAROOK. BUILT ON THE ARCHITECTURAL LEDGER SYSTEM.
+        </div>
+<div class="flex gap-12">
+<a class="text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">LinkedIn</a>
+<a class="text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">GitHub</a>
+<a class="text-white/40 font-['Inter'] text-[10px] uppercase tracking-widest hover:text-white transition-colors duration-300" href="#">Email</a>
+</div>
+</footer>
+</body></html>
