@@ -1,26 +1,27 @@
 # Status
 
 ## Current State
-FEAT-001 complete. FEAT-002 Scope 1 (UX Protocol Layer) complete. FEAT-002 Scope 2+3 (The Surface) complete on `develop`. The editorial surface is live: Iron-Gall Ink palette, Zilla Slab + Inter typography, 12-column CSS grid with 8 named zones, tonal surface hierarchy (inset/featured/recessed/base), zone breathing on 2s dwell, mobile responsive collapse at <768px. 87 unit tests passing, typecheck clean, 0 lint errors. E2e test files created (layout assertions, visual regression, breathing interactions, capture script) but baselines not yet generated.
+FEAT-001 complete. FEAT-002 Scopes 1-3 (UX Protocol + Surface + Breathing) complete on `develop`. The editorial surface is live with Iron-Gall Ink palette, 12-column CSS grid, 8 named zones, breathing mechanics, mobile responsive collapse. 87 frontend tests passing, typecheck clean, 0 lint errors. FEAT-002 Agent Content Intelligence spec and implementation plan are written and committed.
 
 ## Accomplished This Session
-- **Mobile dark mode investigation** — iOS Safari renders the surface in dark mode despite no `.dark` class. Added `color-scheme: light only` via meta tag, inline style, and CSS `:root` rule. Did not resolve the issue — needs deeper investigation (likely Safari automatic dark mode or Tailwind 4 base layer behavior).
+- **Spec written:** `specs/002-agent-intelligence/spec.md` — Shape Up pitch for progressive personalization pipeline (Select → Adapt → Compose)
+- **Architecture designed:** Strategy-driven evaluation pattern with pluggable strategies, single `LLMPort.evaluate()`, unified `IntelligenceResult` type
+- **Framework decided:** PydanticAI (native AG-UI, structured outputs, Pydantic-native) over LangGraph (third-party adapter, async streaming issues)
+- **Reliability architecture:** Four-level anti-hallucination defense (prompt constraints → structured outputs → post-generation validation → EDD evals)
+- **Implementation plan written:** `specs/002-agent-intelligence/plan.md` — 7 slices (spike → domain models → session/signals → select strategy → adapt strategy → compose strategy → five-verb events → frontend rendering), test-first, complete code blocks
+- **Research:** PydanticAI AG-UI integration docs, LangGraph streaming issues, Context7 docs for both frameworks
 
 ## Key Decisions
-- No new ADRs created.
-- `color-scheme: light only` added defensively (correct CSS practice even if Safari ignores it in this case).
+- PydanticAI over LangGraph for agent framework (native AG-UI, no async streaming bugs, lighter)
+- Strategy pattern over per-tier agents (scalable, pluggable)
+- Merged Tier 2+3 into single Adapt call (2 LLM calls max per session)
+- Models as configuration, not code (evaluated during building via EDD)
+- Emphasis directives (Tier 1-2) before generation (Tier 3) — most visitors see only reliable content selection
+- No new ADRs created (five-verb protocol implementation follows existing ADR-0003)
 
 ## Blockers
-- **iOS Safari dark mode** — surface renders dark on mobile despite light-only palette. Not blocking next step (depth layer), but needs resolution before mobile testing. Low priority per user.
+- iOS Safari dark mode rendering (low priority, not blocking intelligence work)
+- E2E visual baselines not yet generated (not blocking)
 
 ## Next Step
-Scope 4: **The Depth** — click-to-expand case studies with paginated viewport-sized pages over a frozen surface. The design spec describes: opaque canvas overlay, 64px padding, page 1 (title+overview+metrics), page 2 (architecture+tags), keyboard/edge navigation, linear counter "1/4", 2px progress bar, close button + escape. This is the third gesture in the user mental model: Look (surface) → Pick up (depth) → Put down (back). Start with a spec/plan session. Reference: `docs/superpowers/specs/2026-04-04-design-and-agent-ux-design.md` (Depth Layer section).
-
-## Remaining Decisions
-1. Dwell threshold tuning — 2s feels too long, try 1.2–1.5s (noted in tasks/lessons.md)
-2. Mobile breathing — scroll-stop vs long-press (needs device testing)
-3. Content generation scope — generative vs variant selection (needs EDD evals)
-4. "Holy shit" reveal — deferred to post-implementation evaluation
-5. Dead code cleanup — old manifest/sse infrastructure (chore task)
-6. E2e visual baselines — need to regenerate with `pnpm test:e2e:update` after confirming surface looks correct
-7. iOS Safari dark mode — surface renders dark on phone despite light-only CSS. Needs debugging.
+Start implementation with **Slice 0: Spike** — validate PydanticAI structured outputs before committing to the full build. Branch `feat/002-spike-pydantic-ai`. Run `specs/002-agent-intelligence/plan.md` Task 0: add `pydantic-ai` dependency, run the spike script testing schema compliance, latency, and grounding accuracy. Go/no-go decision. If spike passes, proceed to Task 1 (domain models). Reference the plan for exact code and commands.
