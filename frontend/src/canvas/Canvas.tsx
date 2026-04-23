@@ -78,7 +78,12 @@ export function Canvas({
                 style={{ opacity: dimmed ? undefined : item.salience }}
                 className="transition-opacity duration-500 ease-out"
               >
-                <MoleculeResolver molecule={item.molecule} data={item.data} />
+                <MoleculeResolver
+                  molecule={item.molecule}
+                  data={item.data}
+                  emphasis={item.emphasis}
+                  generated={item.generated}
+                />
               </div>
             ))}
           </section>

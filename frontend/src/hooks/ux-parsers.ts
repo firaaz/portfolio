@@ -68,3 +68,70 @@ export function isUXTempo(data: unknown): data is UXTempoEvent {
 export function isUXAgency(data: unknown): data is UXAgencyEvent {
   return hasCustomEventType(data, "ux:agency");
 }
+
+export interface UXFocusEvent {
+  type: "CUSTOM";
+  custom: {
+    eventType: "ux:focus";
+    item_id: string;
+    importance: number;
+    emphasis: string[];
+  };
+}
+
+export interface UXRecedeEvent {
+  type: "CUSTOM";
+  custom: {
+    eventType: "ux:recede";
+    item_id: string;
+    importance: number;
+  };
+}
+
+export interface UXBridgeEvent {
+  type: "CUSTOM";
+  custom: {
+    eventType: "ux:bridge";
+    source_id: string;
+    target_id: string;
+    text: string;
+  };
+}
+
+export interface UXSurfaceEvent {
+  type: "CUSTOM";
+  custom: {
+    eventType: "ux:surface";
+    item_id: string;
+    generated: Record<string, string>;
+  };
+}
+
+export interface UXSignalEvent {
+  type: "CUSTOM";
+  custom: {
+    eventType: "ux:signal";
+    confidence: number;
+    reasoning: string;
+  };
+}
+
+export function isUXFocus(data: unknown): data is UXFocusEvent {
+  return hasCustomEventType(data, "ux:focus");
+}
+
+export function isUXRecede(data: unknown): data is UXRecedeEvent {
+  return hasCustomEventType(data, "ux:recede");
+}
+
+export function isUXBridge(data: unknown): data is UXBridgeEvent {
+  return hasCustomEventType(data, "ux:bridge");
+}
+
+export function isUXSurface(data: unknown): data is UXSurfaceEvent {
+  return hasCustomEventType(data, "ux:surface");
+}
+
+export function isUXSignal(data: unknown): data is UXSignalEvent {
+  return hasCustomEventType(data, "ux:signal");
+}
