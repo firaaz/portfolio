@@ -10,6 +10,7 @@ dependencies = [
     "pyyaml>=6.0.3",
     "openai>=2.0",
     "python-dotenv>=1.0",
+    "pydantic-ai>=1.86.0",
 ]
 
 [dependency-groups]
