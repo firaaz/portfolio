@@ -3,12 +3,16 @@ export function ExperienceCard({
   role,
   duration,
   description,
+  generated,
 }: {
   company: string;
   role: string;
   duration: string;
   description: string;
+  generated?: Record<string, string>;
 }) {
+  const displayDesc = generated?.description ?? description;
+
   return (
     <article className="space-y-1">
       <span className="block text-[10px] font-sans font-bold uppercase tracking-[0.08em] text-ink-50">
@@ -20,7 +24,7 @@ export function ExperienceCard({
       </span>
       <div className="breathing-extra opacity-0 max-h-0 overflow-hidden">
         <p className="text-xs font-sans text-ink-65 leading-relaxed pt-1">
-          {description}
+          {displayDesc}
         </p>
       </div>
     </article>

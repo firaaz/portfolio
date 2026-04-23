@@ -18,9 +18,13 @@ const registry: Record<string, ComponentType<Record<string, unknown>>> = {
 export function MoleculeResolver({
   molecule,
   data,
+  emphasis,
+  generated,
 }: {
   molecule: string;
   data: Record<string, unknown>;
+  emphasis?: string[];
+  generated?: Record<string, string>;
 }) {
   const Component = registry[molecule];
 
@@ -28,5 +32,5 @@ export function MoleculeResolver({
     return <div>{molecule}</div>;
   }
 
-  return <Component {...data} />;
+  return <Component {...data} emphasis={emphasis} generated={generated} />;
 }
