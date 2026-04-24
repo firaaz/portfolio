@@ -228,9 +228,9 @@
     min-height: 100dvh;
     padding: 16px;
   }
-  .bento-card {
-    grid-column: 1 !important;
-    grid-row: auto !important;
+  .bento-grid > .bento-card {
+    grid-column: 1;
+    grid-row: auto;
   }
 }
 

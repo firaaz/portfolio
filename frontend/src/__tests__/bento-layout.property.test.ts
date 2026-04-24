@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, it } from "vitest";
-import type { UXItem } from "../store/ux-store";
 import { CELL_BUDGET, computeLayout } from "../canvas/bento-layout";
+import type { UXItem } from "../store/ux-store";
 
 // Cast is safe while all UXItem fields beyond the record keys are optional.
 // If a required field is added to UXItem, update itemArb to include it.
@@ -54,8 +54,8 @@ describe("computeLayout — invariants", () => {
         const salienceById = new Map(items.map((i) => [i.id, i.salience]));
         const visible = layout.filter((e) => !e.hidden);
         for (let i = 1; i < visible.length; i += 1) {
-          const prev = salienceById.get(visible[i - 1]!.id) ?? 0;
-          const curr = salienceById.get(visible[i]!.id) ?? 0;
+          const prev = salienceById.get(visible[i - 1]?.id ?? "") ?? 0;
+          const curr = salienceById.get(visible[i]?.id ?? "") ?? 0;
           if (prev < curr) return false;
         }
         return true;

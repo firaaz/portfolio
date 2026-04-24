@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { UXItem } from "../store/ux-store";
 import { CELL_BUDGET, computeLayout } from "../canvas/bento-layout";
+import type { UXItem } from "../store/ux-store";
 
 function makeItem(id: string, salience: number): UXItem {
   return {
@@ -15,16 +15,26 @@ function makeItem(id: string, salience: number): UXItem {
 describe("computeLayout — quantization thresholds", () => {
   it("salience 0.85 → tier 5 (hero, 4×3)", () => {
     const [entry] = computeLayout([makeItem("a", 0.85)]);
-    expect(entry).toMatchObject({ tier: 5, colSpan: 4, rowSpan: 3, hidden: false });
+    expect(entry).toMatchObject({
+      tier: 5,
+      colSpan: 4,
+      rowSpan: 3,
+      hidden: false,
+    });
   });
 
   it("salience 0.849 → tier 4 (3×2)", () => {
     const [entry] = computeLayout([makeItem("a", 0.849)]);
-    expect(entry).toMatchObject({ tier: 4, colSpan: 3, rowSpan: 2, hidden: false });
+    expect(entry).toMatchObject({
+      tier: 4,
+      colSpan: 3,
+      rowSpan: 2,
+      hidden: false,
+    });
   });
 
   it("salience 0.70 → tier 4", () => {
-    const [entry] = computeLayout([makeItem("a", 0.70)]);
+    const [entry] = computeLayout([makeItem("a", 0.7)]);
     expect(entry?.tier).toBe(4);
   });
 
@@ -51,17 +61,14 @@ describe("computeLayout — quantization thresholds", () => {
 
 describe("computeLayout — hero uniqueness", () => {
   it("two items with salience ≥ 0.85 → one tier 5, one tier 4", () => {
-    const layout = computeLayout([
-      makeItem("a", 0.90),
-      makeItem("b", 0.88),
-    ]);
+    const layout = computeLayout([makeItem("a", 0.9), makeItem("b", 0.88)]);
     expect(layout.map((e) => e.tier)).toEqual([5, 4]);
   });
 
   it("three items all ≥ 0.85 → 5, 4, 4", () => {
     const layout = computeLayout([
       makeItem("a", 0.95),
-      makeItem("b", 0.90),
+      makeItem("b", 0.9),
       makeItem("c", 0.86),
     ]);
     expect(layout.map((e) => e.tier)).toEqual([5, 4, 4]);

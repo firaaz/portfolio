@@ -29,7 +29,11 @@ const TIER_SPECS: TierSpec[] = [
 
 const DEMOTED_HERO = { tier: 4 as Tier, cols: 3, rows: 2 };
 
-function quantize(salience: number): { tier: Tier; cols: number; rows: number } {
+function quantize(salience: number): {
+  tier: Tier;
+  cols: number;
+  rows: number;
+} {
   for (const spec of TIER_SPECS) {
     if (salience >= spec.threshold) {
       return { tier: spec.tier, cols: spec.cols, rows: spec.rows };
