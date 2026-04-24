@@ -1,12 +1,19 @@
 # Status
 
 ## Current State (2026-04-24)
-FEAT-003 **breathing bento shipped on wire**. Branch `feat/003-breathing-bento` stacked on unmerged `feat/002-stream-integration` — ~17 commits ahead covering the full bento cutover.
+FEAT-003 **breathing bento shipped on wire** and passed final branch-scope review. Branch `feat/003-breathing-bento` stacked on unmerged `feat/002-stream-integration` — ~20 commits ahead covering the full bento cutover + three post-review cleanup commits.
+
+**Post-review (🟡 Conditional → cleared):** final review flagged three Important items that were fixed before handoff:
+- **Spec drift** (commit `0a114d2`) — spec.md + plan.md File maps updated to reflect the shipped seam (`signal_builder.py` owns signal synthesis; routes prepend before the transformer; `intelligence_to_events` stays pure on `IntelligenceResult`).
+- **`useDwell` orphan** (commit `95dfeab`) — hook was shaped for the deleted zone abstraction; deleted 49 LoC + 6 tests. Deferred slice B will collect dwell per bento card, a different shape.
+- **`breathing-extra` reserved slot** (commit `0a114d2`) — markup retained in `ProjectCard`/`ExperienceCard` as reserved hook for Slice 2 density-aware molecules; added one-line comment in each file making the reservation explicit. Tests already encode the structural contract.
+
+Remaining Nice-to-have items deferred to Slice B session: e2e scenario 5 rewrite (hero > smallest-visible, not hero > tier-1), `data-zone="canvas"` convention doc note in `frontend/CLAUDE.md`, and a dispatch integration test pinning the 150–350ms range by elapsed time rather than by parameter inspection.
 
 - Agent intelligence now drives a salience-based 6×6 bento grid (not 7 named zones). Cards resize by tier (5 = 4×3 cells, 1 = 1×1) via `motion.article layout` FLIP with spring physics (stiffness 200, damping 22) per ADR-0008.
 - Pre-LLM `ux:signal` emitted on both `/api/agent/stream` and `/api/agent/command` after `STATE_SNAPSHOT` so the agent's "thinking" is audible before the re-weight.
 - Staggered dispatch tightened to 150–350ms gaps (ADR-0009 supersedes ADR-0003's specific timing values).
-- **Test counts:** backend 181 passing, frontend 112 passing, e2e 4/5 passing (1 timeout — see E2E note below).
+- **Test counts:** backend 181 passing, frontend 106 passing (was 112; dropped 6 `useDwell` tests in cleanup commit `95dfeab`), e2e 4/5 passing (1 timeout — see E2E note below).
 - **ADRs added:** ADR-0008 (transform allowed as FLIP bridge, scope-fenced to `.bento-card`), ADR-0009 (dispatch timing revision). ADR-0007 status field updated to "partially superseded by ADR-0008."
 - **New/changed files:** `canvas/Bento.tsx`, `canvas/bento-layout.ts`, `adapters/api/signal_builder.py`, `index.css` (zone CSS replaced by bento CSS), `bento-layout.test.ts`, `bento-layout.property.test.ts`, `bento-cascade.spec.ts`. Five deleted e2e specs (`smoke`, `visual`, `breathing`, `layout`, `capture-surface`) — all zone-pinned, fail by same root cause.
 - **Deferred:** manual browser verification (subjective "agent thought, then acted" feel); branch merges to `develop` pending that verification.
@@ -40,7 +47,7 @@ FEAT-003 **breathing bento shipped on wire**. Branch `feat/003-breathing-bento` 
 ## Blockers
 - **E2E test 5 (hero > tier-1 area):** test expectation gap — tier-1 card not guaranteed in LLM output. Needs either a test fixture or the assertion should check hero > any non-hero card.
 - **Branch merges pending:** `feat/002-stream-integration` → `develop`, then `feat/003-breathing-bento` → `develop`. Defer to after manual browser verification.
-- **`useDwell` hook becomes orphan** after Task 11 deleted zone-based wiring, but plan did not scope its deletion — left in place to avoid unscoped churn.
+- ~~**`useDwell` hook becomes orphan**~~ — resolved in commit `95dfeab` post-review; hook + tests deleted (49 + 77 LoC). Slice B's `useSignalCollector` will wire dwell per bento card, not per zone.
 - Pre-existing backend ruff E501 errors in `tests/test_session_models.py`, `tests/test_signal_route.py`, `tests/test_validation.py`, `src/app/domain/strategies/*.py` — none in FEAT-003 touched files; left as debt.
 
 ## Next Step
