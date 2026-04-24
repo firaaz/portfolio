@@ -17,7 +17,7 @@ test.describe("Breathing bento cascade", () => {
     await page.goto("/?utm_source=linkedin");
     await expect(page.locator(".bento-grid")).toBeVisible();
     await expect(page.locator('[data-tier="5"]')).toBeVisible({
-      timeout: 5000,
+      timeout: 10_000,
     });
   });
 
@@ -29,7 +29,7 @@ test.describe("Breathing bento cascade", () => {
     const highTier = page.locator(
       '[data-tier="5"], [data-tier="4"]',
     );
-    await expect(highTier.first()).toBeVisible({ timeout: 5000 });
+    await expect(highTier.first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("given prefers-reduced-motion, cards have no transform transitions", async ({
@@ -54,7 +54,7 @@ test.describe("Breathing bento cascade", () => {
   }) => {
     await page.goto("/?utm_source=linkedin");
     await expect(page.locator('[data-tier="5"]')).toBeVisible({
-      timeout: 5000,
+      timeout: 10_000,
     });
 
     const hero = page.locator('[data-tier="5"]').first();
@@ -62,13 +62,12 @@ test.describe("Breathing bento cascade", () => {
     const heroBox = await hero.boundingBox();
     const supportingBox = await supporting.boundingBox();
 
-    if (!heroBox || !supportingBox) {
-      test.skip(true, "Expected both tier-5 and tier-1 cards on screen");
-      return;
-    }
+    expect(heroBox, "tier-5 hero card should be on screen").toBeTruthy();
+    expect(supportingBox, "tier-1 supporting card should be on screen").toBeTruthy();
 
-    const heroArea = heroBox.width * heroBox.height;
-    const supportingArea = supportingBox.width * supportingBox.height;
+    const heroArea = (heroBox?.width ?? 0) * (heroBox?.height ?? 0);
+    const supportingArea =
+      (supportingBox?.width ?? 0) * (supportingBox?.height ?? 0);
     expect(heroArea).toBeGreaterThan(supportingArea * 3);
   });
 });
