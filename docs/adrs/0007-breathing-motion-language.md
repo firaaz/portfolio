@@ -1,7 +1,7 @@
 # Breathing Motion Language
 
 ## Status
-accepted
+partially superseded by [ADR-0008](0008-motion-flip-under-layout-change.md) — item-level transform ban lifted for bento FLIP; container-level rules stand
 
 ## Date
 2026-04-04
