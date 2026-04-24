@@ -3,11 +3,13 @@
 import os
 from collections.abc import AsyncGenerator
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.adapters.api.dispatch import staggered_dispatch
+from app.adapters.api.referrer import get_visitor_context
+from app.adapters.api.signal_builder import build_signal_event
 from app.adapters.api.ux_events import intelligence_to_events, ux_snapshot_event
 from app.adapters.content.yaml_loader import load_catalog
 from app.domain.content import content_to_ux_state
@@ -35,17 +37,19 @@ def _get_llm_port() -> object | None:
     return PydanticAIProvider()
 
 
-async def _generate_command_stream(text: str) -> AsyncGenerator[str]:
-    """Yield AG-UI events: snapshot, then five-verb events from ComposeStrategy."""
+async def _generate_command_stream(
+    context: VisitorContext,
+) -> AsyncGenerator[str]:
+    """Yield AG-UI events: snapshot, signal, then five-verb events."""
     catalog = load_catalog()
     default_state = content_to_ux_state(catalog)
     yield ux_snapshot_event(default_state)
+    yield build_signal_event(context)
 
     llm = _get_llm_port()
     if llm is None:
         return
 
-    context = VisitorContext(command=text)
     profile = VisitorProfile(session_id="anonymous", context=context)
     strategy = ComposeStrategy()
     result = await evaluate_intelligence(
@@ -64,10 +68,14 @@ async def _generate_command_stream(text: str) -> AsyncGenerator[str]:
 
 
 @router.post("/command")
-async def command(body: CommandRequest) -> StreamingResponse:
+async def command(
+    body: CommandRequest,
+    context: VisitorContext = Depends(get_visitor_context),  # noqa: B008
+) -> StreamingResponse:
     """Process a visitor command and stream five-verb UX events."""
+    context.command = body.text
     return StreamingResponse(
-        _generate_command_stream(body.text),
+        _generate_command_stream(context),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
