@@ -195,6 +195,9 @@
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(6, 1fr);
+  /* dense repacking enables gap-filling but can desync visual and DOM focus order.
+     Cards set explicit grid-column/grid-row inline (see Bento.tsx) to preserve
+     keyboard focus order (WCAG 2.4.3). FLIP handled by motion.article layout (ADR-0008). */
   grid-auto-flow: dense;
   gap: 4px;
   height: 100dvh;
