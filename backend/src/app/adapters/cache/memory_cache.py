@@ -4,22 +4,18 @@ import threading
 import time
 from collections import OrderedDict
 
-from app.domain.ux import UXState
 
-_CacheEntry = tuple[UXState, float]  # (value, expires_at)
-
-
-class MemoryCache:
+class MemoryCache[T]:
     """LRU cache backed by OrderedDict with per-entry TTL."""
 
     def __init__(self, capacity: int = 32) -> None:
         """Create a cache with the given max capacity."""
         self._capacity = capacity
-        self._store: OrderedDict[str, _CacheEntry] = OrderedDict()
+        self._store: OrderedDict[str, tuple[T, float]] = OrderedDict()
         self._lock = threading.Lock()
 
-    def get(self, key: str) -> UXState | None:
-        """Return cached UX state if present and not expired, else None."""
+    def get(self, key: str) -> T | None:
+        """Return cached value if present and not expired, else None."""
         with self._lock:
             entry = self._store.get(key)
             if entry is None:
@@ -31,8 +27,8 @@ class MemoryCache:
             self._store.move_to_end(key)
             return value
 
-    def set(self, key: str, value: UXState, ttl_seconds: int) -> None:
-        """Store UX state with TTL, evicting LRU entry if at capacity."""
+    def set(self, key: str, value: T, ttl_seconds: int) -> None:
+        """Store value with TTL, evicting LRU entry if at capacity."""
         expires_at = time.monotonic() + ttl_seconds
         with self._lock:
             if key in self._store:
