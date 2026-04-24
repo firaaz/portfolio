@@ -1,7 +1,9 @@
 # Status
 
 ## Current State (2026-04-24)
-FEAT-003 **breathing bento shipped on wire** and passed final branch-scope review. Branch `feat/003-breathing-bento` stacked on unmerged `feat/002-stream-integration` — ~20 commits ahead covering the full bento cutover + three post-review cleanup commits.
+FEAT-003 **breathing bento shipped on wire**, final review cleared, manual browser verification passed. Branch `feat/003-breathing-bento` stacked on unmerged `feat/002-stream-integration` — ~25 commits ahead covering the full bento cutover, post-review cleanup, and a manual-verification tier retune.
+
+**Manual verification outcome (commit `6519142`):** first pass revealed visible holes in the grid after a tier-5 hero claimed cols 1-4 — the 2-col residual strip couldn't host tier-4 (3×2 landscape) and `grid-auto-flow: dense` cannot fabricate fragments to fill gaps. Retuned `TIER_SPECS` so tier-4 is 2×3 portrait (same 6-cell area, 2-wide so it fits the strip). All non-dot tiers now share width=2 → clean tiling against a 4-wide hero on a 6-col grid. User confirmed the bento now fills completely. Further cohesion work (editorial rhythm, content-shape fit) deferred to a separate future feature.
 
 **Post-review (🟡 Conditional → cleared):** final review flagged three Important items that were fixed before handoff:
 - **Spec drift** (commit `0a114d2`) — spec.md + plan.md File maps updated to reflect the shipped seam (`signal_builder.py` owns signal synthesis; routes prepend before the transformer; `intelligence_to_events` stays pure on `IntelligenceResult`).
@@ -51,10 +53,11 @@ Remaining Nice-to-have items deferred to Slice B session: e2e scenario 5 rewrite
 - Pre-existing backend ruff E501 errors in `tests/test_session_models.py`, `tests/test_signal_route.py`, `tests/test_validation.py`, `src/app/domain/strategies/*.py` — none in FEAT-003 touched files; left as debt.
 
 ## Next Step
-1. **Manual browser verification** with real `LLM_API_KEY`: load portfolio with `?utm_source=linkedin`, confirm cascade feels like "agent thought, then acted" — `ux:signal` dot appears briefly, then bento cards resize with FLIP spring.
-2. **If subjective verification passes:** merge `feat/002-stream-integration` → `develop`, then `feat/003-breathing-bento` → `develop`.
+1. ~~**Manual browser verification**~~ — ✅ done, holes fixed via tier retune (`6519142`).
+2. **Merge ceremony (user-gated):** `feat/002-stream-integration` → `develop`, then `feat/003-breathing-bento` → `develop`. Held for explicit go-ahead.
 3. **Fix e2e test 5:** either use a seeded mock manifest that guarantees a tier-1 card, or rewrite assertion to compare hero area against the smallest visible card.
 4. **Deferred slice B** (`useSignalCollector` wiring in `Canvas.tsx`) still backlogged — makes cursor signals causal and unlocks `AdaptStrategy` tier-2 path.
+5. **Next feature pitch — bento cohesion beyond tiling.** Packing is now correct; editorial cohesion (visual rhythm, content-to-shape matching, narrative flow between cells) is a separate problem. Worth its own brainstorm + spec rather than bolted onto FEAT-003.
 
 ---
 
