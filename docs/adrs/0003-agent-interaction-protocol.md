@@ -1,7 +1,7 @@
 # Agent Interaction Protocol
 
 ## Status
-accepted
+accepted (partially superseded by [ADR-0009](0009-dispatch-timing-revision.md) — staggered-dispatch gap constant revised from 400-800ms to 150-350ms; primitive unchanged)
 
 ## Date
 2026-03-31

@@ -36,3 +36,13 @@ class TestStaggeredDispatch:
         async for event in staggered_dispatch([], min_gap_ms=100, max_gap_ms=100):
             results.append(event)
         assert results == []
+
+    async def test_defaults_are_tightened_range(self) -> None:
+        """The default gap range is 150-350ms per FEAT-003 + ADR-0009."""
+        import inspect
+
+        from app.adapters.api.dispatch import staggered_dispatch
+
+        sig = inspect.signature(staggered_dispatch)
+        assert sig.parameters["min_gap_ms"].default == 150
+        assert sig.parameters["max_gap_ms"].default == 350
