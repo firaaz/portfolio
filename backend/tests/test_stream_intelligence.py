@@ -118,9 +118,10 @@ class TestStreamIntelligence:
         types = [_event_key(e) for e in events]
 
         assert types[0] == "STATE_SNAPSHOT"
+        assert types[1] == "ux:signal"
         # Two recedes (education-be, skill-docker) then two focuses (hero, contact)
-        # then one bridge.
-        assert types[1:] == [
+        # then one bridge — cascade starts at index 2, after the signal.
+        assert types[2:] == [
             "ux:recede",
             "ux:recede",
             "ux:focus",
@@ -176,8 +177,11 @@ class TestStreamIntelligence:
             response = client.get("/api/agent/stream")
 
         events = _parse_sse(response.text)
-        assert len(events) == 1
+        # Signal fires pre-LLM; only the five-verb cascade is suppressed.
+        assert len(events) == 2
         assert events[0]["type"] == "STATE_SNAPSHOT"
+        assert _event_key(events[1]) == "ux:signal"
+        # No five-verb cascade emitted — suppression of recede/focus/bridge confirmed.
 
     def test_llm_exception_suppresses_events(self) -> None:
         calls: list[int] = []
@@ -197,8 +201,11 @@ class TestStreamIntelligence:
 
         events = _parse_sse(response.text)
         assert len(calls) == 1
-        assert len(events) == 1
+        # Signal fires pre-LLM; only the five-verb cascade is suppressed.
+        assert len(events) == 2
         assert events[0]["type"] == "STATE_SNAPSHOT"
+        assert _event_key(events[1]) == "ux:signal"
+        # No five-verb cascade emitted — suppression of recede/focus/bridge confirmed.
 
     def test_no_focus_event_below_threshold(self) -> None:
         # All items mid-band (0.5) -> neither focus nor recede fires.
@@ -224,4 +231,32 @@ class TestStreamIntelligence:
 
         events = _parse_sse(response.text)
         types = [_event_key(e) for e in events]
-        assert types == ["STATE_SNAPSHOT"]
+        assert types == ["STATE_SNAPSHOT", "ux:signal"]
+
+    def test_signal_fires_second_after_snapshot(self) -> None:
+        """Signal is the 2nd event, positioned between snapshot and the cascade."""
+        result = IntelligenceResult(
+            items=[ItemResult(id="hero", importance=0.9, emphasis=["title"])],
+        )
+        fake = _fake_llm([], result)
+
+        with (
+            patch(
+                "app.adapters.api.stream_route._get_llm_port",
+                return_value=fake,
+            ),
+            patch(
+                "app.adapters.api.stream_route.staggered_dispatch",
+                _zero_gap_dispatch,
+            ),
+        ):
+            response = client.get(
+                "/api/agent/stream",
+                headers={"Referer": "https://linkedin.com/example"},
+            )
+
+        events = _parse_sse(response.text)
+        types = [_event_key(e) for e in events]
+        assert len(types) >= 2
+        assert types[0] == "STATE_SNAPSHOT"
+        assert types[1] == "ux:signal"

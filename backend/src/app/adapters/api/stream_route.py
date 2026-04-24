@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 
 from app.adapters.api.dispatch import staggered_dispatch
 from app.adapters.api.referrer import get_visitor_context
+from app.adapters.api.signal_builder import build_signal_event
 from app.adapters.api.ux_events import intelligence_to_events, ux_snapshot_event
 from app.adapters.cache.memory_cache import MemoryCache
 from app.adapters.content.yaml_loader import load_catalog
@@ -48,10 +49,11 @@ def _get_llm_port() -> object | None:
 
 
 async def _generate_stream(context: VisitorContext) -> AsyncGenerator[str]:
-    """Yield AG-UI events: snapshot, then five-verb events from SelectStrategy."""
+    """Yield AG-UI events: snapshot, signal, then five-verb events."""
     catalog = load_catalog()
     default_state = content_to_ux_state(catalog)
     yield ux_snapshot_event(default_state)
+    yield build_signal_event(context)
 
     llm = _get_llm_port()
     if llm is None:
