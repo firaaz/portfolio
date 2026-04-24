@@ -1,4 +1,4 @@
-"""Command route — processes visitor commands via LLM and streams SSE response."""
+"""Command route — processes visitor commands via ComposeStrategy and streams SSE."""
 
 import os
 from collections.abc import AsyncGenerator
@@ -7,27 +7,17 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.adapters.api.ux_events import ux_salience_event, ux_snapshot_event
+from app.adapters.api.dispatch import staggered_dispatch
+from app.adapters.api.ux_events import intelligence_to_events, ux_snapshot_event
 from app.adapters.content.yaml_loader import load_catalog
-from app.domain.agent import assemble_ux_state
 from app.domain.content import content_to_ux_state
 from app.domain.context import VisitorContext
-from app.domain.ux import UXState
+from app.domain.evaluation import evaluate_intelligence
+from app.domain.session import VisitorProfile
+from app.domain.strategies.compose import SYSTEM_PROMPT as COMPOSE_SYSTEM_PROMPT
+from app.domain.strategies.compose import ComposeStrategy
 
 router = APIRouter(prefix="/api/agent")
-
-
-def _salience_changes(
-    default: UXState,
-    refined: UXState,
-) -> list[dict[str, float | str]]:
-    """Compute salience differences between default and refined UX states."""
-    default_map = {item.id: item.salience for item in default.items}
-    return [
-        {"id": item.id, "salience": item.salience}
-        for item in refined.items
-        if item.salience != default_map.get(item.id)
-    ]
 
 
 class CommandRequest(BaseModel):
@@ -40,13 +30,13 @@ def _get_llm_port() -> object | None:
     """Create an LLM port if an API key is configured, else None."""
     if not os.environ.get("LLM_API_KEY"):
         return None
-    from app.adapters.llm.provider import LLMProvider
+    from app.adapters.llm.pydantic_ai_provider import PydanticAIProvider
 
-    return LLMProvider()
+    return PydanticAIProvider()
 
 
 async def _generate_command_stream(text: str) -> AsyncGenerator[str]:
-    """Yield AG-UI events for a command: UX snapshot, then optional salience."""
+    """Yield AG-UI events: snapshot, then five-verb events from ComposeStrategy."""
     catalog = load_catalog()
     default_state = content_to_ux_state(catalog)
     yield ux_snapshot_event(default_state)
@@ -56,15 +46,26 @@ async def _generate_command_stream(text: str) -> AsyncGenerator[str]:
         return
 
     context = VisitorContext(command=text)
-    refined = await assemble_ux_state(context, catalog, llm)
-    if refined != default_state:
-        changes = _salience_changes(default_state, refined)
-        yield ux_salience_event(changes)
+    profile = VisitorProfile(session_id="anonymous", context=context)
+    strategy = ComposeStrategy()
+    result = await evaluate_intelligence(
+        strategy,
+        COMPOSE_SYSTEM_PROMPT,
+        llm,
+        profile,
+        catalog,
+    )
+    if result is None:
+        return
+
+    events = intelligence_to_events(result)
+    async for ev in staggered_dispatch(events):
+        yield ev
 
 
 @router.post("/command")
 async def command(body: CommandRequest) -> StreamingResponse:
-    """Process a visitor command and stream updated UX state."""
+    """Process a visitor command and stream five-verb UX events."""
     return StreamingResponse(
         _generate_command_stream(body.text),
         media_type="text/event-stream",
