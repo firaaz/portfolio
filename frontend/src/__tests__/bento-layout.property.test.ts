@@ -3,8 +3,10 @@ import { describe, it } from "vitest";
 import type { UXItem } from "../store/ux-store";
 import { CELL_BUDGET, computeLayout } from "../canvas/bento-layout";
 
+// Cast is safe while all UXItem fields beyond the record keys are optional.
+// If a required field is added to UXItem, update itemArb to include it.
 const itemArb = fc.record({
-  id: fc.string({ minLength: 1, maxLength: 10 }),
+  id: fc.uuid(),
   salience: fc.double({ min: 0, max: 1, noNaN: true }),
   group: fc.constantFrom("work", "identity", "meta"),
   molecule: fc.constantFrom("project", "experience", "skill", "contact"),
@@ -90,6 +92,49 @@ describe("computeLayout — invariants", () => {
           .filter((e) => e.hidden)
           .every((e) => e.colSpan === 0 && e.rowSpan === 0 && e.tier === 0);
       }),
+    );
+  });
+
+  it("all tier values are in [0, 5]", () => {
+    fc.assert(
+      fc.property(itemsArb, (items) => {
+        const layout = computeLayout(items);
+        return layout.every((e) => e.tier >= 0 && e.tier <= 5);
+      }),
+    );
+  });
+
+  it("output IDs are a permutation of input IDs", () => {
+    fc.assert(
+      fc.property(itemsArb, (items) => {
+        const layout = computeLayout(items);
+        const inputIds = items.map((i) => i.id).sort();
+        const outputIds = layout.map((e) => e.id).sort();
+        return JSON.stringify(inputIds) === JSON.stringify(outputIds);
+      }),
+    );
+  });
+
+  it("higher salience yields equal or higher tier (monotonicity across singletons)", () => {
+    fc.assert(
+      fc.property(
+        fc.double({ min: 0, max: 1, noNaN: true }),
+        fc.double({ min: 0, max: 1, noNaN: true }),
+        (sA, sB) => {
+          const makeSingleton = (id: string, salience: number): UXItem => ({
+            id,
+            salience,
+            group: "work",
+            molecule: "project",
+            data: {},
+          });
+          const [entryA] = computeLayout([makeSingleton("a", sA)]);
+          const [entryB] = computeLayout([makeSingleton("b", sB)]);
+          if (!entryA || !entryB) return false;
+          if (sA >= sB) return entryA.tier >= entryB.tier;
+          return entryA.tier <= entryB.tier;
+        },
+      ),
     );
   });
 });
