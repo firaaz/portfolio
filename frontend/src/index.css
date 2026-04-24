@@ -266,3 +266,16 @@
     overflow: hidden;
   }
 }
+
+.canvas-shell {
+  position: relative;
+  width: 100%;
+}
+
+.canvas-chrome {
+  position: fixed;
+  bottom: 16px;
+  right: 24px;
+  z-index: 10;
+  pointer-events: auto;
+}

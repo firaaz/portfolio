@@ -7,6 +7,8 @@ afterEach(cleanup);
 describe("App", () => {
   it("mounts without error", () => {
     render(<App />);
-    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: /content/i }),
+    ).toBeInTheDocument();
   });
 });
