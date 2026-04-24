@@ -38,14 +38,21 @@ function quantize(salience: number): { tier: Tier; cols: number; rows: number } 
   return { tier: 0, cols: 0, rows: 0 };
 }
 
-export function computeLayout(items: UXItem[]): LayoutEntry[] {
-  const sorted = [...items]
+function sortBySalience(items: UXItem[]): UXItem[] {
+  // Explicit index tiebreaker makes stability a defined contract, not an engine
+  // assumption. Task 4 property tests assert descending-salience order where ties
+  // preserve input order — this sort is load-bearing for those invariants.
+  return [...items]
     .map((item, index) => ({ item, index }))
     .sort((a, b) => {
       const delta = b.item.salience - a.item.salience;
       return delta !== 0 ? delta : a.index - b.index;
     })
     .map((x) => x.item);
+}
+
+export function computeLayout(items: UXItem[]): LayoutEntry[] {
+  const sorted = sortBySalience(items);
 
   const entries: LayoutEntry[] = [];
   let used = 0;
@@ -55,7 +62,7 @@ export function computeLayout(items: UXItem[]): LayoutEntry[] {
   for (const item of sorted) {
     const q = quantize(item.salience);
 
-    let tier: Tier = q.tier;
+    let tier = q.tier;
     let cols = q.cols;
     let rows = q.rows;
 
@@ -75,7 +82,7 @@ export function computeLayout(items: UXItem[]): LayoutEntry[] {
         rowSpan: 0,
         hidden: true,
       });
-      overflow = true;
+      if (tier !== 0) overflow = true;
       continue;
     }
 
