@@ -41,6 +41,7 @@ export function ProjectCard({
           ))}
         </ul>
       )}
+      {/* Reserved hook for Slice 2 density-aware content (spec 003 §No-Gos). Inert in FEAT-003. */}
       <div className="breathing-extra opacity-0 max-h-0 overflow-hidden" />
     </article>
   );

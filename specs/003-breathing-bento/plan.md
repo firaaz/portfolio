@@ -28,7 +28,7 @@
 **Modified:**
 - `docs/adrs/0007-breathing-motion-language.md` — `superseded by` field only
 - `frontend/src/canvas/Canvas.tsx` — delegate content area to `<Bento>`, replace "Loading…" with neutral render
-- `frontend/src/index.css` — remove `.zone-*`, `.surface-grid`, `.breathing-extra`; add `.bento-grid`, `.bento-card`, mobile collapse
+- `frontend/src/index.css` — remove `.zone-*`, `.surface-grid`, `.breathing-extra` CSS rule; add `.bento-grid`, `.bento-card`, mobile collapse (`breathing-extra` slot markup kept in molecules as reserved hook for Slice 2 density-aware content)
 - `frontend/src/__tests__/Canvas.test.tsx` — rewrite for new rendering
 - `frontend/package.json` — add `fast-check` dev dep
 - `backend/src/app/adapters/api/stream_route.py` — emit `ux:signal` between snapshot and LLM await
