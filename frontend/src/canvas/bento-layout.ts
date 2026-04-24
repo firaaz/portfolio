@@ -19,15 +19,18 @@ interface TierSpec {
   rows: number;
 }
 
+// Every non-dot tier has width=2 so spans tile cleanly against a 4-wide hero
+// on a 6-col grid. Tier-4 is portrait (2×3) rather than landscape (3×2) so
+// it can occupy the 2-col residual strip beside the hero without overflow.
 const TIER_SPECS: TierSpec[] = [
   { threshold: 0.85, tier: 5, cols: 4, rows: 3 },
-  { threshold: 0.7, tier: 4, cols: 3, rows: 2 },
+  { threshold: 0.7, tier: 4, cols: 2, rows: 3 },
   { threshold: 0.55, tier: 3, cols: 2, rows: 2 },
   { threshold: 0.35, tier: 2, cols: 2, rows: 1 },
   { threshold: 0.15, tier: 1, cols: 1, rows: 1 },
 ];
 
-const DEMOTED_HERO = { tier: 4 as Tier, cols: 3, rows: 2 };
+const DEMOTED_HERO = { tier: 4 as Tier, cols: 2, rows: 3 };
 
 function quantize(salience: number): {
   tier: Tier;

@@ -23,12 +23,12 @@ describe("computeLayout — quantization thresholds", () => {
     });
   });
 
-  it("salience 0.849 → tier 4 (3×2)", () => {
+  it("salience 0.849 → tier 4 (2×3 portrait)", () => {
     const [entry] = computeLayout([makeItem("a", 0.849)]);
     expect(entry).toMatchObject({
       tier: 4,
-      colSpan: 3,
-      rowSpan: 2,
+      colSpan: 2,
+      rowSpan: 3,
       hidden: false,
     });
   });
