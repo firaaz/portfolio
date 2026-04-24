@@ -85,7 +85,7 @@ The three-layer methodology (TDD + BDD + EDD from `project_testing_methodology.m
 - **Budget-overflow strategy.** At 36 cells with typical catalogs (12–20 items), most content fits. Edge case: a catalog where the lowest-salience tail would be truncated. First cut: tail goes `aria-hidden`, silently dropped from paint. If truncation shows up in real traffic, a later slice exposes them via a "...more" reveal. Not this slice.
 - **Hero uniqueness vs. tie score.** Two items with identical salience `>= 0.85` — which becomes hero? Stable sort preserves input order; input order comes from catalog load order. Deterministic but arguably arbitrary. Acceptable for now; LLM prompting already biases hero eligibility implicitly (the hero item typically has the highest score by design).
 - **Single-viewport enforcement under re-layout.** `100dvh - padding` is the budget; `grid-template-rows: repeat(6, 1fr)` ensures rows never overflow. Container queries on cards ensure content never overflows its cell (existing practice). No vertical scroll introduced.
-- **`ux:signal` confidence + reasoning generation.** The synthesized signal needs short, grounded reasoning text. Simplest path: synthesize in `intelligence_to_events` from the `referrer_type` passed into the strategy (`"LinkedIn visitor — elevating contact and leadership"`). Confidence derived from the strategy name (Select with known referrer → 0.6–0.8; unknown → 0.3–0.5). Moving reasoning into `IntelligenceResult` as an optional field is possible but out of appetite this slice.
+- **`ux:signal` confidence + reasoning generation.** The synthesized signal needs short, grounded reasoning text. Simplest path: synthesize from the `referrer_type` (`"LinkedIn visitor — elevating contact and leadership"`). Confidence derived per-persona (known referrer → 0.6–0.8; unknown → 0.3–0.5). Moving reasoning into `IntelligenceResult` as an optional field is possible but out of appetite this slice. *Built as:* dedicated `signal_builder.py` module invoked by the routes before `intelligence_to_events`, keeping the transformer pure on `IntelligenceResult`.
 - **Motion library spelling.** The dep is `motion@^12.38.0` (renamed from `framer-motion`). Imports are `import { motion, useReducedMotion } from "motion/react"`. Noted to avoid time lost hunting the old import path.
 
 ## No-Gos
@@ -106,15 +106,18 @@ The three-layer methodology (TDD + BDD + EDD from `project_testing_methodology.m
 - `frontend/src/canvas/__tests__/bento-layout.property.test.ts` — fast-check invariants
 - `frontend/src/canvas/__tests__/Bento.test.tsx` — component / BDD
 - `frontend/e2e/bento-cascade.spec.ts` — Playwright BDD scenarios
+- `backend/src/app/adapters/api/signal_builder.py` — synthesize `ux:signal` (confidence + reasoning) from `VisitorContext`
+- `backend/tests/test_signal_builder.py` — unit tests for the synthesizer
 - `docs/adrs/0008-motion-flip-under-layout-change.md` — supersedes 0007
+- `docs/adrs/0009-dispatch-timing-revision.md` — narrows ADR-0003 gaps to 150–350ms
 
 **Modified**
 - `frontend/src/canvas/Canvas.tsx` — outer shell + chrome, delegates to `<Bento>`
-- `frontend/src/index.css` — remove `.zone-*`, `.surface-grid`, `.breathing-extra`; add `.bento-grid`, `.bento-card`
+- `frontend/src/index.css` — remove `.zone-*`, `.surface-grid`, `.breathing-extra` CSS rule; add `.bento-grid`, `.bento-card` (`breathing-extra` slot markup kept in molecules as reserved hook for Slice 2 density-aware content)
 - `frontend/package.json` — add `fast-check` dev dep
-- `backend/src/app/adapters/api/stream_route.py` — emit STATE_SNAPSHOT before LLM; emit `ux:signal` first
-- `backend/src/app/adapters/api/command_route.py` — emit `ux:signal` first in cascade
-- `backend/src/app/adapters/api/ux_events.py` — `intelligence_to_events` prepends `ux_signal_event`
+- `backend/src/app/adapters/api/stream_route.py` — emit STATE_SNAPSHOT; call `build_signal_event(context)` before LLM await, then transform result
+- `backend/src/app/adapters/api/command_route.py` — call `build_signal_event(context)` first in cascade, then transform
+- `backend/src/app/adapters/api/ux_events.py` — add `ux_signal_event()` formatter helper; `intelligence_to_events` unchanged (routes prepend signal, transformer stays pure on `IntelligenceResult`)
 - `backend/src/app/adapters/api/dispatch.py` — default gaps 150–350ms
 - `docs/adrs/0007-breathing-motion-language.md` — update `superseded by` field
 

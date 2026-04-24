@@ -100,8 +100,9 @@ class TestCommandIntelligence:
         types = [_event_key(e) for e in events]
 
         assert types[0] == "STATE_SNAPSHOT"
-        # Order: 1 recede, 2 focuses, 1 bridge, then 2 surfaces at the end.
-        assert types[1:] == [
+        assert types[1] == "ux:signal"
+        # Order after signal: 1 recede, 2 focuses, 1 bridge, then 2 surfaces at the end.
+        assert types[2:] == [
             "ux:recede",
             "ux:focus",
             "ux:focus",
@@ -154,8 +155,40 @@ class TestCommandIntelligence:
             )
 
         events = _parse_sse(response.text)
-        assert len(events) == 1
+        # Signal fires unconditionally; cascade is suppressed on validation failure.
+        assert len(events) == 2
         assert events[0]["type"] == "STATE_SNAPSHOT"
+        assert _event_key(events[1]) == "ux:signal"
+        # No five-verb cascade events — validation failure suppresses them.
+
+    def test_signal_fires_second_after_snapshot(self) -> None:
+        """Signal is the 2nd event in commands, between snapshot and cascade."""
+        result = IntelligenceResult(
+            items=[ItemResult(id="hero", importance=0.9, emphasis=["title"])],
+        )
+        fake = _fake_llm([], result)
+
+        with (
+            patch(
+                "app.adapters.api.command_route._get_llm_port",
+                return_value=fake,
+            ),
+            patch(
+                "app.adapters.api.command_route.staggered_dispatch",
+                _zero_gap_dispatch,
+            ),
+        ):
+            response = client.post(
+                "/api/agent/command",
+                json={"text": "show projects"},
+                headers={"Referer": "https://github.com/example"},
+            )
+
+        events = _parse_sse(response.text)
+        types = [_event_key(e) for e in events]
+        assert len(types) >= 2
+        assert types[0] == "STATE_SNAPSHOT"
+        assert types[1] == "ux:signal"
 
     def test_surface_event_carries_generated_payload(self) -> None:
         result = IntelligenceResult(

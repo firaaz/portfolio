@@ -190,86 +190,54 @@
   background: rgba(28, 36, 48, 0.02);
 }
 
-/* Grid shell */
-.surface-grid {
+/* Bento grid shell (FEAT-003 / ADR-0008) */
+.bento-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: 1.4fr 1fr auto;
-  gap: 2px;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  /* dense repacking enables gap-filling but can desync visual and DOM focus order.
+     Cards set explicit grid-column/grid-row inline (see Bento.tsx) to preserve
+     keyboard focus order (WCAG 2.4.3). FLIP handled by motion.article layout (ADR-0008). */
+  grid-auto-flow: dense;
+  gap: 4px;
   height: 100dvh;
   max-width: 64rem;
   margin: 0 auto;
   padding: 32px;
+  box-sizing: border-box;
 }
 
-/* Zone positions */
-.zone {
-  padding: 24px;
-}
-.zone-identity {
-  grid-column: 1 / 5;
-  grid-row: 1;
-}
-.zone-featured {
-  grid-column: 5 / 13;
-  grid-row: 1;
-}
-.zone-experience {
-  grid-column: 1 / 5;
-  grid-row: 2;
-}
-.zone-other-work {
-  grid-column: 5 / 9;
-  grid-row: 2;
-}
-.zone-skills {
-  grid-column: 9 / 13;
-  grid-row: 2;
-}
-.zone-contact {
-  grid-column: 1 / 5;
-  grid-row: 3;
-}
-.zone-education {
-  grid-column: 5 / 9;
-  grid-row: 3;
-}
-.zone-command {
-  grid-column: 9 / 13;
-  grid-row: 3;
-}
-
-/* Breathing: grid-template transitions (ADR-0007 allowlist) */
-.surface-grid {
-  transition:
-    grid-template-rows 600ms cubic-bezier(0.4, 0, 0.2, 1),
-    gap 600ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Content reveal during breathing */
-.breathing-extra {
-  opacity: 0;
-  max-height: 0;
+.bento-card {
+  background: rgba(28, 36, 48, 0.05);
+  border: 1px solid rgba(28, 36, 48, 0.08);
+  padding: 16px;
   overflow: hidden;
-  transition: opacity 450ms ease-out 150ms;
+  transition: background 0.3s ease-out;
 }
-[data-breathing="true"] .breathing-extra {
-  opacity: 1;
-  max-height: none;
-}
-
-/* Deprioritized zone dimming */
-.zone-dimmed {
-  opacity: 0.45;
-  transition: opacity 500ms ease-out;
-}
-.zone-dimmed:hover {
-  opacity: 1;
-  transition: opacity 300ms ease-out;
+.bento-card:hover {
+  background: rgba(28, 36, 48, 0.07);
 }
 
+/* Mobile collapse */
+@media (max-width: 640px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-flow: row;
+    height: auto;
+    min-height: 100dvh;
+    padding: 16px;
+  }
+  .bento-card {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+}
+
+/* Reduced motion — Framer Motion handles FLIP disable via useReducedMotion;
+   CSS mirror is defensive for any transitions added later. */
 @media (prefers-reduced-motion: reduce) {
-  .surface-grid {
+  .bento-card {
     transition: none;
   }
   .surface-inset,
@@ -281,43 +249,8 @@
 }
 
 @media (max-height: 800px) {
-  .surface-grid {
+  .bento-grid {
     padding: 16px;
-  }
-  .zone {
-    padding: 16px;
-  }
-}
-
-@media (max-width: 767px) {
-  html {
-    overflow: auto;
-  }
-  .surface-grid {
-    height: auto;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    padding: 16px;
-    overflow-y: auto;
-    transition: none !important;
-  }
-  .zone {
-    padding: 16px;
-  }
-  .zone-identity,
-  .zone-featured,
-  .zone-experience,
-  .zone-other-work,
-  .zone-skills,
-  .zone-contact,
-  .zone-education,
-  .zone-command {
-    grid-column: 1;
-    grid-row: auto;
-  }
-  [data-breathing="true"] .breathing-extra {
-    opacity: 0;
-    max-height: 0;
   }
 }
 
@@ -332,4 +265,17 @@
     @apply font-sans;
     overflow: hidden;
   }
+}
+
+.canvas-shell {
+  position: relative;
+  width: 100%;
+}
+
+.canvas-chrome {
+  position: fixed;
+  bottom: 16px;
+  right: 24px;
+  z-index: 10;
+  pointer-events: auto;
 }
