@@ -1,13 +1,13 @@
 export function ProjectCard({
   title,
   description,
-  tech,
+  tech = [],
   emphasis,
   generated,
 }: {
   title: string;
   description: string;
-  tech: string[];
+  tech?: string[];
   emphasis?: string[];
   generated?: Record<string, string>;
 }) {
