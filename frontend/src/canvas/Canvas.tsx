@@ -8,7 +8,7 @@ const NEUTRAL_SALIENCE = 0.5;
 function neutralize(items: UXItem[]): UXItem[] {
   if (items.length === 0) return [];
   const hasAnyNonZero = items.some((i) => i.salience > 0);
-  if (hasAnyNonZero) return items;
+  if (hasAnyNonZero) return [...items];
   return items.map((i) => ({ ...i, salience: NEUTRAL_SALIENCE }));
 }
 
@@ -21,7 +21,7 @@ export function Canvas({
   const rendered = neutralize(items);
 
   return (
-    <main className="canvas-shell">
+    <main className="canvas-shell" data-zone="canvas">
       <Bento items={rendered} />
       <div className="canvas-chrome">
         <div className="flex items-center gap-3">
