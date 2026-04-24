@@ -1,88 +1,64 @@
 # Status
 
 ## Current State (2026-04-24)
-FEAT-002 and FEAT-003 **merged into `develop`**. Merge ceremony done with `--no-ff` to preserve feature-branch topology: `47216b6` (feat/002-stream-integration) then `c6bc033` (feat/003-breathing-bento). Both feature branches deleted locally after clean `git branch -d` (fully-merged verification). `develop` is now 92 commits ahead of `origin/develop` — **unpushed**, held for explicit user instruction.
+FEAT-002 and FEAT-003 **merged into `develop`**. Merge ceremony used `--no-ff` to preserve feature-branch topology: `47216b6` (feat/002-stream-integration) then `c6bc033` (feat/003-breathing-bento). Both feature branches deleted locally after `git branch -d` confirmed fully-merged. `develop` is now 93 commits ahead of `origin/develop` — **unpushed**, held for explicit user instruction.
 
-FEAT-003 breathing bento is live end-to-end: final review cleared, manual browser verification passed, tier retune (commit `6519142`) confirmed the grid fills cleanly.
+FEAT-003 breathing bento is live end-to-end: salience-driven 6×6 grid, `motion.article layout` FLIP with spring physics (stiffness 200, damping 22) per ADR-0008, pre-LLM `ux:signal` emission on both `/api/agent/stream` and `/api/agent/command`, staggered dispatch narrowed to 150–350ms per ADR-0009. Manual browser verification confirmed the grid fills cleanly after tier retune.
 
-**Manual verification outcome (commit `6519142`):** first pass revealed visible holes in the grid after a tier-5 hero claimed cols 1-4 — the 2-col residual strip couldn't host tier-4 (3×2 landscape) and `grid-auto-flow: dense` cannot fabricate fragments to fill gaps. Retuned `TIER_SPECS` so tier-4 is 2×3 portrait (same 6-cell area, 2-wide so it fits the strip). All non-dot tiers now share width=2 → clean tiling against a 4-wide hero on a 6-col grid. User confirmed the bento now fills completely. Further cohesion work (editorial rhythm, content-shape fit) deferred to a separate future feature.
+**Test counts on `develop`:** backend 181, frontend 106, e2e 4/5 passing (scenario 5 timeout — see Next Step).
 
-**Post-review (🟡 Conditional → cleared):** final review flagged three Important items that were fixed before handoff:
-- **Spec drift** (commit `0a114d2`) — spec.md + plan.md File maps updated to reflect the shipped seam (`signal_builder.py` owns signal synthesis; routes prepend before the transformer; `intelligence_to_events` stays pure on `IntelligenceResult`).
-- **`useDwell` orphan** (commit `95dfeab`) — hook was shaped for the deleted zone abstraction; deleted 49 LoC + 6 tests. Deferred slice B will collect dwell per bento card, a different shape.
-- **`breathing-extra` reserved slot** (commit `0a114d2`) — markup retained in `ProjectCard`/`ExperienceCard` as reserved hook for Slice 2 density-aware molecules; added one-line comment in each file making the reservation explicit. Tests already encode the structural contract.
+**Working tree clean.** No active feature branch. Next session starts from `develop`.
 
-Remaining Nice-to-have items deferred to Slice B session: e2e scenario 5 rewrite (hero > smallest-visible, not hero > tier-1), `data-zone="canvas"` convention doc note in `frontend/CLAUDE.md`, and a dispatch integration test pinning the 150–350ms range by elapsed time rather than by parameter inspection.
+## Accomplished This Session
 
-- Agent intelligence now drives a salience-based 6×6 bento grid (not 7 named zones). Cards resize by tier (5 = 4×3 cells, 1 = 1×1) via `motion.article layout` FLIP with spring physics (stiffness 200, damping 22) per ADR-0008.
-- Pre-LLM `ux:signal` emitted on both `/api/agent/stream` and `/api/agent/command` after `STATE_SNAPSHOT` so the agent's "thinking" is audible before the re-weight.
-- Staggered dispatch tightened to 150–350ms gaps (ADR-0009 supersedes ADR-0003's specific timing values).
-- **Test counts:** backend 181 passing, frontend 106 passing (was 112; dropped 6 `useDwell` tests in cleanup commit `95dfeab`), e2e 4/5 passing (1 timeout — see E2E note below).
-- **ADRs added:** ADR-0008 (transform allowed as FLIP bridge, scope-fenced to `.bento-card`), ADR-0009 (dispatch timing revision). ADR-0007 status field updated to "partially superseded by ADR-0008."
-- **New/changed files:** `canvas/Bento.tsx`, `canvas/bento-layout.ts`, `adapters/api/signal_builder.py`, `index.css` (zone CSS replaced by bento CSS), `bento-layout.test.ts`, `bento-layout.property.test.ts`, `bento-cascade.spec.ts`. Five deleted e2e specs (`smoke`, `visual`, `breathing`, `layout`, `capture-surface`) — all zone-pinned, fail by same root cause.
-- **Deferred:** manual browser verification (subjective "agent thought, then acted" feel); branch merges to `develop` pending that verification.
-
-## Accomplished This Session (FEAT-003, 13 tasks)
-
-1. **Task 1** — Drafted ADR-0008 (transform as FLIP bridge); updated ADR-0007 `partially-superseded-by` field.
-2. **Task 2** — Added `fast-check` dev dependency for property-based testing.
-3. **Task 3** — Pure `computeLayout()` function + TDD example tests (`bento-layout.test.ts`, 15 tests).
-4. **Task 4** — Property-based invariant tests for `computeLayout` (`bento-layout.property.test.ts`, 9 properties).
-5. **Task 5** — Tightened staggered dispatch to 150–350ms; drafted ADR-0009 to capture timing revision.
-6. **Task 6** — Added `signal_builder.py` (pre-LLM `ux:signal` builder) + `test_signal_builder.py` (5 tests).
-7. **Task 7** — Wired `ux:signal` emission into `stream_route.py` after `STATE_SNAPSHOT`; updated `test_stream_intelligence.py`.
-8. **Task 8** — Wired `ux:signal` emission into `command_route.py`; updated `test_command_intelligence.py`.
-9. **Task 9** — Built `Bento.tsx` component with `motion.article layout` FLIP, `data-tier` attributes, spring physics config.
-10. **Task 10** — CSS cutover: replaced zone CSS (`data-zone` selectors, 7 named zones) with bento CSS (`.bento-grid`, `.bento-card`, tier-based sizing). Reduced-motion guard added.
-11. **Task 11** — Canvas integration: swapped `ZoneLabel`-based layout in `Canvas.tsx` for `<Bento>`. Deleted `ZoneLabel.tsx`, `zone-map.ts`, and their tests. Deleted five zone-pinned e2e specs.
-12. **Task 12** — Wrote `bento-cascade.spec.ts` with 5 BDD scenarios: grid visible in 1s, LinkedIn → tier-5, GitHub → tier-4+, reduced-motion → no transform, hero area > tier-1.
-13. **Task 13** — Full verification sweep: 181 backend tests pass, 112 frontend tests pass, typecheck clean, biome lint clean on all FEAT-003 touched files (1 pre-existing warning in `SkillTag.test.tsx` left in place as out-of-scope debt), backend ruff errors are pre-existing (not in FEAT-003 touched files). E2E 4/5 pass — see E2E note.
-
-## E2E Note (Task 13)
-4/5 scenarios passed: grid visible in 1s, LinkedIn → tier-5, GitHub → tier-4+, reduced-motion → no transform.
-1/5 timed out: "hero card occupies visibly more area than tier-1 card" — `[data-tier="1"]` never appeared because the LLM cascade assigned all visible items salience above the tier-1 threshold (≥0.15 but ≤0.35 range unreached). LLM_API_KEY inferred available (tier-5 and tier-4 scenarios passed live). This is a test expectation gap: the scenario assumes a tier-1 card exists in the output, but a realistic LLM-weighted manifest may not produce one. Defer test fix to next session.
+1. **Final code reviewer dispatched** — verdict 🟡 Conditional with three Important items.
+2. **Spec drift reconciliation** (commit `0a114d2`) — `specs/003-breathing-bento/spec.md` and `plan.md` File maps updated to reflect the shipped seam: `signal_builder.py` owns signal synthesis, routes prepend it before `intelligence_to_events`, transformer stays pure on `IntelligenceResult`.
+3. **`useDwell` hook deletion** (commit `95dfeab`) — orphaned by zone→bento cutover; deleted 49 LoC + 77 LoC of tests (6 tests). Slice B's `useSignalCollector` will collect dwell per bento card, a different shape.
+4. **`breathing-extra` reservation documented** (commit `0a114d2`) — added one-line comment in `ProjectCard.tsx` and `ExperienceCard.tsx` making the Slice 2 density-aware slot explicit.
+5. **Manual browser verification pass 1 — found holes.** Tier-5 hero claimed cols 1-4, leaving a 2-col residual strip. Tier-4 at 3×2 landscape couldn't fit; `grid-auto-flow: dense` can repack but cannot fabricate fragments.
+6. **Tier retune** (commit `6519142`) — changed tier-4 to 2×3 portrait (same 6-cell area, 2-wide). All non-dot tiers now share width=2 → clean tiling against 4-wide hero on 6-col grid. User confirmed bento fills completely.
+7. **Merge ceremony** — `git merge --no-ff feat/002-stream-integration` into develop (`47216b6`), then `feat/003-breathing-bento` (`c6bc033`). Clean linear integration; no conflicts.
+8. **Branch cleanup** — `git branch -d feat/002-stream-integration feat/003-breathing-bento`. Lowercase `-d` confirmed both fully merged before deletion.
+9. **STATUS update** (commit `93b5272`) — pinned E2E scenario 5 as next session's entry point with two tradeoff-ordered options.
 
 ## Key Decisions
-- **ADR-0008:** `transform` transitions permitted as FLIP bridge, scope-fenced to `.bento-card` only — prevents bleed into hero/agent UI.
-- **ADR-0009:** Dispatch gaps narrowed to 150–350ms (was 400–800ms in ADR-0003). Rationale: user UX feedback from FEAT-002 manual E2E ("feels like CSS, not AI") confirmed pacing was too slow.
-- **Scope expansion during Task 12:** deleted `smoke.spec.ts`, `visual.spec.ts`, `capture-surface.spec.ts` alongside `breathing.spec.ts` and `layout.spec.ts` — all five were zone-pinned and failed by the same root cause. Collapsed into single `bento-cascade.spec.ts`.
-- **Lint fixes at Task 13:** `bento-layout.ts` function signature reformatted; `bento-layout.test.ts` import order + `toMatchObject` formatting; `bento-layout.property.test.ts` import order + non-null assertions changed to optional chaining. A parallel attempt to replace `!important` on mobile `.bento-card` with a higher-specificity selector (`.bento-grid > .bento-card`) was **reverted in commit `3d99651`** — inline styles from `motion.article`'s `style` prop have specificity 1000, so no class selector combination can override without `!important`. The `!important` pattern is load-bearing and was documented as intentional in Task 10's quality review.
+- **Tier retune over richer packer** — user picked the lightweight table fix (option 1 of 3) over building a residual-aware packer or explicit cell placement. Rationale: correct tiling unlocks shipping; editorial cohesion is a separate future feature worth its own pitch.
+- **Merge instead of extending branches** — FEAT-002 and FEAT-003 shipped as originally scoped; no reason to stack further slices on either.
+- **`develop` stays local** — 93-commit divergence from `origin/develop` is intentional; pushing requires explicit instruction, not auto-mode inference.
+- **No new ADRs this session.** ADR-0008, ADR-0009, and ADR-0007's `partially-superseded-by` update all landed in prior sessions.
 
 ## Blockers
-- **`develop` is 92 commits ahead of `origin/develop`** — unpushed. Not a code blocker, but a drift that will grow with each session. Decide at some point whether to push or stay local-only.
-- **E2E test 5 (hero > tier-1 area):** test expectation gap — tier-1 card not guaranteed in LLM output. Needs either a test fixture or the assertion should check hero > any non-hero card. **Picked up next session.**
-- ~~**Branch merges pending**~~ — ✅ done this session (`47216b6`, `c6bc033`). Feature branches deleted locally.
-- ~~**`useDwell` hook becomes orphan**~~ — resolved in commit `95dfeab` post-review; hook + tests deleted (49 + 77 LoC). Slice B's `useSignalCollector` will wire dwell per bento card, not per zone.
-- Pre-existing backend ruff E501 errors in `tests/test_session_models.py`, `tests/test_signal_route.py`, `tests/test_validation.py`, `src/app/domain/strategies/*.py` — none in FEAT-003 touched files; left as debt.
+- **`develop` is 93 commits ahead of `origin/develop`** — unpushed. Not a code blocker, but the drift will keep growing. Decide at some point whether to publish or stay local-only.
+- **E2E scenario 5 (hero > tier-1 area)** — test expectation gap; `[data-tier="1"]` not guaranteed in a realistic LLM-weighted manifest. **Picked up next session.**
+- Pre-existing backend ruff E501 errors in `tests/test_session_models.py`, `tests/test_signal_route.py`, `tests/test_validation.py`, `src/app/domain/strategies/*.py` — none in touched files; left as debt.
 
 ## Next Step
-**Fix e2e scenario 5 (`bento-cascade.spec.ts`, "hero card occupies visibly more area than tier-1 card").** Test pinned `[data-tier="1"]` as the comparison card, but a realistic LLM-weighted manifest for the LinkedIn persona assigned every visible item salience above the tier-1 threshold (≥0.15 but ≤0.35 unreached) — the selector never matched and Playwright timed out.
+**Fix e2e scenario 5 (`frontend/e2e/bento-cascade.spec.ts`, scenario "hero card occupies visibly more area than tier-1 card").** Test pins `[data-tier="1"]` as the comparison card, but the LLM cascade for the LinkedIn persona assigned every visible item salience above the tier-1 threshold (≥0.15 but ≤0.35 unreached). Selector never matched → Playwright timed out. Other 4 scenarios pass live against the real LLM.
 
 **Two options, pick at session start:**
-1. **Seeded fixture** — mock the backend strategy to return a manifest guaranteed to contain a tier-1 card. Pro: tests the tiling math deterministically. Con: stops exercising the live LLM path.
-2. **Rewrite assertion** — compare hero area against the smallest visible non-hero card (whichever tier it happens to be). Pro: stays end-to-end. Con: weaker invariant — only confirms hero > something, not hero > tier-1.
 
-Lean toward option 2 on first pass (cheaper, preserves e2e value); fall back to option 1 if the assertion becomes too permissive to catch regressions. File: `frontend/e2e/bento-cascade.spec.ts`. Scenario 5 is currently the only timeout among 5.
+1. **Seeded fixture** — mock the backend strategy to return a manifest guaranteed to contain a tier-1 card.
+   - Pro: tests the tiling math deterministically; no LLM flakiness.
+   - Con: stops exercising the live LLM path for this scenario — tier-quantization is tested but the full cascade is not.
+
+2. **Rewrite assertion** — compare hero area against the *smallest visible non-hero card*, whichever tier it happens to be.
+   - Pro: stays end-to-end, keeps the test probing real LLM output.
+   - Con: weaker invariant — only confirms hero > something, not hero > tier-1 specifically.
+
+Lean toward option 2 on first pass (cheaper to write, preserves e2e coverage). Fall back to option 1 if the new assertion can't catch plausible regressions (e.g., if it would pass even when hero is only marginally larger than a tier-3 card).
 
 ### Backlogged (not for next session unless user redirects)
-- **Deferred slice B** (`useSignalCollector` wiring in `Canvas.tsx`) — makes cursor signals causal and unlocks `AdaptStrategy` tier-2 path.
-- **Next feature pitch — bento cohesion beyond tiling.** Packing is now correct; editorial cohesion (visual rhythm, content-to-shape matching, narrative flow between cells) is a separate problem. Worth its own brainstorm + spec rather than bolted onto FEAT-003.
-- **Push `develop` to `origin`** — 92-commit divergence will keep growing.
+- **Deferred slice B** — wire `useSignalCollector` into `Canvas.tsx`. Makes cursor signals causal and unlocks `AdaptStrategy` tier-2 path. Dwell needs to be per bento card, not per zone.
+- **Next feature pitch — bento cohesion beyond tiling.** Packing is correct now; editorial cohesion (visual rhythm, content-to-shape matching, narrative flow between cells) is a distinct problem. Brainstorm → pitch → spec, not bolted onto FEAT-003.
+- **Push `develop` to `origin`** — 93-commit divergence will keep growing.
+- **Tooling-hooks slice (cairn cherry-pick)** — still backlogged behind feature work.
 
 ---
 
-## Previous State (FEAT-002, pre-FEAT-003)
-FEAT-002 **stream + command integration shipped on wire**. Branch `feat/002-stream-integration` (5 commits ahead of `develop`, not yet merged) makes the agent intelligence pipeline live end-to-end:
+## Previous State (pre-merge, FEAT-002 + FEAT-003 on feature branches)
+FEAT-003 breathing bento shipped on the `feat/003-breathing-bento` branch stacked on `feat/002-stream-integration`. 13 implementation tasks covered ADR drafting, pure `computeLayout` function, property-based tests, staggered-dispatch retune, pre-LLM signal builder, `Bento.tsx` motion component, CSS cutover from 7-zone to bento grid, Canvas integration, and e2e scenario set. Full history retained in git; session commits prefixed `feat(canvas)`, `feat(frontend)`, `feat(api)`, `chore(frontend)`, `docs(status)`, `docs`.
 
-- `stream_route.py` runs `SelectStrategy` via `PydanticAIProvider.evaluate()`, transforms the `IntelligenceResult` into five-verb events (`ux:recede → ux:focus → ux:bridge → ux:surface`), dispatches through `staggered_dispatch` (400–800ms gaps). Caches the result per `referrer_type`; cache hits still replay through staggered dispatch.
-- `command_route.py` runs `ComposeStrategy` on every POST (no cache); emits generated-copy `ux:surface` events alongside focus/recede/bridge.
-- New orchestrator `app/domain/evaluation.py::evaluate_intelligence()` runs any strategy through `LLMPort`, validates via `validate_result`, returns `None` on failure.
-- New transformer `ux_events.py::intelligence_to_events()` with thresholds `_FOCUS_MIN=0.6`, `_RECEDE_MAX=0.3`.
-- `MemoryCache` genericized to PEP 695 `MemoryCache[T]`.
-
-**Test counts:** backend 173 (up from 168 pre-slice), frontend 92 (unchanged), ruff clean on all touched files. Manual E2E verified working in browser with real `LLM_API_KEY` — events arrive, zones re-weight, cascade visible.
-
-**User-visible behavior gap (known):** the cascade functions but reads as "scripted CSS reveal," not "agent thinking." Two structural reasons: (1) `ux:signal` verb is never emitted — the agent's "I am thinking" narration is silent; (2) `useSignalCollector` hook exists but is not attached to `Canvas.tsx`, so cursor/dwell/scroll signals are dropped and `AdaptStrategy` can never fire. Both are spec'd in `specs/002-agent-intelligence/spec.md` but incompletely implemented.
+Prior FEAT-002 shipped `stream_route.py` running `SelectStrategy` via `PydanticAIProvider.evaluate()`, `command_route.py` running `ComposeStrategy`, `app/domain/evaluation.py::evaluate_intelligence()` orchestrator, `ux_events.py::intelligence_to_events()` transformer, `MemoryCache[T]` genericization. Both routes dispatch through `staggered_dispatch` (now 150–350ms post-FEAT-003).
 
 ## Story Map
 No story map
