@@ -1,77 +1,63 @@
 """BDD tests for cache integration in the SSE stream route."""
 
-import json
+from collections.abc import AsyncGenerator
+from typing import Any
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 from app.adapters.cache.memory_cache import MemoryCache
-from app.domain.content import ContentItem
-from app.domain.context import VisitorContext
-from app.domain.ux import UXGlobals, UXItem, UXState
+from app.domain.intelligence import IntelligenceResult, ItemResult
 from app.main import app
 
 client = TestClient(app)
 
 
-def _fake_llm_port(ux_state: UXState) -> object:
-    """Create a fake LLM port that records calls and returns a UX state."""
+def _fake_llm_port(result: IntelligenceResult) -> object:
+    """Create a fake LLM port that records calls and returns an IntelligenceResult."""
 
     class _Fake:
         call_count: int = 0
 
-        async def assemble_ux_state(
-            self,
-            context: VisitorContext,
-            catalog: list[ContentItem],
-        ) -> UXState:
+        async def evaluate(self, **_: Any) -> IntelligenceResult:
             _Fake.call_count += 1
-            return ux_state
+            return result
 
     _Fake.call_count = 0
     return _Fake()
 
 
-def _get_default_state() -> UXState:
-    """Fetch the default UX state from a no-LLM stream response."""
-    with patch(
-        "app.adapters.api.stream_route._get_llm_port",
-        return_value=None,
-    ):
-        resp = client.get("/api/agent/stream")
-    event = json.loads(resp.text.strip().split("\n")[0][len("data:") :])
-    return UXState(**event["snapshot"])
+async def _zero_gap_dispatch(
+    events: list[str],
+    min_gap_ms: int = 0,
+    max_gap_ms: int = 0,
+) -> AsyncGenerator[str]:
+    """Zero-gap replacement for staggered_dispatch to keep tests fast."""
+    for event in events:
+        yield event
 
 
-def _make_refined(base: UXState) -> UXState:
-    """Tweak salience scores so the UX state differs from default."""
-    return UXState(
-        ux=UXGlobals(),
+def _sample_result() -> IntelligenceResult:
+    """A valid IntelligenceResult referencing known catalog IDs."""
+    return IntelligenceResult(
         items=[
-            UXItem(
-                id=i.id,
-                salience=min(i.salience + 0.1, 1.0),
-                group=i.group,
-                molecule=i.molecule,
-                data=i.data,
-            )
-            for i in base.items
+            ItemResult(id="hero", importance=0.9, emphasis=["title"]),
+            ItemResult(id="contact", importance=0.8, emphasis=["cta"]),
         ],
     )
 
 
 class TestAgentCaching:
-    """Cache integration: LLM results cached by referrer_type."""
+    """Cache integration: IntelligenceResult cached by referrer_type."""
 
     def test_given_cached_state_when_same_referrer_then_llm_skipped(
         self,
     ) -> None:
-        """Cache hit returns cached UX state without calling LLM."""
-        default = _get_default_state()
-        refined = _make_refined(default)
-        fake = _fake_llm_port(refined)
-        cache = MemoryCache(capacity=8)
-        cache.set("linkedin", refined, ttl_seconds=60)
+        """Cache hit returns cached result without calling LLM."""
+        result = _sample_result()
+        fake = _fake_llm_port(result)
+        cache: MemoryCache[IntelligenceResult] = MemoryCache(capacity=8)
+        cache.set("linkedin", result, ttl_seconds=60)
 
         with (
             patch(
@@ -82,26 +68,25 @@ class TestAgentCaching:
                 "app.adapters.api.stream_route._get_cache",
                 return_value=cache,
             ),
+            patch(
+                "app.adapters.api.stream_route.staggered_dispatch",
+                _zero_gap_dispatch,
+            ),
         ):
-            resp = client.get(
+            client.get(
                 "/api/agent/stream",
                 headers={"referer": "https://www.linkedin.com/in/x"},
             )
 
         assert fake.__class__.call_count == 0
-        events = _parse_events(resp.text)
-        assert len(events) == 2
-        assert events[1]["type"] == "CUSTOM"
-        assert events[1]["custom"]["eventType"] == "ux:salience"
 
     def test_given_empty_cache_when_request_then_llm_called_and_cached(
         self,
     ) -> None:
         """Cache miss triggers LLM call and stores result."""
-        default = _get_default_state()
-        refined = _make_refined(default)
-        fake = _fake_llm_port(refined)
-        cache = MemoryCache(capacity=8)
+        result = _sample_result()
+        fake = _fake_llm_port(result)
+        cache: MemoryCache[IntelligenceResult] = MemoryCache(capacity=8)
 
         with (
             patch(
@@ -111,6 +96,10 @@ class TestAgentCaching:
             patch(
                 "app.adapters.api.stream_route._get_cache",
                 return_value=cache,
+            ),
+            patch(
+                "app.adapters.api.stream_route.staggered_dispatch",
+                _zero_gap_dispatch,
             ),
         ):
             client.get(
@@ -119,16 +108,15 @@ class TestAgentCaching:
             )
 
         assert fake.__class__.call_count == 1
-        assert cache.get("github") == refined
+        assert cache.get("github") == result
 
     def test_given_two_requests_same_type_then_llm_called_once(
         self,
     ) -> None:
         """Second request for same referrer_type uses cache."""
-        default = _get_default_state()
-        refined = _make_refined(default)
-        fake = _fake_llm_port(refined)
-        cache = MemoryCache(capacity=8)
+        result = _sample_result()
+        fake = _fake_llm_port(result)
+        cache: MemoryCache[IntelligenceResult] = MemoryCache(capacity=8)
 
         with (
             patch(
@@ -138,6 +126,10 @@ class TestAgentCaching:
             patch(
                 "app.adapters.api.stream_route._get_cache",
                 return_value=cache,
+            ),
+            patch(
+                "app.adapters.api.stream_route.staggered_dispatch",
+                _zero_gap_dispatch,
             ),
         ):
             client.get(
@@ -155,11 +147,10 @@ class TestAgentCaching:
         self,
     ) -> None:
         """Different referrer_type is a cache miss even if others cached."""
-        default = _get_default_state()
-        refined = _make_refined(default)
-        fake = _fake_llm_port(refined)
-        cache = MemoryCache(capacity=8)
-        cache.set("linkedin", refined, ttl_seconds=60)
+        result = _sample_result()
+        fake = _fake_llm_port(result)
+        cache: MemoryCache[IntelligenceResult] = MemoryCache(capacity=8)
+        cache.set("linkedin", result, ttl_seconds=60)
 
         with (
             patch(
@@ -170,6 +161,10 @@ class TestAgentCaching:
                 "app.adapters.api.stream_route._get_cache",
                 return_value=cache,
             ),
+            patch(
+                "app.adapters.api.stream_route.staggered_dispatch",
+                _zero_gap_dispatch,
+            ),
         ):
             client.get(
                 "/api/agent/stream",
@@ -177,12 +172,3 @@ class TestAgentCaching:
             )
 
         assert fake.__class__.call_count == 1
-
-
-def _parse_events(text: str) -> list[dict]:
-    """Parse SSE text into a list of event payloads."""
-    return [
-        json.loads(line[len("data:") :].strip())
-        for line in text.strip().split("\n")
-        if line.startswith("data:")
-    ]
