@@ -37,7 +37,7 @@ describe("Canvas", () => {
     });
     render(<Canvas onPresenceDotClick={vi.fn()} />);
     const card = screen.getByTestId("bento-card-hero");
-    // Neutral salience 0.5 -> tier 3 -> colSpan 2
+    // Neutral salience 0.5 falls in [0.35, 0.55) -> tier 2 -> colSpan 2
     const style = card.getAttribute("style") ?? "";
     expect(style).toMatch(/grid-column:\s*span\s*2/);
   });
