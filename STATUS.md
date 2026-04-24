@@ -1,7 +1,9 @@
 # Status
 
 ## Current State (2026-04-24)
-FEAT-003 **breathing bento shipped on wire**, final review cleared, manual browser verification passed. Branch `feat/003-breathing-bento` stacked on unmerged `feat/002-stream-integration` — ~25 commits ahead covering the full bento cutover, post-review cleanup, and a manual-verification tier retune.
+FEAT-002 and FEAT-003 **merged into `develop`**. Merge ceremony done with `--no-ff` to preserve feature-branch topology: `47216b6` (feat/002-stream-integration) then `c6bc033` (feat/003-breathing-bento). Both feature branches deleted locally after clean `git branch -d` (fully-merged verification). `develop` is now 92 commits ahead of `origin/develop` — **unpushed**, held for explicit user instruction.
+
+FEAT-003 breathing bento is live end-to-end: final review cleared, manual browser verification passed, tier retune (commit `6519142`) confirmed the grid fills cleanly.
 
 **Manual verification outcome (commit `6519142`):** first pass revealed visible holes in the grid after a tier-5 hero claimed cols 1-4 — the 2-col residual strip couldn't host tier-4 (3×2 landscape) and `grid-auto-flow: dense` cannot fabricate fragments to fill gaps. Retuned `TIER_SPECS` so tier-4 is 2×3 portrait (same 6-cell area, 2-wide so it fits the strip). All non-dot tiers now share width=2 → clean tiling against a 4-wide hero on a 6-col grid. User confirmed the bento now fills completely. Further cohesion work (editorial rhythm, content-shape fit) deferred to a separate future feature.
 
@@ -47,17 +49,25 @@ Remaining Nice-to-have items deferred to Slice B session: e2e scenario 5 rewrite
 - **Lint fixes at Task 13:** `bento-layout.ts` function signature reformatted; `bento-layout.test.ts` import order + `toMatchObject` formatting; `bento-layout.property.test.ts` import order + non-null assertions changed to optional chaining. A parallel attempt to replace `!important` on mobile `.bento-card` with a higher-specificity selector (`.bento-grid > .bento-card`) was **reverted in commit `3d99651`** — inline styles from `motion.article`'s `style` prop have specificity 1000, so no class selector combination can override without `!important`. The `!important` pattern is load-bearing and was documented as intentional in Task 10's quality review.
 
 ## Blockers
-- **E2E test 5 (hero > tier-1 area):** test expectation gap — tier-1 card not guaranteed in LLM output. Needs either a test fixture or the assertion should check hero > any non-hero card.
-- **Branch merges pending:** `feat/002-stream-integration` → `develop`, then `feat/003-breathing-bento` → `develop`. Defer to after manual browser verification.
+- **`develop` is 92 commits ahead of `origin/develop`** — unpushed. Not a code blocker, but a drift that will grow with each session. Decide at some point whether to push or stay local-only.
+- **E2E test 5 (hero > tier-1 area):** test expectation gap — tier-1 card not guaranteed in LLM output. Needs either a test fixture or the assertion should check hero > any non-hero card. **Picked up next session.**
+- ~~**Branch merges pending**~~ — ✅ done this session (`47216b6`, `c6bc033`). Feature branches deleted locally.
 - ~~**`useDwell` hook becomes orphan**~~ — resolved in commit `95dfeab` post-review; hook + tests deleted (49 + 77 LoC). Slice B's `useSignalCollector` will wire dwell per bento card, not per zone.
 - Pre-existing backend ruff E501 errors in `tests/test_session_models.py`, `tests/test_signal_route.py`, `tests/test_validation.py`, `src/app/domain/strategies/*.py` — none in FEAT-003 touched files; left as debt.
 
 ## Next Step
-1. ~~**Manual browser verification**~~ — ✅ done, holes fixed via tier retune (`6519142`).
-2. **Merge ceremony (user-gated):** `feat/002-stream-integration` → `develop`, then `feat/003-breathing-bento` → `develop`. Held for explicit go-ahead.
-3. **Fix e2e test 5:** either use a seeded mock manifest that guarantees a tier-1 card, or rewrite assertion to compare hero area against the smallest visible card.
-4. **Deferred slice B** (`useSignalCollector` wiring in `Canvas.tsx`) still backlogged — makes cursor signals causal and unlocks `AdaptStrategy` tier-2 path.
-5. **Next feature pitch — bento cohesion beyond tiling.** Packing is now correct; editorial cohesion (visual rhythm, content-to-shape matching, narrative flow between cells) is a separate problem. Worth its own brainstorm + spec rather than bolted onto FEAT-003.
+**Fix e2e scenario 5 (`bento-cascade.spec.ts`, "hero card occupies visibly more area than tier-1 card").** Test pinned `[data-tier="1"]` as the comparison card, but a realistic LLM-weighted manifest for the LinkedIn persona assigned every visible item salience above the tier-1 threshold (≥0.15 but ≤0.35 unreached) — the selector never matched and Playwright timed out.
+
+**Two options, pick at session start:**
+1. **Seeded fixture** — mock the backend strategy to return a manifest guaranteed to contain a tier-1 card. Pro: tests the tiling math deterministically. Con: stops exercising the live LLM path.
+2. **Rewrite assertion** — compare hero area against the smallest visible non-hero card (whichever tier it happens to be). Pro: stays end-to-end. Con: weaker invariant — only confirms hero > something, not hero > tier-1.
+
+Lean toward option 2 on first pass (cheaper, preserves e2e value); fall back to option 1 if the assertion becomes too permissive to catch regressions. File: `frontend/e2e/bento-cascade.spec.ts`. Scenario 5 is currently the only timeout among 5.
+
+### Backlogged (not for next session unless user redirects)
+- **Deferred slice B** (`useSignalCollector` wiring in `Canvas.tsx`) — makes cursor signals causal and unlocks `AdaptStrategy` tier-2 path.
+- **Next feature pitch — bento cohesion beyond tiling.** Packing is now correct; editorial cohesion (visual rhythm, content-to-shape matching, narrative flow between cells) is a separate problem. Worth its own brainstorm + spec rather than bolted onto FEAT-003.
+- **Push `develop` to `origin`** — 92-commit divergence will keep growing.
 
 ---
 
