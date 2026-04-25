@@ -32,6 +32,9 @@ CONVENTIONS:
   - Include an observation with dimension="role" when trust > 0.4.
   - Every observation MUST list at least one source_signals reference to
     a real signal id from the input batch.
+  - source_signals MUST cite ids from the "Recent signals" block below
+    (e.g. {"kind": "signal", "id": "s3"}). Do NOT cite card ids,
+    catalog item ids, or invent ids.
   - Use new dimension names freely if the seed taxonomy doesn't fit.
   - Keep value strings short — composites should be multiple observations,
     not concatenated values.

@@ -14,9 +14,11 @@ class TestReadStrategySystemPrompt:
 
     def test_prompt_instructs_multivoice_emission(self) -> None:
         # Critical: prompt must tell the agent to emit MULTIPLE observations
-        # in the same dimension when patterns match multiple roles.
-        assert "MULTIPLE" in SYSTEM_PROMPT or "multiple" in SYSTEM_PROMPT
-        assert "multivoice" in SYSTEM_PROMPT.lower() or "multi" in SYSTEM_PROMPT.lower()
+        # in the same dimension when patterns match multiple roles. Pin the
+        # exact phrase — "multi" alone matches "multi-modal" and won't catch
+        # a regression that deletes the multivoice rule.
+        assert "MULTIVOICE" in SYSTEM_PROMPT.upper()
+        assert "EMIT MULTIPLE" in SYSTEM_PROMPT
 
     def test_prompt_requires_source_signal_references(self) -> None:
         assert "source_signals" in SYSTEM_PROMPT
