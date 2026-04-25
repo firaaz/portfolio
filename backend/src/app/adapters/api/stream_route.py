@@ -12,6 +12,7 @@ from app.adapters.api.signal_builder import build_signal_event
 from app.adapters.api.ux_events import intelligence_to_events, ux_snapshot_event
 from app.adapters.cache.memory_cache import MemoryCache
 from app.adapters.content.yaml_loader import load_catalog
+from app.adapters.sse.event_bus import get_event_bus
 from app.domain.content import content_to_ux_state
 from app.domain.context import VisitorContext
 from app.domain.evaluation import evaluate_intelligence
@@ -48,45 +49,58 @@ def _get_llm_port() -> object | None:
     return PydanticAIProvider()
 
 
-async def _generate_stream(context: VisitorContext) -> AsyncGenerator[str]:
-    """Yield AG-UI events: snapshot, signal, then five-verb events."""
+async def _generate_stream(
+    context: VisitorContext,
+    session_id: str | None = None,
+) -> AsyncGenerator[str]:
+    """Yield AG-UI events: snapshot, signal, initial cascade, then live adaptations.
+
+    Lifecycle: deterministic prefix (snapshot + signal) → optional LLM-driven
+    initial cascade → optional long-lived bus subscription keyed by session_id.
+    The subscription tail is what makes server-pushed adaptations possible —
+    without session_id, the generator terminates after the prefix/cascade.
+    """
     catalog = load_catalog()
     default_state = content_to_ux_state(catalog)
     yield ux_snapshot_event(default_state)
     yield build_signal_event(context)
 
     llm = _get_llm_port()
-    if llm is None:
-        return
-
-    cache = _get_cache()
-    cached = cache.get(context.referrer_type)
-    if cached is None:
-        profile = VisitorProfile(session_id="anonymous", context=context)
-        strategy = SelectStrategy()
-        cached = await evaluate_intelligence(
-            strategy,
-            SELECT_SYSTEM_PROMPT,
-            llm,
-            profile,
-            catalog,
-        )
+    if llm is not None:
+        cache = _get_cache()
+        cached = cache.get(context.referrer_type)
         if cached is None:
-            return
-        cache.set(context.referrer_type, cached, _cache_ttl())
+            profile = VisitorProfile(session_id="anonymous", context=context)
+            strategy = SelectStrategy()
+            cached = await evaluate_intelligence(
+                strategy,
+                SELECT_SYSTEM_PROMPT,
+                llm,
+                profile,
+                catalog,
+            )
+            if cached is not None:
+                cache.set(context.referrer_type, cached, _cache_ttl())
 
-    events = intelligence_to_events(cached)
-    async for ev in staggered_dispatch(events):
-        yield ev
+        if cached is not None:
+            events = intelligence_to_events(cached)
+            async for ev in staggered_dispatch(events):
+                yield ev
+
+    if session_id is not None:
+        bus = get_event_bus()
+        async for ev in bus.subscribe(session_id):
+            yield ev
 
 
 @router.get("/stream")
 async def stream(
     context: VisitorContext = Depends(get_visitor_context),  # noqa: B008
+    session_id: str | None = None,
 ) -> StreamingResponse:
-    """SSE endpoint serving AG-UI UX protocol events."""
+    """SSE endpoint serving AG-UI UX protocol events; long-lived if session_id given."""
     return StreamingResponse(
-        _generate_stream(context),
+        _generate_stream(context, session_id=session_id),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

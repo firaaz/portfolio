@@ -107,7 +107,7 @@ test.describe("Breathing bento cascade", () => {
       },
     };
     const sseBody = `data: ${JSON.stringify(snapshotEvent)}\n\n`;
-    await page.route("**/api/agent/stream", async (route) => {
+    await page.route(/\/api\/agent\/stream(\?|$)/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "text/event-stream",
