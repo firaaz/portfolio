@@ -34,13 +34,15 @@ class TestAdaptStrategy:
         assert "skills" in prompt.lower()
         assert "dwell" in prompt.lower()
 
-    def test_includes_interests(self) -> None:
+    def test_renders_empty_interests_gracefully(self) -> None:
         from app.domain.strategies.adapt import AdaptStrategy
 
+        # Interests derivation is retired pending the AdaptStrategy
+        # invocation slice; prompt should render "none yet" rather than fail.
         strategy = AdaptStrategy()
         profile = _profile_with_signals()
         prompt = strategy.build_prompt(profile, _load_catalog())
-        assert "technical-depth" in prompt
+        assert "Interests: none yet" in prompt
 
     def test_includes_confidence(self) -> None:
         from app.domain.strategies.adapt import AdaptStrategy

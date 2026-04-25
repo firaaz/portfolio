@@ -56,15 +56,9 @@ class VisitorProfile(BaseModel):
             self.tier = 3
 
     def _infer_interests(self) -> None:
-        """Derive interest tags from top-dwelled zones."""
-        zone_interest_map = {
-            "featured": "architecture",
-            "other-work": "projects",
-            "skills": "technical-depth",
-            "experience": "leadership",
-            "contact": "hiring",
-        }
-        sorted_zones = sorted(self.dwell_map, key=self.dwell_map.get, reverse=True)  # type: ignore[arg-type]
-        self.interests = [
-            zone_interest_map[z] for z in sorted_zones[:3] if z in zone_interest_map
-        ]
+        """Derive interest tags from behavioral signals."""
+        # TODO: re-derive from card_id keys once AdaptStrategy invocation slice
+        # owns the catalog→interest mapping. Pre-bento map keyed off legacy
+        # zone names was silently producing [] post-bento; better to be
+        # explicit about emptiness than to fake a derivation.
+        self.interests = []

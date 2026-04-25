@@ -88,6 +88,21 @@ class TestVisitorProfile:
         assert profile.confidence > 0.0
         assert profile.confidence <= 1.0
 
+    def test_interests_remain_empty_after_signals(self) -> None:
+        from app.domain.context import VisitorContext
+        from app.domain.session import BehavioralSignal, VisitorProfile
+
+        # Interests derivation is retired pending AdaptStrategy invocation
+        # slice; accumulation must not silently re-introduce stale mapping.
+        profile = VisitorProfile(session_id="s1", context=VisitorContext())
+        for i in range(5):
+            profile.accumulate(
+                BehavioralSignal(
+                    type="dwell", card_id="hero", duration_ms=2000, timestamp=float(i)
+                )
+            )
+        assert profile.interests == []
+
     def test_tier_escalates_with_confidence(self) -> None:
         from app.domain.context import VisitorContext
         from app.domain.session import BehavioralSignal, VisitorProfile
