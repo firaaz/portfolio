@@ -1,5 +1,7 @@
 import { useEffect } from "react";
+import { applyPersonaDelta } from "../store/persona-store";
 import { useUXStore } from "../store/ux-store";
+import { isPersonaDelta } from "./sse-parsers";
 import { useSessionId } from "./use-session-id";
 import {
   isUXAgency,
@@ -57,6 +59,13 @@ export function useAgentStream(url = "/api/agent/stream") {
           applySurface(data.custom.item_id, data.custom.generated);
         } else if (isUXSignal(data)) {
           // Signal events — confidence/reasoning available for transparency panel
+        } else if (isPersonaDelta(data)) {
+          applyPersonaDelta({
+            rationale: data.custom.rationale,
+            trust: data.custom.trust,
+            observations_added: data.custom.observations_added,
+            ts: data.custom.ts,
+          });
         }
       } catch {
         // Ignore malformed events

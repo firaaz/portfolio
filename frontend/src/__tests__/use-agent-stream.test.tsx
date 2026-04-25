@@ -62,3 +62,71 @@ describe("useAgentStream", () => {
     );
   });
 });
+
+describe("useAgentStream persona handling", () => {
+  it("dispatches a PERSONA_DELTA event into usePersonaStore", async () => {
+    const { usePersonaStore } = await import("../store/persona-store");
+    usePersonaStore.setState({ rationale: "", trust: 0, observations: [] });
+
+    let pushed: ((event: MessageEvent) => void) | null = null;
+    class CapturingEventSource {
+      static readonly CONNECTING = 0;
+      static readonly OPEN = 1;
+      static readonly CLOSED = 2;
+      readyState = 0;
+      onerror: ((event: Event) => void) | null = null;
+      onopen: ((event: Event) => void) | null = null;
+      constructor(_url: string) {}
+      close() {
+        this.readyState = 2;
+      }
+    }
+    const proto = CapturingEventSource.prototype as unknown as {
+      onmessage: ((event: MessageEvent) => void) | null;
+    };
+    Object.defineProperty(proto, "onmessage", {
+      configurable: true,
+      get() {
+        return (this as { _om: typeof pushed })._om ?? null;
+      },
+      set(handler: typeof pushed) {
+        (this as { _om: typeof pushed })._om = handler;
+        pushed = handler;
+      },
+    });
+    globalThis.EventSource =
+      CapturingEventSource as unknown as typeof EventSource;
+
+    sessionStorage.setItem(SESSION_KEY, "persona-test-sid");
+    renderHook(() => useAgentStream());
+
+    expect(pushed).not.toBeNull();
+    pushed?.(
+      new MessageEvent("message", {
+        data: JSON.stringify({
+          type: "CUSTOM",
+          custom: {
+            eventType: "persona:delta",
+            rationale: "engineer evaluating",
+            trust: 0.5,
+            observations_added: [
+              {
+                dimension: "role",
+                value: "engineer",
+                confidence: 0.6,
+                rationale: "dwell pattern",
+                source_signals: [{ kind: "signal", id: "s0" }],
+                ts: "2026-04-26T12:00:00Z",
+              },
+            ],
+          },
+        }),
+      }),
+    );
+
+    const s = usePersonaStore.getState();
+    expect(s.trust).toBe(0.5);
+    expect(s.rationale).toBe("engineer evaluating");
+    expect(s.observations).toHaveLength(1);
+  });
+});
