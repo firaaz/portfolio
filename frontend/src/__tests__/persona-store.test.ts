@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
-  type PersonaObservation,
   applyPersonaDelta,
+  type PersonaObservation,
   usePersonaStore,
 } from "../store/persona-store";
 

@@ -41,8 +41,6 @@ export function applyPersonaDelta(delta: PersonaDelta): void {
   }));
 }
 
-export function getRoleObservations(
-  state: PersonaState,
-): PersonaObservation[] {
+export function getRoleObservations(state: PersonaState): PersonaObservation[] {
   return state.observations.filter((o) => o.dimension === "role");
 }

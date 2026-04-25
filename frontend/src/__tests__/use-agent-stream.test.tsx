@@ -68,7 +68,8 @@ describe("useAgentStream persona handling", () => {
     const { usePersonaStore } = await import("../store/persona-store");
     usePersonaStore.setState({ rationale: "", trust: 0, observations: [] });
 
-    let pushed: ((event: MessageEvent) => void) | null = null;
+    type Handler = (event: MessageEvent) => void;
+    const captured: { handler: Handler | null } = { handler: null };
     class CapturingEventSource {
       static readonly CONNECTING = 0;
       static readonly OPEN = 1;
@@ -76,22 +77,25 @@ describe("useAgentStream persona handling", () => {
       readyState = 0;
       onerror: ((event: Event) => void) | null = null;
       onopen: ((event: Event) => void) | null = null;
-      constructor(_url: string) {}
+      readonly url: string;
+      constructor(url: string) {
+        this.url = url;
+      }
       close() {
         this.readyState = 2;
       }
     }
     const proto = CapturingEventSource.prototype as unknown as {
-      onmessage: ((event: MessageEvent) => void) | null;
+      onmessage: Handler | null;
     };
     Object.defineProperty(proto, "onmessage", {
       configurable: true,
       get() {
-        return (this as { _om: typeof pushed })._om ?? null;
+        return (this as { _om?: Handler | null })._om ?? null;
       },
-      set(handler: typeof pushed) {
-        (this as { _om: typeof pushed })._om = handler;
-        pushed = handler;
+      set(handler: Handler | null) {
+        (this as { _om?: Handler | null })._om = handler;
+        captured.handler = handler;
       },
     });
     globalThis.EventSource =
@@ -100,8 +104,8 @@ describe("useAgentStream persona handling", () => {
     sessionStorage.setItem(SESSION_KEY, "persona-test-sid");
     renderHook(() => useAgentStream());
 
-    expect(pushed).not.toBeNull();
-    pushed?.(
+    expect(captured.handler).not.toBeNull();
+    captured.handler?.(
       new MessageEvent("message", {
         data: JSON.stringify({
           type: "CUSTOM",

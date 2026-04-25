@@ -5,11 +5,26 @@ import {
   SheetTitle,
 } from "../components/ui/sheet";
 import { useAuditStore } from "../store/audit-store";
-import { usePersonaStore } from "../store/persona-store";
+import {
+  type PersonaObservation,
+  usePersonaStore,
+} from "../store/persona-store";
 
 function formatTime(timestamp: string): string {
   const date = new Date(timestamp);
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function withStableKeys(
+  observations: PersonaObservation[],
+): { key: string; obs: PersonaObservation }[] {
+  const seen = new Map<string, number>();
+  return observations.map((obs) => {
+    const base = `${obs.ts}-${obs.dimension}-${obs.value}`;
+    const seq = seen.get(base) ?? 0;
+    seen.set(base, seq + 1);
+    return { key: seq === 0 ? base : `${base}-${seq}`, obs };
+  });
 }
 
 export function TransparencyPanel({
@@ -41,22 +56,22 @@ export function TransparencyPanel({
                   trust {persona.trust.toFixed(2)}
                 </p>
                 <ul className="mt-3 space-y-2">
-                  {persona.observations.map((o, idx) => (
+                  {withStableKeys(persona.observations).map(({ key, obs }) => (
                     <li
-                      key={`${o.ts}-${o.dimension}-${o.value}-${idx}`}
+                      key={key}
                       className="rounded-md border border-border/50 p-2"
                     >
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {o.dimension}
+                        {obs.dimension}
                       </p>
                       <p className="text-sm">
-                        {o.value}{" "}
+                        {obs.value}{" "}
                         <span className="text-xs text-muted-foreground">
-                          ({o.confidence.toFixed(2)})
+                          ({obs.confidence.toFixed(2)})
                         </span>
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {o.rationale}
+                        {obs.rationale}
                       </p>
                     </li>
                   ))}
