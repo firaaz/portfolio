@@ -74,3 +74,5 @@ class TestEvaluatePersona:
         assert kwargs["result_type"] is Persona
         assert kwargs["system_prompt"] == SYSTEM_PROMPT
         assert 0.0 <= kwargs["temperature"] <= 1.0
+        assert kwargs["max_tokens"] == 1024
+        assert "Visitor referrer:" in kwargs["user_prompt"]
