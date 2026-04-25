@@ -23,6 +23,7 @@ Last reviewed: 2026-04-04
 - 2s dwell threshold for breathing feels too long. Tune down — try 1.2–1.5s. The `useDwell` hook accepts a custom threshold as first argument.
 - Walking skeleton had `class="dark"` on `<html>` (shadcn default). Iron-Gall Ink is light-only — must remove dark class when switching palettes.
 - iOS Firefox dark mode ignores `color-scheme: light only`. The surface renders dark on Firefox for iOS despite meta tag + CSS rule. Safari on iOS works correctly. Firefox on iOS uses WebKit but has its own color-scheme quirks. Low priority — desktop is primary target.
+- Readiness-polling for the dev backend must probe a non-streaming route (`/openapi.json`) — never `/api/agent/stream`. `curl --max-time 1` against an SSE endpoint returns timeout exit 28 even when the server is fully up; with `-fsS` and an `until` loop the polling can continue indefinitely and emit hundreds of phantom GETs in the access log that look like a frontend reconnect bug. Burned ~2 min during the 2026-04-26 C2 smoke test diagnosing the noise before realizing it was self-inflicted.
 
 ## CLAUDE.md Management
 - Lessons.md is fast-moving (low bar, capture immediately). CLAUDE.md is curated (high bar, 2+ occurrences).

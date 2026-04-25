@@ -1,6 +1,70 @@
 # Status
 
-## Current State (2026-04-26, post-Slice-D1 persona protocol scaffold, merged into develop)
+## Current State (2026-04-26, post-C2 smoke-test verification — no code changes)
+
+**Operational verification session, not a code session.** No source files changed; working tree clean. Branch state and test counts identical to prior catchup: `develop` at `80d0674` (post-D1 merge), backend pytest **218**, frontend vitest **120**, e2e **6/6**, `develop` **117 commits ahead of `origin/develop`** (was 116; the +1 is a small drift, likely accumulated count mistakes across past handoffs — git is authoritative).
+
+**The C2 visible adapt loop was smoke-tested end-to-end via Playwright MCP + dev-log instrumentation, with `LLM_API_KEY` from `backend/.env` and a real Anthropic round-trip.** Verdict: **PASS at all three evidence layers.**
+
+- **Wire/network:** browser opened exactly **1** persistent stream `GET /api/agent/stream?session_id=be50590e-...` (the C2 consumer subscription). Sent **8** `POST /api/agent/signal` over ~12s of activity. The shared `session_id` join key (frontend's `portfolio.sid` in `sessionStorage` ↔ backend's `SessionEventBus` channel) was confirmed identical on both sides.
+- **Backend:** **0** `Background adaptation failed` log lines. Real LLM call completed under load; `evaluate_intelligence` parsed without errors.
+- **DOM (visible):** bento bottom row reordered after activity. The card I last hovered + clicked (`GenAI Code Migration`) was promoted from rightmost (x=703) to leftmost (x=39); `Senior Consultant` and `Senior Software Engineer` shifted right. Top row (Hero + Salama) unchanged. Card dimensions identical (328×359), confirming `AdaptStrategy` reorders/promotes but doesn't resize — resizing remains a local breathing-bento dwell behavior.
+- **Latency:** ~4–6s from last hover to visible reorder under real LLM. Felt usable but slower than mocks suggested.
+
+**What this verifies that the test suite can't:** real Anthropic auth + parsing under live conditions; the producer-consumer rendezvous on `SessionEventBus` via the shared client-generated UUID; that the long-lived SSE connection survives a `BackgroundTasks` scheduling cycle and delivers new events. Tests use a shared in-memory bus and mocked `EventSource`; they could pass while any of the above were broken in the same direction.
+
+**Implication for D2:** the substrate is operationally proven. D2 (which extends `signal_route._run_adaptation` to also emit `PERSONA_DELTA` events through the same bus) can be built with confidence that any failure during dev work will be in the new code path (ReadStrategy invocation, formatter, `isPersonaDelta` guard, `useAgentStream` branch) — not in the bus or long-lived subscription transport.
+
+## Accomplished This Session
+
+1. **Agentic smoke test of C2 visible adapt loop** using Playwright MCP browser tools + `tail`-style dev-log inspection. No screenshots needed; evidence was network counts, backend log greps, and DOM `getBoundingClientRect()` deltas captured via `browser_evaluate`.
+
+2. **Three-layer evidence captured and compared baseline → post-activity:**
+   - Baseline DOM snapshot saved at `.playwright-mcp/baseline-snapshot.md` (gitignored).
+   - Post-activity snapshot saved at `.playwright-mcp/post-activity-snapshot.md` (gitignored).
+   - Full backend run log retained at `/tmp/portfolio-dev.log` (transient).
+
+3. **Dev-loop dependency map confirmed:** `portfolio.sid` in `sessionStorage` is the load-bearing client-side state — without it, signals POST to one session_id and the EventSource subscribes to a different one and the bus fan-out fails silently. Confirmed both sides use the same UUID.
+
+4. **One operational pitfall surfaced and recorded** (added to `tasks/lessons.md`): readiness-polling for an SSE-serving dev server should probe `/openapi.json` (or any non-streaming route), never the streaming endpoint. `curl --max-time 1` against a streaming response returns timeout exit 28 even when the server is fully up, and an `until` loop combined with `-fsS` can produce hundreds of phantom GETs in the access log that look like a frontend reconnect bug. Lost ~2 minutes diagnosing the noise before realizing it was self-inflicted.
+
+5. **Removed stale blocker:** "Manual smoke test of the C2 visible loop pending" carried forward through 2 prior handoffs. Now closed.
+
+## Key Decisions
+
+- **No new ADRs** — operational verification only, no architectural change.
+- **No code changes** — the smoke test is a runtime probe, not a fix or feature. STATUS.md and `tasks/lessons.md` are the only files modified this session.
+- **D2 starting state is the same as it was before this session** — no point pre-creating the D2 branch from this session's clean tree. Fresh session starts from `develop` @ `80d0674`.
+
+## Blockers
+
+- **D2 implementation has not started** — the first visible-beat slice. D2 wires `PERSONA_DELTA` SSE events into `signal_route._run_adaptation`, parses them in the frontend, and renders the persona in `TransparencyPanel`. Plan task list is in `specs/006-agent-is-the-page/plan.md` slice D2 (~6 tasks).
+- **`develop` 117 commits ahead of `origin/develop`** — unchanged push posture. User decision pending.
+- **Pre-existing backend ruff E501 errors** — 12 still in untouched files (`tests/test_validation.py`, `src/app/domain/strategies/*.py`).
+- **Pre-existing frontend Biome lint errors** — `src/__tests__/SkillTag.test.tsx:16` (non-null assertion), `src/__tests__/Canvas.test.tsx` (formatting), `src/index.css` (`!important` warnings).
+
+## Next Step
+
+**Run Slice D2 of FEAT-006 — the first visible-beat slice.** C2's substrate is operationally proven, so D2 can build on it with high confidence.
+
+**Concrete starting state for fresh context:**
+- Branch start point: `develop` @ `80d0674` (unchanged from prior catchup; this session changed only STATUS + lessons).
+- New branch name: `feat/006-d2-persona-on-wire` from `develop`.
+- Plan: `specs/006-agent-is-the-page/plan.md` Slice D2 (~6 tasks: D2.1 persona_delta_event SSE formatter → D2.2 wire ReadStrategy + emit PERSONA_DELTA from signal_route → D2.3 frontend persona-store + isPersonaDelta guard → D2.4 useAgentStream branch → D2.5 TransparencyPanel persona render → D2.6 verify+merge).
+- D2 deliberately ships with **no voice rendering** — that's D3+. D2's whole point: visitor opens TransparencyPanel and sees what the agent thinks of them (rationale, trust, observations). First visible UX beat from FEAT-006.
+- LLM_API_KEY in `backend/.env` works — D2 dev can include manual smoke-test passes in the loop.
+
+### Backlogged (not for next session unless user redirects)
+
+- **Push `develop` to `origin`** — 117 commits unpushed. User decision pending.
+- **Pre-existing lint issues** (SkillTag non-null, Canvas formatting, index.css `!important`, ruff E501 in test_validation/strategies). Clean-up sweep, ~5-min slice if done in isolation.
+- **Cost debounce for AdaptStrategy** — surfaced in C1, scoped to D9 in spec but could land sooner if real-LLM cost in dev exceeds expectations (the ~4–6s round-trip per adapt cycle observed today suggests cost will be modest at typical visitor pacing, but worth monitoring once D2+ generate more traffic).
+- **Bento cohesion beyond tiling** (editorial rhythm). Distinct problem; needs its own brainstorm.
+- **Tooling-hooks slice (cairn cherry-pick)** — still backlogged behind feature work.
+
+---
+
+## Previous State (2026-04-26, post-Slice-D1 persona protocol scaffold, merged into develop)
 
 Slice D1 of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `80d0674`). The persona protocol now has its backend foundation: typed wire models (`Persona`, `Observation`, `SignalRef`), a `ReadStrategy` that builds a multivoice-aware prompt, and an `evaluate_persona` orchestrator that runs it through the LLM port. **Pure backend foundation — no events on the wire, no UI change.** D2 is the first visible-beat slice (PERSONA_DELTA + TransparencyPanel render).
 
