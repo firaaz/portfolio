@@ -15,7 +15,7 @@ class BehavioralSignal(BaseModel):
     """A single behavioral event from the frontend."""
 
     type: Literal["dwell", "skip", "click", "hover"]
-    zone: str
+    card_id: str
     duration_ms: int = Field(ge=0)
     timestamp: float
 
@@ -43,7 +43,7 @@ class VisitorProfile(BaseModel):
         self.signals.append(signal)
         if signal.type == "dwell":
             seconds = signal.duration_ms / 1000.0
-            self.dwell_map[signal.zone] = self.dwell_map.get(signal.zone, 0.0) + seconds
+            self.dwell_map[signal.card_id] = self.dwell_map.get(signal.card_id, 0.0) + seconds
         self.confidence = min(1.0, len(self.signals) * _CONFIDENCE_PER_SIGNAL)
         self._update_tier()
         self._infer_interests()

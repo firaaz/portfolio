@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
 
-interface Signal {
+export interface Signal {
   type: "dwell" | "skip" | "click" | "hover";
-  zone: string;
+  card_id: string;
   duration_ms: number;
   timestamp: number;
 }

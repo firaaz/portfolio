@@ -6,6 +6,7 @@ from app.domain.session import BehavioralSignal, VisitorProfile
 
 def _load_catalog():
     from app.adapters.content.yaml_loader import load_catalog
+
     return load_catalog()
 
 
@@ -16,7 +17,9 @@ def _profile_with_signals() -> VisitorProfile:
     )
     for i in range(5):
         profile.accumulate(
-            BehavioralSignal(type="dwell", zone="skills", duration_ms=3000, timestamp=float(i))
+            BehavioralSignal(
+                type="dwell", card_id="skills", duration_ms=3000, timestamp=float(i)
+            )
         )
     return profile
 
