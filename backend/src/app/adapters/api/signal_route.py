@@ -6,15 +6,19 @@ import os
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 
+from app.adapters.api.persona_events import persona_delta_event
 from app.adapters.api.ux_events import intelligence_to_events
 from app.adapters.content.yaml_loader import load_catalog
 from app.adapters.session.memory_session import InMemorySession
 from app.adapters.sse.event_bus import SessionEventBus, get_event_bus
 from app.domain.context import VisitorContext
 from app.domain.evaluation import evaluate_intelligence
+from app.domain.persona_evaluation import evaluate_persona
 from app.domain.session import SignalBatch, VisitorProfile
 from app.domain.strategies.adapt import SYSTEM_PROMPT as ADAPT_SYSTEM_PROMPT
 from app.domain.strategies.adapt import AdaptStrategy
+from app.domain.strategies.read import SYSTEM_PROMPT as READ_SYSTEM_PROMPT
+from app.domain.strategies.read import ReadStrategy
 
 router = APIRouter(prefix="/api/agent")
 
@@ -62,14 +66,22 @@ async def _run_adaptation(
     bus: SessionEventBus,
     llm: object,
 ) -> None:
-    """Run AdaptStrategy and publish resulting events to the bus.
+    """Run ReadStrategy + AdaptStrategy; publish PERSONA_DELTA + UX events.
 
-    Wrapped in a broad except so background-task failures stay silent — agent
-    silence is better than a crash. Concurrent escalations may interleave their
-    publications in the bus; ordering is only guaranteed within a single call.
+    PERSONA_DELTA is published first so the transparency panel updates before
+    the canvas shifts — preserving causality (agent thinks → speaks → acts).
+    Background-task failures stay silent — agent silence beats a crash.
     """
     try:
         catalog = load_catalog()
+
+        persona = await evaluate_persona(
+            ReadStrategy(), READ_SYSTEM_PROMPT, llm, profile, catalog
+        )
+        if persona is not None:
+            ev = persona_delta_event(persona, prior_trust=0.0, prior_rationale="")
+            await bus.publish(profile.session_id, ev)
+
         result = await evaluate_intelligence(
             AdaptStrategy(),
             ADAPT_SYSTEM_PROMPT,

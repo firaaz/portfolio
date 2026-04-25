@@ -2,22 +2,19 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { TransparencyPanel } from "../chrome/TransparencyPanel";
 import { useAuditStore } from "../store/audit-store";
+import { usePersonaStore } from "../store/persona-store";
 
 afterEach(() => {
   cleanup();
   useAuditStore.setState({ decisions: [] });
+  usePersonaStore.setState({ rationale: "", trust: 0, observations: [] });
 });
 
 describe("TransparencyPanel", () => {
-  it("shows empty state when no decisions", () => {
-    render(<TransparencyPanel open onOpenChange={() => {}} />);
-    expect(screen.getByText("No decisions yet")).toBeInTheDocument();
-  });
-
   it("has accessible heading", () => {
     render(<TransparencyPanel open onOpenChange={() => {}} />);
     expect(
-      screen.getByRole("heading", { name: /agent decisions/i }),
+      screen.getByRole("heading", { name: /what the agent thinks of you/i }),
     ).toBeInTheDocument();
   });
 

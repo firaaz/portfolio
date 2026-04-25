@@ -3,6 +3,7 @@
  */
 import type { DecisionRecord } from "../store/audit-store";
 import type { ImportanceUpdate, ManifestItem } from "../store/manifest-store";
+import type { PersonaObservation } from "../store/persona-store";
 
 export interface StateSnapshotEvent {
   type: "STATE_SNAPSHOT";
@@ -58,4 +59,31 @@ export function isDecisionEvent(data: unknown): data is DecisionEvent {
   }
   const custom = obj.custom as Record<string, unknown>;
   return custom.eventType === "DECISION";
+}
+
+export interface PersonaDeltaEvent {
+  type: "CUSTOM";
+  custom: {
+    eventType: "persona:delta";
+    rationale?: string;
+    trust?: number;
+    observations_added: PersonaObservation[];
+    ts?: string;
+  };
+}
+
+export function isPersonaDelta(data: unknown): data is PersonaDeltaEvent {
+  if (typeof data !== "object" || data === null || !("type" in data)) {
+    return false;
+  }
+  const obj = data as Record<string, unknown>;
+  if (
+    obj.type !== "CUSTOM" ||
+    typeof obj.custom !== "object" ||
+    obj.custom === null
+  ) {
+    return false;
+  }
+  const custom = obj.custom as Record<string, unknown>;
+  return custom.eventType === "persona:delta";
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isDecisionEvent,
+  isPersonaDelta,
   isStateDelta,
   isStateSnapshot,
 } from "../hooks/sse-parsers";
@@ -75,6 +76,35 @@ describe("sse-parsers", () => {
 
     it("returns false for null", () => {
       expect(isDecisionEvent(null)).toBe(false);
+    });
+  });
+
+  describe("isPersonaDelta", () => {
+    it("matches a persona:delta CUSTOM event", () => {
+      expect(
+        isPersonaDelta({
+          type: "CUSTOM",
+          custom: {
+            eventType: "persona:delta",
+            observations_added: [],
+          },
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects other CUSTOM events", () => {
+      expect(
+        isPersonaDelta({
+          type: "CUSTOM",
+          custom: { eventType: "ux:focus", item_id: "hero", importance: 0.9 },
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects non-CUSTOM events", () => {
+      expect(isPersonaDelta({ type: "STATE_SNAPSHOT", snapshot: {} })).toBe(
+        false,
+      );
     });
   });
 });

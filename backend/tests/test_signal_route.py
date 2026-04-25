@@ -219,12 +219,88 @@ class TestSignalRouteAdaptation:
 
         consumer_task = asyncio.create_task(_consumer())
         await asyncio.sleep(0)
-        with patch(
-            "app.adapters.api.signal_route.evaluate_intelligence",
-            new=_fake_evaluate,
+        # Mock both: evaluate_persona returns None so the persona branch is a no-op
+        # and the consumer sees only intelligence events (preserving prior contract).
+        with (
+            patch(
+                "app.adapters.api.signal_route.evaluate_intelligence",
+                new=_fake_evaluate,
+            ),
+            patch(
+                "app.adapters.api.signal_route.evaluate_persona",
+                new=AsyncMock(return_value=None),
+            ),
         ):
             await _run_adaptation(profile, bus, AsyncMock())
         await asyncio.wait_for(consumer_task, timeout=1.0)
         # 1 recede (0.2 <= 0.3) + 2 focuses (>=0.6) = 3 events; consumer broke at 2.
         assert len(received) == 2
         assert all(ev.startswith("data: ") for ev in received)
+
+
+class TestSignalRoutePersonaEmission:
+    """ReadStrategy fires alongside AdaptStrategy; emits PERSONA_DELTA via the bus."""
+
+    async def test_run_adaptation_publishes_persona_delta_then_intelligence_events(
+        self,
+    ) -> None:
+        from datetime import UTC, datetime
+
+        from app.adapters.api.signal_route import _run_adaptation
+        from app.domain.persona import Observation, Persona, SignalRef
+
+        profile = VisitorProfile(session_id="persona-emit", context=VisitorContext())
+        for _ in range(3):
+            profile.accumulate(
+                BehavioralSignal(
+                    type="dwell", card_id="skills", duration_ms=1500, timestamp=1.0
+                )
+            )
+
+        persona = Persona(
+            rationale="testing emission",
+            observations=[
+                Observation(
+                    dimension="role",
+                    value="engineer",
+                    confidence=0.6,
+                    rationale="dwell pattern",
+                    source_signals=[SignalRef(kind="signal", id="s0")],
+                    ts=datetime.now(UTC),
+                )
+            ],
+            trust=0.5,
+        )
+        intelligence = IntelligenceResult(
+            items=[ItemResult(id="hero", importance=0.95)],
+            bridges=None,
+        )
+
+        bus = SessionEventBus()
+        received: list[str] = []
+
+        async def _consumer() -> None:
+            async for event in bus.subscribe(profile.session_id):
+                received.append(event)
+                if len(received) >= 2:
+                    break
+
+        consumer_task = asyncio.create_task(_consumer())
+        await asyncio.sleep(0)
+
+        with (
+            patch(
+                "app.adapters.api.signal_route.evaluate_persona",
+                new=AsyncMock(return_value=persona),
+            ),
+            patch(
+                "app.adapters.api.signal_route.evaluate_intelligence",
+                new=AsyncMock(return_value=intelligence),
+            ),
+        ):
+            await _run_adaptation(profile, bus, AsyncMock())
+
+        await asyncio.wait_for(consumer_task, timeout=1.0)
+        # First event should be the persona delta, then intelligence events.
+        assert len(received) >= 1
+        assert "persona:delta" in received[0]
