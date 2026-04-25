@@ -52,3 +52,19 @@ class SessionEventBus:
             with contextlib.suppress(asyncio.QueueEmpty):
                 queue.get_nowait()
             queue.put_nowait(event)
+
+
+_bus_instance: SessionEventBus | None = None
+
+
+def get_event_bus() -> SessionEventBus:
+    """Return the process-wide SessionEventBus singleton.
+
+    Producer (signal_route) and consumer (stream_route) must share the same
+    instance — otherwise events publish into one bus and subscribers wait on
+    a different one.
+    """
+    global _bus_instance
+    if _bus_instance is None:
+        _bus_instance = SessionEventBus()
+    return _bus_instance

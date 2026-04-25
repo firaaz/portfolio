@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useUXStore } from "../store/ux-store";
+import { useSessionId } from "./use-session-id";
 import {
   isUXAgency,
   isUXBridge,
@@ -13,6 +14,7 @@ import {
 } from "./ux-parsers";
 
 export function useAgentStream(url = "/api/agent/stream") {
+  const sessionId = useSessionId();
   const setSnapshot = useUXStore((s) => s.setSnapshot);
   const applySalience = useUXStore((s) => s.applySalience);
   const setTempo = useUXStore((s) => s.setTempo);
@@ -23,7 +25,8 @@ export function useAgentStream(url = "/api/agent/stream") {
   const addBridge = useUXStore((s) => s.addBridge);
 
   useEffect(() => {
-    const source = new EventSource(url);
+    const fullUrl = `${url}?session_id=${encodeURIComponent(sessionId)}`;
+    const source = new EventSource(fullUrl);
 
     source.onmessage = (event: MessageEvent<string>) => {
       try {
@@ -65,6 +68,7 @@ export function useAgentStream(url = "/api/agent/stream") {
     };
   }, [
     url,
+    sessionId,
     setSnapshot,
     applySalience,
     setTempo,

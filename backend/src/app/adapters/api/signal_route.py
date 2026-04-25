@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from app.adapters.api.ux_events import intelligence_to_events
 from app.adapters.content.yaml_loader import load_catalog
 from app.adapters.session.memory_session import InMemorySession
-from app.adapters.sse.event_bus import SessionEventBus
+from app.adapters.sse.event_bus import SessionEventBus, get_event_bus
 from app.domain.context import VisitorContext
 from app.domain.evaluation import evaluate_intelligence
 from app.domain.session import SignalBatch, VisitorProfile
@@ -21,7 +21,6 @@ router = APIRouter(prefix="/api/agent")
 _log = logging.getLogger(__name__)
 
 _session_store: InMemorySession | None = None
-_event_bus: SessionEventBus | None = None
 
 
 def _get_session_store() -> InMemorySession:
@@ -32,14 +31,6 @@ def _get_session_store() -> InMemorySession:
         capacity = int(os.environ.get("SESSION_CAPACITY", "256"))
         _session_store = InMemorySession(ttl_seconds=ttl, capacity=capacity)
     return _session_store
-
-
-def _get_event_bus() -> SessionEventBus:
-    """Return the module-level event bus singleton."""
-    global _event_bus
-    if _event_bus is None:
-        _event_bus = SessionEventBus()
-    return _event_bus
 
 
 def _get_llm_port() -> object | None:
@@ -130,7 +121,7 @@ async def ingest_signals(
         background_tasks.add_task(
             _run_adaptation,
             profile.model_copy(deep=True),
-            _get_event_bus(),
+            get_event_bus(),
             llm,
         )
 

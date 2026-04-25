@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from app.adapters.sse.event_bus import SessionEventBus
+from app.adapters.sse.event_bus import SessionEventBus, get_event_bus
 
 
 async def _drain(bus: SessionEventBus, session_id: str, count: int) -> list[str]:
@@ -81,3 +81,15 @@ class TestSessionEventBus:
         y_events = await asyncio.wait_for(consumer_y, timeout=1.0)
         assert x_events == ["broadcast"]
         assert y_events == ["broadcast"]
+
+
+class TestGetEventBus:
+    """Module-level singleton accessor — producer and consumer share one bus."""
+
+    def test_get_event_bus_returns_same_instance_across_calls(self) -> None:
+        first = get_event_bus()
+        second = get_event_bus()
+        assert first is second
+
+    def test_get_event_bus_returns_session_event_bus(self) -> None:
+        assert isinstance(get_event_bus(), SessionEventBus)
