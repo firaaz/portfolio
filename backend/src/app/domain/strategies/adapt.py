@@ -14,8 +14,8 @@ confidence is high (>= 0.7) — generated content and bridge annotations.
 
 Rules:
 - "hero" item MUST have importance >= 0.9
-- Shift emphasis toward zones the visitor dwelled on
-- Reduce importance of zones the visitor skipped
+- Shift emphasis toward cards the visitor dwelled on
+- Reduce importance of cards the visitor skipped
 - ALL catalog item IDs must appear — no more, no fewer
 - emphasis: list of data field names to highlight (only real field names from item data)
 - generated: dict of field_name -> rewritten text (ONLY if confidence >= 0.7)
@@ -42,10 +42,10 @@ class AdaptStrategy:
             f"Tier: {profile.tier}",
             f"Interests: {', '.join(profile.interests) or 'none yet'}",
             "",
-            "Dwell map (zone → cumulative seconds):",
+            "Dwell map (card_id → cumulative seconds):",
         ]
-        for zone, seconds in sorted(profile.dwell_map.items(), key=lambda x: -x[1]):
-            lines.append(f"  {zone}: {seconds:.1f}s")
+        for card_id, seconds in sorted(profile.dwell_map.items(), key=lambda x: -x[1]):
+            lines.append(f"  {card_id}: {seconds:.1f}s")
 
         lines += [
             "",

@@ -15,7 +15,7 @@ class BehavioralSignal(BaseModel):
     """A single behavioral event from the frontend."""
 
     type: Literal["dwell", "skip", "click", "hover"]
-    zone: str
+    card_id: str
     duration_ms: int = Field(ge=0)
     timestamp: float
 
@@ -43,7 +43,7 @@ class VisitorProfile(BaseModel):
         self.signals.append(signal)
         if signal.type == "dwell":
             seconds = signal.duration_ms / 1000.0
-            self.dwell_map[signal.zone] = self.dwell_map.get(signal.zone, 0.0) + seconds
+            self.dwell_map[signal.card_id] = self.dwell_map.get(signal.card_id, 0.0) + seconds
         self.confidence = min(1.0, len(self.signals) * _CONFIDENCE_PER_SIGNAL)
         self._update_tier()
         self._infer_interests()
@@ -56,15 +56,9 @@ class VisitorProfile(BaseModel):
             self.tier = 3
 
     def _infer_interests(self) -> None:
-        """Derive interest tags from top-dwelled zones."""
-        zone_interest_map = {
-            "featured": "architecture",
-            "other-work": "projects",
-            "skills": "technical-depth",
-            "experience": "leadership",
-            "contact": "hiring",
-        }
-        sorted_zones = sorted(self.dwell_map, key=self.dwell_map.get, reverse=True)  # type: ignore[arg-type]
-        self.interests = [
-            zone_interest_map[z] for z in sorted_zones[:3] if z in zone_interest_map
-        ]
+        """Derive interest tags from behavioral signals."""
+        # TODO: re-derive from card_id keys once AdaptStrategy invocation slice
+        # owns the catalog→interest mapping. Pre-bento map keyed off legacy
+        # zone names was silently producing [] post-bento; better to be
+        # explicit about emptiness than to fake a derivation.
+        self.interests = []

@@ -1,4 +1,7 @@
 import { PresenceDot } from "../chrome/PresenceDot";
+import { useCardSignals } from "../hooks/use-card-signals";
+import { useSessionId } from "../hooks/use-session-id";
+import { useSignalCollector } from "../hooks/use-signal-collector";
 import type { UXItem } from "../store/ux-store";
 import { useUXStore } from "../store/ux-store";
 import { Bento } from "./Bento";
@@ -19,10 +22,13 @@ export function Canvas({
 }) {
   const items = useUXStore((s) => s.items);
   const rendered = neutralize(items);
+  const sessionId = useSessionId();
+  const { addSignal } = useSignalCollector(sessionId);
+  const { cardHandlers } = useCardSignals(addSignal);
 
   return (
     <main className="canvas-shell" data-zone="canvas">
-      <Bento items={rendered} />
+      <Bento items={rendered} cardHandlers={cardHandlers} />
       <div className="canvas-chrome">
         <div className="flex items-center gap-3">
           <div className="text-right">

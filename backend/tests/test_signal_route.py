@@ -14,7 +14,12 @@ class TestSignalRoute:
             json={
                 "session_id": "test-session",
                 "signals": [
-                    {"type": "dwell", "zone": "skills", "duration_ms": 3000, "timestamp": 1.0}
+                    {
+                        "type": "dwell",
+                        "card_id": "skills",
+                        "duration_ms": 3000,
+                        "timestamp": 1.0,
+                    }
                 ],
             },
         )
@@ -26,8 +31,18 @@ class TestSignalRoute:
             json={
                 "session_id": "test-session-2",
                 "signals": [
-                    {"type": "dwell", "zone": "featured", "duration_ms": 5000, "timestamp": 1.0},
-                    {"type": "click", "zone": "featured", "duration_ms": 0, "timestamp": 2.0},
+                    {
+                        "type": "dwell",
+                        "card_id": "featured",
+                        "duration_ms": 5000,
+                        "timestamp": 1.0,
+                    },
+                    {
+                        "type": "click",
+                        "card_id": "featured",
+                        "duration_ms": 0,
+                        "timestamp": 2.0,
+                    },
                 ],
             },
         )
@@ -41,7 +56,9 @@ class TestSignalRoute:
             "/api/agent/signal",
             json={
                 "session_id": "s",
-                "signals": [{"type": "scroll", "zone": "x", "duration_ms": 0, "timestamp": 0}],
+                "signals": [
+                    {"type": "scroll", "card_id": "x", "duration_ms": 0, "timestamp": 0}
+                ],
             },
         )
         assert response.status_code == 422
