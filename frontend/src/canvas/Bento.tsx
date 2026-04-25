@@ -5,7 +5,19 @@ import { computeLayout } from "./bento-layout";
 
 const SPRING = { type: "spring" as const, stiffness: 200, damping: 22 };
 
-export function Bento({ items }: { items: UXItem[] }) {
+interface CardHandlers {
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onClick: () => void;
+}
+
+export function Bento({
+  items,
+  cardHandlers,
+}: {
+  items: UXItem[];
+  cardHandlers?: (cardId: string) => CardHandlers;
+}) {
   const layout = computeLayout(items);
   const itemsById = new Map(items.map((i) => [i.id, i]));
   const reducedMotion = useReducedMotion();
@@ -31,6 +43,7 @@ export function Bento({ items }: { items: UXItem[] }) {
             className="bento-card"
             style={style}
             aria-hidden={entry.hidden ? true : undefined}
+            {...cardHandlers?.(entry.id)}
           >
             <MoleculeResolver
               molecule={item.molecule}
