@@ -14,13 +14,16 @@ interface CardHandlers {
 export function Bento({
   items,
   cardHandlers,
+  highlighted,
 }: {
   items: UXItem[];
   cardHandlers?: (cardId: string) => CardHandlers;
+  highlighted?: readonly string[];
 }) {
   const layout = computeLayout(items);
   const itemsById = new Map(items.map((i) => [i.id, i]));
   const reducedMotion = useReducedMotion();
+  const highlightedSet = new Set(highlighted ?? []);
 
   return (
     <section className="bento-grid" aria-label="Content">
@@ -33,6 +36,7 @@ export function Bento({
               gridColumn: `span ${entry.colSpan}`,
               gridRow: `span ${entry.rowSpan}`,
             };
+        const isHighlighted = highlightedSet.has(entry.id);
         return (
           <motion.article
             key={entry.id}
@@ -40,6 +44,7 @@ export function Bento({
             transition={SPRING}
             data-testid={`bento-card-${entry.id}`}
             data-tier={entry.tier}
+            data-highlighted={isHighlighted ? "true" : undefined}
             className="bento-card"
             style={style}
             aria-hidden={entry.hidden ? true : undefined}

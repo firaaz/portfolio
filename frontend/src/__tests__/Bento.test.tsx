@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Bento } from "../canvas/Bento";
 import type { UXItem } from "../store/ux-store";
@@ -21,6 +21,7 @@ function makeItem(
 describe("Bento — rendering", () => {
   afterEach(() => {
     useUXStore.setState({ items: [], bridges: [] });
+    cleanup();
   });
 
   it("given no items, renders nothing in the grid", () => {
@@ -50,11 +51,24 @@ describe("Bento — rendering", () => {
     const card = screen.getByTestId("bento-card-tiny");
     expect(card).toHaveAttribute("aria-hidden", "true");
   });
+
+  it("borders highlighted cards when given the highlighted prop", () => {
+    const items = [makeItem("hero", 0.9), makeItem("other", 0.5)];
+    render(<Bento items={items} highlighted={["hero"]} />);
+    expect(screen.getByTestId("bento-card-hero")).toHaveAttribute(
+      "data-highlighted",
+      "true",
+    );
+    expect(screen.getByTestId("bento-card-other")).not.toHaveAttribute(
+      "data-highlighted",
+    );
+  });
 });
 
 describe("Bento — BDD: agent cascade", () => {
   afterEach(() => {
     useUXStore.setState({ items: [], bridges: [] });
+    cleanup();
   });
 
   it("given a LinkedIn cascade, when ux:focus raises contact salience to 0.7, then contact renders at tier 4 (larger than default)", () => {

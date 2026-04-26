@@ -67,3 +67,23 @@ class TestLetterPrompt:
     def test_letter_strategy_can_be_constructed(self) -> None:
         strat = VoiceStrategy(voice_tag="letter")
         assert strat.name == "voice:letter"
+
+
+class TestDialoguePrompt:
+    def test_dialogue_prompt_registered(self) -> None:
+        assert "dialogue" in VOICE_PROMPTS
+
+    def test_dialogue_prompt_emits_question_answer_receipts(self) -> None:
+        prompt = VOICE_PROMPTS["dialogue"].lower()
+        assert "question" in prompt
+        assert "answer" in prompt
+        assert "receipt" in prompt
+
+    def test_dialogue_prompt_grounds_receipts_in_item_ids(self) -> None:
+        prompt = VOICE_PROMPTS["dialogue"].lower()
+        assert "item" in prompt
+        assert "id" in prompt or "catalog" in prompt
+
+    def test_dialogue_strategy_can_be_constructed(self) -> None:
+        strat = VoiceStrategy(voice_tag="dialogue")
+        assert strat.name == "voice:dialogue"
