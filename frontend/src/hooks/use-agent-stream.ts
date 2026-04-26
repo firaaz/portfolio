@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { applyPersonaDelta } from "../store/persona-store";
 import { useUXStore } from "../store/ux-store";
-import { isPersonaDelta } from "./sse-parsers";
+import { addUtterance, useVoiceStore } from "../store/voice-store";
+import { isPersonaDelta, isVoiceUtterance } from "./sse-parsers";
 import { useSessionId } from "./use-session-id";
 import {
   isUXAgency,
@@ -66,6 +67,14 @@ export function useAgentStream(url = "/api/agent/stream") {
             observations_added: data.custom.observations_added,
             ts: data.custom.ts,
           });
+        } else if (isVoiceUtterance(data)) {
+          addUtterance({
+            voice_tag: data.custom.voice_tag,
+            utterance_kind: data.custom.utterance_kind,
+            content: data.custom.content,
+            references: data.custom.references ?? [],
+          });
+          useVoiceStore.getState().setActiveVoice(data.custom.voice_tag);
         }
       } catch {
         // Ignore malformed events
