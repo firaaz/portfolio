@@ -2,6 +2,7 @@
 
 import logging
 import os
+import time
 
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
@@ -31,6 +32,9 @@ router = APIRouter(prefix="/api/agent")
 _log = logging.getLogger(__name__)
 
 _session_store: InMemorySession | None = None
+
+_DEBOUNCE_WINDOW_S = 2.0
+_last_adapt_ts: dict[str, float] = {}
 
 
 def _get_session_store() -> InMemorySession:
@@ -160,12 +164,16 @@ async def ingest_signals(
 
     llm = _get_llm_port()
     if llm is not None and _should_adapt(old_tier, old_band, profile):
-        background_tasks.add_task(
-            _run_adaptation,
-            profile.model_copy(deep=True),
-            get_event_bus(),
-            llm,
-        )
+        now = time.monotonic()
+        last = _last_adapt_ts.get(profile.session_id, 0.0)
+        if now - last >= _DEBOUNCE_WINDOW_S:
+            _last_adapt_ts[profile.session_id] = now
+            background_tasks.add_task(
+                _run_adaptation,
+                profile.model_copy(deep=True),
+                get_event_bus(),
+                llm,
+            )
 
     return SignalResponse(
         session_id=profile.session_id,
