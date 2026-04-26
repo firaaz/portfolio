@@ -1,6 +1,79 @@
 # Status
 
-## Current State (2026-04-26, post-Slice-D8 mobile degradation, merged into develop)
+## Current State (2026-04-26, post-Slice-D9a backend polish, merged into develop)
+
+Slice D9a of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `f64fa43`). **D9 has been decomposed into D9a (backend polish) + D9b (frontend polish)** since the four planned concerns crossed both the ≤5-source-file and ≤200-line-diff caps. **D9a covers the backend half: per-session ReadStrategy debounce + DeepEval persona inference eval (with prompt strengthening surfaced by the eval).**
+
+The signal route now keeps a per-session `_last_adapt_ts: dict[str, float]` and a `_DEBOUNCE_WINDOW_S = 2.0` constant. Rapid back-to-back POSTs that would otherwise each cross a confidence band now coalesce — the second request still returns 200 but does not schedule another `_run_adaptation` background task. This closes the cost-debounce backlog item carried since C2 (ReadStrategy + VoiceStrategy + AdaptStrategy together can run 2–3 LLM calls per escalation).
+
+A new `backend/evals/test_persona_inference.py` covers the ReadStrategy prompt against a LinkedIn-referred + technical-dwell visitor fixture, asserting the multivoice rule produces ≥2 role observations (recruiter + engineer), a `depth=technical` observation, and a rationale citing dwell-like behavior. Marked `@pytest.mark.eval` — excluded from default suite, skips when `LLM_API_KEY` unset. **The eval surfaced a real prompt-quality issue on first run:** the LLM was encoding its read in `rationale` and emitting `observations: []` despite trust=0.72. Strengthened `read.py SYSTEM_PROMPT` with: a new PRIMARY OUTPUT section ("observations are the canonical typed read; empty list + non-zero trust = invalid"); the explicit EXAMPLE block from the spec (LinkedIn + engineering dwell + skip on contact → recruiter + engineer + depth=technical) which had been omitted in the original D1 implementation; and tightened CONVENTIONS rule from "include observation when trust > 0.4" to "emit at least one observation whenever you can characterize the visitor — this is the primary read." Post-fix the eval passes (3 observations, trust 0.8).
+
+**Branch state:** `develop` at `f64fa43`. `feat/006-d9a-backend` carried 2 commits pre-merge:
+- `d2ef67c` — D9.1 `signal_route.py` adds 2.0s per-session debounce + 2 new tests (within-window coalesce + per-session keying). +63/-6.
+- `99d09ab` — D9.2 new `evals/test_persona_inference.py` (127-line LinkedIn-technical eval) + `read.py` SYSTEM_PROMPT strengthened (PRIMARY OUTPUT section + spec EXAMPLE block + tightened CONVENTIONS). +152/-1.
+
+No fixup commit needed. **Test counts on `develop` (post-merge):** backend pytest **264** (was 262 pre-D9.1; +2 debounce tests ✓), frontend vitest **163** unchanged (backend-only slice), e2e **7/7** unchanged. pytest 0.85s; vitest 2.33s. The eval suite runs ~3.8s per case under `LLM_API_KEY`.
+
+`develop` is now **160 commits ahead of `origin/develop`** (157 pre-D9a + 2 slice commits + 1 merge = +3, STATUS marker pending). No push this session.
+
+## Accomplished This Session
+
+1. **Decomposed D9 into D9a + D9b.** The plan's slice header listed "≤4 source files" but the four-task list (D9.1–D9.4) actually spans 6 source files (`signal_route.py`, `read.py` (prompt fix), `persona-store.ts`, `TransparencyPanel.tsx`, `use-signal-collector.ts`, `audit-store.ts`) + 1 new eval file. Cumulative diff projected to +345–435 lines. STATUS.md anticipated this: "May decompose into D9a/D9b/D9c if all four concerns can't fit ≤5 files / ≤200 lines." Cleanest split was by tier: **D9a = backend (debounce + EDD eval), D9b = frontend (toggle + audit-log).** They share zero files and can ship in either order.
+
+2. **D9a implementation (TDD-driven, 2 tasks, all green at commit time):**
+   - **D9.1** `signal_route.py` — added `time` import, `_DEBOUNCE_WINDOW_S = 2.0`, `_last_adapt_ts: dict[str, float]` module dict; gated the `background_tasks.add_task(_run_adaptation, ...)` call behind `if now - last >= _DEBOUNCE_WINDOW_S` with the per-session timestamp. Two new tests pin the contract: `test_two_signals_within_2s_fire_one_adaptation` (same sid, 2 POSTs, `mock_run.call_count == 1`) and `test_different_sessions_do_not_share_debounce_state` (different sids, 2 POSTs, `call_count == 2`).
+   - **D9.2** new `evals/test_persona_inference.py` (LinkedIn-technical fixture, `evaluate_persona` via `PydanticAIProvider`, asserts ≥2 role observations + depth=technical + rationale references dwell pattern). Eval surfaced empty-observations bug on first run; strengthened `read.py` SYSTEM_PROMPT (PRIMARY OUTPUT section + spec EXAMPLE block + tightened CONVENTIONS). Eval passes after fix.
+
+3. **Process discipline:** branched `feat/006-d9-polish` from develop, ran D9.1 + D9.2 each via failing-test → impl → green → lint → commit. After D9.2 staged, projected D9.3 + D9.4 diff would push the slice past both file and line caps — renamed branch to `feat/006-d9a-backend` to signal the decomposition. Merged via `--no-ff`. Two task commits, two clean test runs, zero fixup commits.
+
+## Key Decisions
+
+- **D9 decomposed into D9a (backend) + D9b (frontend).** Source-file count and cumulative diff both projected over caps. Cleanest split was by tier — D9a (signal_route + read.py + new eval) shares zero files with D9b (persona-store + TransparencyPanel + use-signal-collector + audit-store). Either could ship first; D9a went first because D9.1 was earlier in the plan order and D9.2's prompt fix was uncovered by the eval that came with it.
+- **Per-session debounce keyed by `session_id`, not global.** A global debounce would prevent legitimate concurrent adaptations across different visitors. The in-memory dict grows with active sessions and is bounded by the existing session capacity (default 256) — entries leak indefinitely as written, but `SESSION_TTL_SECONDS` already caps real session lifetime; promoting to a TTL-aware dict can wait until measured pressure exists.
+- **`_DEBOUNCE_WINDOW_S = 2.0`** matches the plan's stated value and the spec's "every signal batch, debounced 2s." Tunable in code; promoted to env var only when there's a reason.
+- **Eval-driven prompt fix is in scope for D9.** Spec's Rabbit Holes section: "Voice prompt tuning. Three prompts will need iteration. Restraint: ship simple prompts first. EDD evals (DeepEval, per ADR-0006) cover them in D9." The eval surfaced empty-observations on first run; tuning to fix it is what evals are for. The prompt change is contained inside `read.py`'s `SYSTEM_PROMPT` module constant — the structured-output schema, the strategy class, and all consumers are untouched.
+- **The original D1 prompt omitted the spec's EXAMPLE block.** Spec sketch (Solution → Persona creation mechanism) included a 4-line example showing LinkedIn + Salama dwell + Education skip → 3 observations. The D1 implementation left this out — likely as "rabbit hole avoidance." The eval revealed it was load-bearing: without the example, the LLM emits `observations: []` even when its rationale is rich. Restored verbatim from the spec.
+- **Plain `assert` style, not `deepeval` metric scoring.** Existing eval suite (`test_command_relevancy`, `test_content_grounding`, `test_manifest_relevancy`) uses plain assertions against structured outputs. DeepEval's metrics (GEval, AnswerRelevancyMetric) are for fuzzy text-quality grading; for asserting that a Pydantic Persona has specific dimension/value combinations, plain assertions are clearer and more deterministic. Project consistency over framework completeness.
+- **Local `read_llm` fixture inside the eval file, not added to `evals/conftest.py`.** The existing `llm_provider` fixture returns the older `LLMProvider` (used by `assemble_manifest` legacy path). `evaluate_persona` requires `PydanticAIProvider`. Adding a parallel fixture to conftest would touch one more file; instantiating in-test with a skip-if-no-key check keeps D9.2 to a single file change and mirrors conftest's skip pattern.
+
+## Blockers
+
+- **D9b implementation has not started — final FEAT-006 slice for shipping the feature.** Plan task list at `specs/006-agent-is-the-page/plan.md` Slice D9, tasks D9.3 + D9.4: TransparencyPanel "do not infer" toggle (+ `persona-store.ts` flag + `use-signal-collector.ts` gate) and `audit-store.ts` unified activity log (persona-delta + voice-utterance entry types alongside legacy decisions). 4 frontend source files + their tests. **After D9b merges, FEAT-006 ships.**
+- **`develop` 160 commits ahead of `origin/develop`** — unchanged push posture. User decision pending.
+- **Pre-existing backend ruff issues** — same 4 errors in `src/app/domain/{session,strategy,strategies/adapt,strategies/select}.py` (E501) and 8 errors in `tests/test_validation.py` + `tests/test_five_verb_events.py`. None in files D9a touched. Untouched this session.
+- **Pre-existing frontend Biome issues** — same as before: `src/__tests__/SkillTag.test.tsx:16` (noNonNullAssertion), `src/index.css:232-233` (noImportantStyles ×2), formatter delta on `src/__tests__/Canvas.test.tsx`. Untouched this session.
+- **No real-LLM smoke test of the new debounce + tuned read prompt against a live visitor session yet.** Debounce contract proven by 2 unit tests; prompt change proven by 1 eval that runs against the real LLM. Operational verification would be: open the dev page with `LLM_API_KEY` set, scroll-mash to generate fast signal bursts, confirm `ReadStrategy` fires once per ~2s window (visible in backend logs); also verify the agent's first persona delta on a LinkedIn-referred session includes ≥2 role observations.
+- **PresenceDot long-press + Canvas mobile flag + `useDwell` touch tuning unimplemented** — same as post-D8 (mentioned in D8 plan header but absent from D8 task list). Could fold into D9b polish or its own micro-slice.
+
+## Next Step
+
+**Run Slice D9b of FEAT-006 — frontend polish.** Plan task list at `specs/006-agent-is-the-page/plan.md` Slice D9, tasks D9.3 + D9.4. Two concerns:
+
+1. **D9.3 — "do not infer" toggle.** Add `inferenceDisabled: boolean` flag to `frontend/src/store/persona-store.ts`. Render a toggle in `frontend/src/chrome/TransparencyPanel.tsx` (label + checkbox; default off; flips the flag). Gate the signal POST in `frontend/src/hooks/use-signal-collector.ts` — when the flag is set, skip the `fetch("/api/agent/signal", ...)` call. Tests for each.
+2. **D9.4 — unified activity log.** Extend `frontend/src/store/audit-store.ts` with new entry kinds for `persona-delta` and `voice-utterance` alongside the legacy `decision` entry. Update `TransparencyPanel.tsx` "Decision history" section into "Activity" with three event types and appropriate iconography. Update `audit-store.test.ts` for the new entry types.
+
+**After D9b merges, FEAT-006 ships.** Candidate next steps: smoke-test full agent-IS-the-page experience with `LLM_API_KEY`, push `develop` to `origin`, brainstorm FEAT-007 OR shift to portfolio-content authoring.
+
+**Concrete starting state for fresh context:**
+- Branch start point: `develop` @ `f64fa43` (post-D9a merge).
+- New branch name: `feat/006-d9b-frontend` from `develop`.
+- Plan: `specs/006-agent-is-the-page/plan.md` Slice D9, tasks D9.3 + D9.4.
+- Walking-skeleton test for D9.3: `TransparencyPanel.persona.test.tsx` — render panel, click toggle, assert subsequent signal POST is skipped (mocked fetch).
+
+### Backlogged (not for next session unless user redirects)
+
+- **Manual smoke test of D3+D4+D5+D6+D7+D8 + D9a debounce/tuned-prompt with `LLM_API_KEY` set** — same backlog item, now extended.
+- **Push `develop` to `origin`** — 160 commits unpushed. User decision pending.
+- **PresenceDot long-press + Canvas mobile flag + `useDwell` touch tuning** — mentioned in D8 plan header but no task steps. Could fold into D9b polish or its own micro-slice.
+- **Pre-existing lint sweep** (SkillTag noNonNullAssertion, index.css `!important` ×2, Canvas.test.tsx formatter, ruff E501 across multiple test/strategy files). Standalone ~5-min slice.
+- **`cleanup()` audit across remaining `src/__tests__/*.test.tsx` files** — fragile pre-existing pattern; not encountered this slice.
+- **Generic `useMediaQuery(query: string)` hook extraction** — promote when a third media-query consumer arrives.
+- **Bento cohesion beyond tiling** (editorial rhythm). Distinct problem; needs its own brainstorm.
+- **TTL-aware `_last_adapt_ts` dict** — currently leaks per-session entries indefinitely; bounded only by `SESSION_TTL_SECONDS` at the visitor-session layer, not the debounce layer. Promote when measured pressure exists.
+
+---
+
+## Previous State (2026-04-26, post-Slice-D8 mobile degradation, merged into develop)
 
 Slice D8 of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `83c6c0f`). **`WhisperLayer` now collapses to a `<details>` disclosure on narrow viewports (≤640px).** The component subscribes to `matchMedia("(max-width: 640px)")` via a private `useNarrowViewport()` hook (mirrors the shape of `use-reduced-motion.ts`, kept inline since it has a single consumer for now). When the query matches, the existing `<aside aria-label="Whisper layer">` wrapper still owns the accessible label (preserving aria-label queries from earlier slices), but its body wraps the utterance `<ul>` in a native `<details>` whose `<summary>` reads "Notes from the agent" and is initially closed. Wide viewports keep the inline `<ul>` exactly as before — zero behavioral or visual change above 640px. A new Playwright spec at viewport 375×812 mocks `/api/agent/stream` with a single synthetic `voice:utterance` event and asserts the closed-then-open disclosure cycle end-to-end via `details.evaluate(el => el.open)` reads on the JSHandle.
 
