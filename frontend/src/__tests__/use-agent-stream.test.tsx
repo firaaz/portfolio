@@ -1,6 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAgentStream } from "../hooks/use-agent-stream";
+import { useAuditStore } from "../store/audit-store";
 
 const SESSION_KEY = "portfolio.sid";
 const ORIGINAL_EVENT_SOURCE = globalThis.EventSource;
@@ -32,6 +33,7 @@ beforeEach(() => {
 afterEach(() => {
   globalThis.EventSource = ORIGINAL_EVENT_SOURCE;
   vi.restoreAllMocks();
+  useAuditStore.setState({ activities: [] });
 });
 
 describe("useAgentStream", () => {
@@ -198,5 +200,119 @@ describe("useAgentStream voice handling", () => {
     expect(s.utterancesByVoice.whisper?.[0]?.content).toBe(
       "reading slowly here",
     );
+  });
+});
+
+type Handler = (event: MessageEvent) => void;
+function captureMessageHandler(): { current: () => Handler | null } {
+  const captured: { handler: Handler | null } = { handler: null };
+  class CapturingEventSource {
+    static readonly CONNECTING = 0;
+    static readonly OPEN = 1;
+    static readonly CLOSED = 2;
+    readyState = 0;
+    onerror: ((event: Event) => void) | null = null;
+    onopen: ((event: Event) => void) | null = null;
+    readonly url: string;
+    constructor(url: string) {
+      this.url = url;
+    }
+    close() {
+      this.readyState = 2;
+    }
+  }
+  const proto = CapturingEventSource.prototype as unknown as {
+    onmessage: Handler | null;
+  };
+  Object.defineProperty(proto, "onmessage", {
+    configurable: true,
+    get() {
+      return (this as { _om?: Handler | null })._om ?? null;
+    },
+    set(handler: Handler | null) {
+      (this as { _om?: Handler | null })._om = handler;
+      captured.handler = handler;
+    },
+  });
+  globalThis.EventSource =
+    CapturingEventSource as unknown as typeof EventSource;
+  return { current: () => captured.handler };
+}
+
+describe("useAgentStream activity-log wiring", () => {
+  it("appends a kind=persona activity when a PERSONA_DELTA arrives", () => {
+    const handler = captureMessageHandler();
+    sessionStorage.setItem(SESSION_KEY, "audit-persona-sid");
+    renderHook(() => useAgentStream());
+
+    handler.current()?.(
+      new MessageEvent("message", {
+        data: JSON.stringify({
+          type: "CUSTOM",
+          custom: {
+            eventType: "persona:delta",
+            rationale: "engineer evaluating tenancy",
+            trust: 0.5,
+            observations_added: [
+              {
+                dimension: "role",
+                value: "engineer",
+                confidence: 0.6,
+                rationale: "dwell pattern",
+                source_signals: [],
+                ts: "2026-04-26T12:00:00Z",
+              },
+              {
+                dimension: "depth",
+                value: "technical",
+                confidence: 0.55,
+                rationale: "lingered on architecture",
+                source_signals: [],
+                ts: "2026-04-26T12:00:00Z",
+              },
+            ],
+            ts: "2026-04-26T12:00:00Z",
+          },
+        }),
+      }),
+    );
+
+    const [first] = useAuditStore.getState().activities;
+    expect(first?.kind).toBe("persona");
+    if (first?.kind === "persona") {
+      expect(first.rationale).toBe("engineer evaluating tenancy");
+      expect(first.trust).toBe(0.5);
+      expect(first.observation_count).toBe(2);
+      expect(first.timestamp).toBe("2026-04-26T12:00:00Z");
+    }
+  });
+
+  it("appends a kind=voice activity when a VOICE_UTTERANCE arrives", () => {
+    const handler = captureMessageHandler();
+    sessionStorage.setItem(SESSION_KEY, "audit-voice-sid");
+    renderHook(() => useAgentStream());
+
+    handler.current()?.(
+      new MessageEvent("message", {
+        data: JSON.stringify({
+          type: "CUSTOM",
+          custom: {
+            eventType: "voice:utterance",
+            voice_tag: "letter",
+            utterance_kind: "letter",
+            content: "reading carefully",
+            references: [],
+          },
+        }),
+      }),
+    );
+
+    const [first] = useAuditStore.getState().activities;
+    expect(first?.kind).toBe("voice");
+    if (first?.kind === "voice") {
+      expect(first.voice_tag).toBe("letter");
+      expect(first.content).toBe("reading carefully");
+      expect(first.utterance_kind).toBe("letter");
+    }
   });
 });
