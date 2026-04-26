@@ -1,8 +1,9 @@
 # Lessons Learned
-Last reviewed: 2026-04-04
+Last reviewed: 2026-04-26
 
 ## Critical Rules (promoted after 2+ occurrences)
 - Shape Up methodology for all planning. Pitches (Problem/Appetite/Solution/Rabbit Holes/No-Gos), not PRDs. One spec at a time, no waterfall phasing. (2 occurrences: sessions 3, 4)
+- Zustand v5 selectors that return a record-keyed array fallback MUST use a hoisted frozen sentinel, never `?? []`. `useSyncExternalStore` compares snapshots by `Object.is`; `arr ?? []` mints a fresh `[]` every call → "getSnapshot should be cached" warning → `Maximum update depth exceeded` crash on first render with no entries. Pattern: `const EMPTY: readonly T[] = Object.freeze([]); export function getX(s: State) { return s.byKey.x ?? EMPTY; }`. (2 occurrences: D3 caught it via the empty-state unit test on first run; D4 plan code reproduced the anti-pattern verbatim and we sidestepped it by adding a parallel `getLetterUtterances` selector reusing the existing `EMPTY_UTTERANCES` constant.)
 
 ## Recent Corrections
 - Plans must be persisted to disk. Claude Code's plan mode keeps plans in conversation context only — they are NOT written to `.claude/plans/` or anywhere on disk. A `/clear` or new session destroys them. Always save implementation plans to a committed location (e.g., `specs/<feature>/plan.md`). Lost the entire FEAT-001 9-slice implementation plan (~100k tokens of work) because it only existed in conversation context.

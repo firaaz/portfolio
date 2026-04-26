@@ -1,6 +1,72 @@
 # Status
 
-## Current State (2026-04-26, post-Slice-D3 whisper voice, merged into develop)
+## Current State (2026-04-26, post-Slice-D4 letter voice, merged into develop)
+
+Slice D4 of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `e5bf638`). **The agent now writes a cover letter.** Mid-trust visitors (0.4 ≤ trust < 0.7) now trigger the letter branch: `select_voice` returns `"letter"`, the registry resolves it via `LETTER_PROMPT`, the LLM produces a single 2–3-sentence pitch utterance, and the frontend's `CoverLetterPanel.tsx` renders it at the top of the canvas in Zilla Slab serif at full opacity (font-size 1.25rem). The whisper layer remains visible at 0.3 opacity below it (cohabitation, not replacement, per spec lines 226–229). Letter+whisper now both registered; only `"dialogue"` (trust ≥ 0.7) still falls through silently — D5 fills it.
+
+**Branch state:** `develop` at `e5bf638`. `feat/006-d4-letter` carried 2 commits pre-merge:
+- `0748deb` — D4.1 `LETTER_PROMPT` + `VOICE_PROMPTS["letter"]` registration (4 new tests)
+- `2467623` — D4.2 `CoverLetterPanel.tsx` + `getLetterUtterances` selector + Canvas wire-in (3 new tests)
+
+No fixup commit needed — both task commits clean at commit time (typecheck + ruff + biome + tests all green). One in-task correction (added `cleanup()` to `afterEach` per `frontend/CLAUDE.md` convention; per-CLAUDE.md test idiom that the test draft initially missed) was caught by the second test failing on a duplicated rendered DOM tree, then immediately fixed and re-run before commit.
+
+`develop` is now **137 commits ahead of `origin/develop`** (was 134 pre-D4 by git's count; +2 slice commits + 1 merge = +3 ✓). No push this session.
+
+**Test counts on `develop` (post-merge):** backend pytest **243** (was 239, +4: TestLetterPrompt — registered/sentence-instructions/multivoice-instructions/strategy-constructible), frontend vitest **142** (was 139, +3: CoverLetterPanel — empty-state/latest-content/backgrounded-opacity), e2e **6/6** unchanged. pytest 0.88s; vitest 2.15s; e2e 7.4s.
+
+## Accomplished This Session
+
+1. **Slice D4 implementation (TDD-driven, 2 tasks, all green at commit time):**
+   - **D4.1** `backend/src/app/domain/strategies/voice.py` — added `LETTER_PROMPT` constant + new `"letter"` entry in `VOICE_PROMPTS`. Prompt instructs 2–3 sentences, present-tense second-person ("you'll find…"), client decorates the typography (Zilla Slab serif). MULTIVOICE clause: address every role observation with confidence > 0.3, weighted by confidence. The example "recruiter (0.4) + engineer (0.6) → speak to a technical reader who is also evaluating fit" is in the prompt as a concrete pattern. Output schema: a `VoiceUtteranceList` with a single `voice_tag="letter"` `utterance_kind="pitch"` utterance, `references=[]`. **Note:** plan said "replace the placeholder `LETTER_PROMPT`" but no placeholder existed in `voice.py` post-D3 — added fresh.
+   - **D4.2** `frontend/src/voice/CoverLetterPanel.tsx` (new, ~35 lines) — reads via new `getLetterUtterances(state)` named selector (mirrors `getWhisperUtterances`), renders `null` when empty, otherwise the **most recent** letter utterance only (asymmetric to whisper, which renders all). Active opacity 1.0 + font-size 1.25rem when `activeVoice === "letter"`, backgrounded 0.4 + 0.875rem when another voice is active. `transition: opacity 350ms ease-out, font-size 350ms ease-out` (opacity-only is fine for `prefers-reduced-motion`; font-size transition is decorative and degrades gracefully). `<section aria-label="Cover letter">` placed in `Canvas.tsx` ABOVE `<WhisperLayer />` so screen readers hear the headline pitch before the marginalia.
+
+2. **Three design moves worth noting:**
+   - **Stable empty-array sentinel reused via the existing voice-store pattern.** D3 retrospective flagged the Zustand v5 `?? []` selector anti-pattern as a `lessons.md` candidate after one more occurrence. D4's plan code at line 2530 reproduced the same anti-pattern verbatim. Rather than re-fix at the call site, I added a parallel `getLetterUtterances` selector to `voice-store.ts` that reuses the existing `EMPTY_UTTERANCES = Object.freeze([])` constant, keeping the public-selector pattern symmetrical with `getWhisperUtterances`. Anti-pattern occurred a second time → promoted the idiom to `tasks/lessons.md` this session (see Key Decisions).
+   - **Letter renders only the latest pitch; whisper renders all observations.** Asymmetric — and intentional. A cover letter is a single replaceable headline; whispers are a stream of marginal noticings. Same store, different rendering policy per voice. New voices (D5 dialogue) decide their own policy.
+   - **Stale-render bug in test caught the missing `cleanup()`.** First run of `CoverLetterPanel.test.tsx` had test 2 fail with `getMultipleElementsFoundError` because the `afterEach` reset the store but didn't call `@testing-library/react`'s `cleanup()`. `frontend/CLAUDE.md` mandates `afterEach with cleanup() + store reset` — the test draft initially shipped only the store reset. Added `cleanup()` and the test went green on the next run. Reinforces the convention; no new lesson, but worth noting that a hand-drafted test missed the per-CLAUDE.md idiom and the test result surfaced it immediately (not a silent leak).
+
+3. **Process discipline:** direct execution (not subagent-driven). D4 is two sequentially-dependent tasks (D4.2 imports the registered `"letter"` voice from D4.1; D4.2's frontend doesn't depend on backend wiring beyond the registry). Single-file edits, TDD per task — failing test → watch fail → implement minimally → green → commit. Two commits, two clean test runs, zero fixups. Mirrors D3's pattern.
+
+## Key Decisions
+
+- **`getLetterUtterances` named selector instead of inline `?? []`.** Plan code prescribed inline. D3 retrospective flagged the anti-pattern. Rather than re-fix inline at every new voice, codify the pattern as a per-voice selector with the existing frozen sentinel. Adds two lines to `voice-store.ts`; keeps the call-site clean and symmetrical to `getWhisperUtterances`. Future voices register their own selector.
+- **Letter renders latest only, whisper renders all** — content semantics, not protocol. Both arrive on the same `voice:utterance` SSE wire and both land in `useVoiceStore.utterancesByVoice`. The `CoverLetterPanel` chooses `utterances[utterances.length - 1]`; `WhisperLayer` maps over the full list. Different voices, different display policies, same store contract.
+- **Background opacity 0.4 for letter (vs whisper's 0.3).** Letter is a more substantive surface — when dialogue (D5) takes the foreground, the letter should still be readable as supporting context, not just legible. Whisper at 0.3 reads as gutter ambience; letter at 0.4 reads as a recessed sub-headline. Tunable in D9 if real-LLM dev surfaces a different feel.
+- **Zilla Slab inline `style` not Tailwind class** — letter is the first surface in the design system that calls for serif typography. No Tailwind serif class is configured (the project loaded Zilla Slab but no `font-serif-zilla` utility exists). Inline `fontFamily: "'Zilla Slab', serif"` for now; promote to a utility class when a second component needs it (premature abstraction otherwise).
+- **`<CoverLetterPanel />` placed ABOVE `<WhisperLayer />` in `Canvas.tsx`.** DOM order matters for screen readers — the headline pitch is heard before the marginal noticings. Visually the letter sits at the top of the canvas; whisper drifts in the gutter beside the bento. The order also matches the trust-confidence ladder (letter = "I have something concrete to say"; whisper = "I'm noticing things").
+
+## Blockers
+
+- **D5 implementation has not started** — dialogue voice for trust ≥ 0.7. Plan task list is in `specs/006-agent-is-the-page/plan.md` slice D5 (~5 source files: register `DIALOGUE_PROMPT`, build `DialogueOverlay.tsx` with question/answer/receipts pattern, bento highlight integration via `references[]`).
+- **Triple LLM round-trips per adapt cycle still in flight, now demonstrated for the letter branch too.** D4 didn't add a new round-trip but the letter branch now also fires the same read+voice+adapt sequence. Cost-debounce decision (D9-scoped) becomes more pressing once a manual smoke test produces real-cost observations.
+- **`develop` 137 commits ahead of `origin/develop`** — unchanged push posture. User decision pending.
+- **Pre-existing backend ruff issues** — 12 errors in untouched files (`tests/test_validation.py`, `src/app/domain/strategies/*.py`); 7 files would reformat. Untouched this session.
+- **Pre-existing frontend Biome issues** — `src/__tests__/SkillTag.test.tsx:16` (noNonNullAssertion), `src/index.css:232-233` (noImportantStyles ×2). The Canvas.test.tsx format issue from D3's STATUS may have resolved itself — no current Biome flag on it. Untouched this session beyond observation.
+- **No manual smoke test of the D3 whisper or D4 letter loop yet.** Wiring is proven by 18 backend tests covering the voice path + 12 frontend tests across voice-store/CoverLetterPanel/WhisperLayer + 6 e2e. End-to-end demo with `LLM_API_KEY` set in the running backend would confirm both branches fire on the same `SessionEventBus` subscription, render in the canvas, and dim correctly when activeVoice changes. Operational verification, not a code blocker — and it doubles as the cost-debounce datapoint.
+
+## Next Step
+
+**Run Slice D5 of FEAT-006 — dialogue voice + DialogueOverlay.** Trust band ≥ 0.7. High-confidence visitor sees an inferred question, the agent's prose answer, and 1–3 receipt utterances referencing item IDs render as a Q/A overlay above and below the bento. Bento highlights cards referenced by receipts.
+
+**Concrete starting state for fresh context:**
+- Branch start point: `develop` @ `e5bf638` (post-D4 merge).
+- New branch name: `feat/006-d5-dialogue` from `develop`.
+- Plan: `specs/006-agent-is-the-page/plan.md` Slice D5. Mirrors D3/D4 structure but introduces references[] consumption in the bento — first slice where utterance content cross-links to canvas content.
+- D4's substrate compounds: `getLetterUtterances` selector pattern is a template for `getDialogueUtterances`. The single-utterance-latest rendering policy from CoverLetterPanel transfers to the dialogue answer. Receipt rendering is new (per-utterance, with bento highlight side-effect).
+- LLM_API_KEY in `backend/.env` works — D5 dev should include manual smoke-test passes (and would also exercise D3+D4 via mid-trust runs).
+
+### Backlogged (not for next session unless user redirects)
+
+- **Manual smoke test of D3 whisper + D4 letter loops with `LLM_API_KEY` set** — verify both voices arrive on the same bus subscription under a real Anthropic round-trip; capture cost observations for the debounce-priority decision.
+- **Push `develop` to `origin`** — 137 commits unpushed. User decision pending.
+- **Pre-existing lint sweep** (SkillTag noNonNullAssertion, index.css `!important` ×2, ruff E501 across test_validation/strategies). Standalone ~5-min slice.
+- **Cost debounce for read+voice+adapt cycle** (D9-scoped, may land sooner). Currently 3 LLM calls per escalation; need real-LLM dev observations to size the actual spend.
+- **Bento cohesion beyond tiling** (editorial rhythm). Distinct problem; needs its own brainstorm.
+- **Tooling-hooks slice (cairn cherry-pick)** — still backlogged behind feature work.
+
+---
+
+## Previous State (2026-04-26, post-Slice-D3 whisper voice, merged into develop)
 
 Slice D3 of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `47fb3ab`). **The agent now speaks on the page.** When the adapt cycle fires for a low-trust visitor (trust < 0.4), the backend runs `evaluate_persona` → emits PERSONA_DELTA → calls `select_voice` → instantiates `VoiceStrategy("whisper")` → calls `evaluate_voice` → emits one VOICE_UTTERANCE event per utterance through `SessionEventBus`. The frontend's `useVoiceStore` collects them and `WhisperLayer.tsx` renders italic gutter observations next to the bento at 0.6 opacity (active) / 0.3 (backgrounded). Whisper-only in D3 — `VOICE_PROMPTS` registers `"whisper"`; `select_voice` returning `"letter"` (trust 0.4–0.69) or `"dialogue"` (trust ≥ 0.7) currently falls through silently because those tags are not yet registered. D4 and D5 fill them.
 
