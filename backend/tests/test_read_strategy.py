@@ -1,6 +1,6 @@
 """Tests for ReadStrategy — agent's persona-inference prompt builder."""
 
-from app.domain.context import VisitorContext
+from app.domain.context import UserAgentSummary, Viewport, VisitorContext
 from app.domain.persona import Persona
 from app.domain.session import BehavioralSignal, VisitorProfile
 from app.domain.strategies.read import SYSTEM_PROMPT, ReadStrategy
@@ -69,3 +69,85 @@ class TestReadStrategy:
         cfg = ReadStrategy().model_config()
         assert cfg.temperature <= 0.4
         assert cfg.max_tokens >= 512
+
+
+class TestReadStrategyExpandedContext:
+    """ReadStrategy surfaces first-paint context to the LLM."""
+
+    def _profile_with(
+        self,
+        viewport: Viewport | None = None,
+        landing_path: str | None = None,
+        ua: UserAgentSummary | None = None,
+    ) -> VisitorProfile:
+        return VisitorProfile(
+            session_id="t",
+            context=VisitorContext(
+                viewport=viewport,
+                landing_path=landing_path,
+                user_agent_summary=ua,
+            ),
+        )
+
+    def test_prompt_mentions_touch_pointer(self) -> None:
+        profile = self._profile_with(
+            viewport=Viewport(width=390, height=844, pointer_type="touch"),
+        )
+        prompt = ReadStrategy().build_prompt(profile, []).lower()
+        assert "touch" in prompt
+
+    def test_prompt_mentions_mouse_pointer(self) -> None:
+        profile = self._profile_with(
+            viewport=Viewport(width=1440, height=900, pointer_type="mouse"),
+        )
+        prompt = ReadStrategy().build_prompt(profile, []).lower()
+        assert "mouse" in prompt
+
+    def test_prompt_mentions_reduced_motion_when_set(self) -> None:
+        profile = self._profile_with(
+            viewport=Viewport(
+                width=1440,
+                height=900,
+                pointer_type="mouse",
+                prefers_reduced_motion=True,
+            ),
+        )
+        prompt = ReadStrategy().build_prompt(profile, []).lower()
+        assert "reduced motion" in prompt or "prefers-reduced-motion" in prompt
+
+    def test_prompt_does_not_mention_reduced_motion_when_unset(self) -> None:
+        profile = self._profile_with(
+            viewport=Viewport(width=1440, height=900, pointer_type="mouse"),
+        )
+        prompt = ReadStrategy().build_prompt(profile, []).lower()
+        assert "reduced motion" not in prompt
+
+    def test_prompt_mentions_viewport_dimensions(self) -> None:
+        profile = self._profile_with(
+            viewport=Viewport(width=1440, height=900, pointer_type="mouse"),
+        )
+        prompt = ReadStrategy().build_prompt(profile, [])
+        assert "1440" in prompt
+        assert "900" in prompt
+
+    def test_prompt_includes_landing_path(self) -> None:
+        profile = self._profile_with(landing_path="/work")
+        prompt = ReadStrategy().build_prompt(profile, [])
+        assert "/work" in prompt
+
+    def test_prompt_includes_user_agent_summary(self) -> None:
+        profile = self._profile_with(
+            ua=UserAgentSummary(family="Firefox", platform="Linux"),
+        )
+        prompt = ReadStrategy().build_prompt(profile, [])
+        assert "Firefox" in prompt
+        assert "Linux" in prompt
+
+    def test_prompt_omits_expanded_fields_when_absent(self) -> None:
+        profile = VisitorProfile(session_id="t", context=VisitorContext())
+        prompt = ReadStrategy().build_prompt(profile, []).lower()
+        # No expanded fields set — none of these tokens should appear.
+        assert "touch" not in prompt
+        assert "viewport" not in prompt
+        assert "landing" not in prompt
+        assert "user agent" not in prompt
