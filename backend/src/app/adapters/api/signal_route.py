@@ -6,7 +6,10 @@ import os
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 
-from app.adapters.api.persona_events import persona_delta_event
+from app.adapters.api.persona_events import (
+    persona_delta_event,
+    voice_utterance_event,
+)
 from app.adapters.api.ux_events import intelligence_to_events
 from app.adapters.content.yaml_loader import load_catalog
 from app.adapters.session.memory_session import InMemorySession
@@ -15,10 +18,13 @@ from app.domain.context import VisitorContext
 from app.domain.evaluation import evaluate_intelligence
 from app.domain.persona_evaluation import evaluate_persona
 from app.domain.session import SignalBatch, VisitorProfile
+from app.domain.stage import select_voice
 from app.domain.strategies.adapt import SYSTEM_PROMPT as ADAPT_SYSTEM_PROMPT
 from app.domain.strategies.adapt import AdaptStrategy
 from app.domain.strategies.read import SYSTEM_PROMPT as READ_SYSTEM_PROMPT
 from app.domain.strategies.read import ReadStrategy
+from app.domain.strategies.voice import VOICE_PROMPTS, VoiceStrategy
+from app.domain.voice_evaluation import evaluate_voice
 
 router = APIRouter(prefix="/api/agent")
 
@@ -66,10 +72,10 @@ async def _run_adaptation(
     bus: SessionEventBus,
     llm: object,
 ) -> None:
-    """Run ReadStrategy + AdaptStrategy; publish PERSONA_DELTA + UX events.
+    """Run Read -> Voice -> Adapt; publish PERSONA_DELTA + VOICE + UX events.
 
-    PERSONA_DELTA is published first so the transparency panel updates before
-    the canvas shifts — preserving causality (agent thinks → speaks → acts).
+    Ordering enforces visitor-perceived causality (agent thinks -> speaks ->
+    acts): persona delta first, voice utterances second, UX events last.
     Background-task failures stay silent — agent silence beats a crash.
     """
     try:
@@ -81,6 +87,17 @@ async def _run_adaptation(
         if persona is not None:
             ev = persona_delta_event(persona, prior_trust=0.0, prior_rationale="")
             await bus.publish(profile.session_id, ev)
+
+            voice_tag = select_voice(persona, steer=None)
+            if voice_tag in VOICE_PROMPTS:
+                strategy = VoiceStrategy(voice_tag=voice_tag)
+                strategy.persona = persona
+                utterances = await evaluate_voice(strategy, llm, profile, catalog)
+                if utterances is not None:
+                    for utt in utterances.utterances:
+                        await bus.publish(
+                            profile.session_id, voice_utterance_event(utt)
+                        )
 
         result = await evaluate_intelligence(
             AdaptStrategy(),

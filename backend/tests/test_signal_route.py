@@ -304,3 +304,87 @@ class TestSignalRoutePersonaEmission:
         # First event should be the persona delta, then intelligence events.
         assert len(received) >= 1
         assert "persona:delta" in received[0]
+
+
+class TestSignalRouteVoiceEmission:
+    """Whisper voice fires after PERSONA_DELTA when trust < 0.4."""
+
+    async def test_run_adaptation_emits_voice_utterance_after_persona_delta(
+        self,
+    ) -> None:
+        from datetime import UTC, datetime
+
+        from app.adapters.api.signal_route import _run_adaptation
+        from app.domain.persona import Observation, Persona, SignalRef
+        from app.domain.strategies.voice import VoiceUtterance, VoiceUtteranceList
+
+        profile = VisitorProfile(session_id="voice-emit", context=VisitorContext())
+        for _ in range(3):
+            profile.accumulate(
+                BehavioralSignal(
+                    type="dwell", card_id="skills", duration_ms=1500, timestamp=1.0
+                )
+            )
+
+        # trust=0.2 -> select_voice returns "whisper" (registered in VOICE_PROMPTS)
+        low_trust_persona = Persona(
+            rationale="early-read",
+            observations=[
+                Observation(
+                    dimension="role",
+                    value="engineer",
+                    confidence=0.4,
+                    rationale="dwell pattern",
+                    source_signals=[SignalRef(kind="signal", id="s0")],
+                    ts=datetime.now(UTC),
+                )
+            ],
+            trust=0.2,
+        )
+        utterances = VoiceUtteranceList(
+            utterances=[
+                VoiceUtterance(
+                    voice_tag="whisper",
+                    utterance_kind="observation",
+                    content="reading slowly here",
+                )
+            ]
+        )
+        intelligence = IntelligenceResult(
+            items=[ItemResult(id="hero", importance=0.95)],
+            bridges=None,
+        )
+
+        bus = SessionEventBus()
+        received: list[str] = []
+
+        async def _consumer() -> None:
+            async for event in bus.subscribe(profile.session_id):
+                received.append(event)
+                if len(received) >= 3:
+                    break
+
+        consumer_task = asyncio.create_task(_consumer())
+        await asyncio.sleep(0)
+
+        with (
+            patch(
+                "app.adapters.api.signal_route.evaluate_persona",
+                new=AsyncMock(return_value=low_trust_persona),
+            ),
+            patch(
+                "app.adapters.api.signal_route.evaluate_voice",
+                new=AsyncMock(return_value=utterances),
+            ),
+            patch(
+                "app.adapters.api.signal_route.evaluate_intelligence",
+                new=AsyncMock(return_value=intelligence),
+            ),
+        ):
+            await _run_adaptation(profile, bus, AsyncMock())
+
+        await asyncio.wait_for(consumer_task, timeout=1.0)
+        # Order: persona:delta -> voice:utterance -> intelligence (UX) event.
+        assert len(received) >= 2
+        assert "persona:delta" in received[0]
+        assert "voice:utterance" in received[1]
