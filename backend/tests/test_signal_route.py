@@ -470,3 +470,52 @@ class TestSignalRouteInitialContext:
         assert profile.context.viewport.width == 1440
         assert profile.context.viewport.pointer_type == "mouse"
         assert profile.context.landing_path == "/"
+
+
+class TestSignalRouteDebounce:
+    """Rapid signals coalesce — only one adaptation fires per debounce window."""
+
+    def test_two_signals_within_2s_fire_one_adaptation(self) -> None:
+        with (
+            patch(
+                "app.adapters.api.signal_route._get_llm_port",
+                return_value=object(),
+            ),
+            patch(
+                "app.adapters.api.signal_route._run_adaptation",
+                new_callable=AsyncMock,
+            ) as mock_run,
+        ):
+            client.post(
+                "/api/agent/signal",
+                json={"session_id": "debounce-1", "signals": [_signal(ts=1.0)]},
+            )
+            client.post(
+                "/api/agent/signal",
+                json={"session_id": "debounce-1", "signals": [_signal(ts=1.5)]},
+            )
+        # Without debounce: two band crossings -> two adaptations.
+        # With debounce: second is within 2s window -> coalesced.
+        assert mock_run.call_count == 1
+
+    def test_different_sessions_do_not_share_debounce_state(self) -> None:
+        with (
+            patch(
+                "app.adapters.api.signal_route._get_llm_port",
+                return_value=object(),
+            ),
+            patch(
+                "app.adapters.api.signal_route._run_adaptation",
+                new_callable=AsyncMock,
+            ) as mock_run,
+        ):
+            client.post(
+                "/api/agent/signal",
+                json={"session_id": "debounce-A", "signals": [_signal(ts=1.0)]},
+            )
+            client.post(
+                "/api/agent/signal",
+                json={"session_id": "debounce-B", "signals": [_signal(ts=1.0)]},
+            )
+        # Per-session debounce keying — each session gets its own first call.
+        assert mock_run.call_count == 2
