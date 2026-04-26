@@ -1,6 +1,6 @@
 """Tests for VisitorContext model — referrer URL parsing."""
 
-from app.domain.context import VisitorContext
+from app.domain.context import UserAgentSummary, Viewport, VisitorContext
 
 
 class TestVisitorContext:
@@ -58,3 +58,55 @@ class TestVisitorContextCommand:
         )
         assert ctx.referrer_type == "linkedin"
         assert ctx.command == "show contact"
+
+
+class TestVisitorContextExpansion:
+    """VisitorContext carries first-paint signals: viewport, landing, UA summary."""
+
+    def test_viewport_field_optional_and_typed(self) -> None:
+        ctx = VisitorContext(
+            viewport=Viewport(
+                width=1440,
+                height=900,
+                pointer_type="mouse",
+                prefers_reduced_motion=False,
+            )
+        )
+        assert ctx.viewport is not None
+        assert ctx.viewport.width == 1440
+        assert ctx.viewport.height == 900
+        assert ctx.viewport.pointer_type == "mouse"
+        assert ctx.viewport.prefers_reduced_motion is False
+
+    def test_viewport_defaults_when_omitted(self) -> None:
+        assert VisitorContext().viewport is None
+
+    def test_user_agent_summary_aggregated_only(self) -> None:
+        ctx = VisitorContext(
+            user_agent_summary=UserAgentSummary(family="Chrome", platform="macOS")
+        )
+        assert ctx.user_agent_summary is not None
+        assert ctx.user_agent_summary.family == "Chrome"
+        assert ctx.user_agent_summary.platform == "macOS"
+
+    def test_user_agent_summary_defaults_when_omitted(self) -> None:
+        assert VisitorContext().user_agent_summary is None
+
+    def test_landing_path_optional(self) -> None:
+        assert VisitorContext().landing_path is None
+        assert VisitorContext(landing_path="/").landing_path == "/"
+        assert VisitorContext(landing_path="/work").landing_path == "/work"
+
+    def test_referrer_type_still_computed_with_expanded_fields(self) -> None:
+        ctx = VisitorContext(
+            referrer="https://linkedin.com/in/someone",
+            viewport=Viewport(width=390, height=844, pointer_type="touch"),
+            landing_path="/",
+            user_agent_summary=UserAgentSummary(family="Safari", platform="iOS"),
+        )
+        assert ctx.referrer_type == "linkedin"
+        assert ctx.viewport is not None
+        assert ctx.viewport.pointer_type == "touch"
+        assert ctx.landing_path == "/"
+        assert ctx.user_agent_summary is not None
+        assert ctx.user_agent_summary.platform == "iOS"
