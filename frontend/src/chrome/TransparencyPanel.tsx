@@ -7,6 +7,7 @@ import {
 import { useAuditStore } from "../store/audit-store";
 import {
   type PersonaObservation,
+  setInferenceDisabled,
   usePersonaStore,
 } from "../store/persona-store";
 
@@ -44,6 +45,16 @@ export function TransparencyPanel({
           <SheetTitle>What the agent thinks of you</SheetTitle>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-6">
+          <section aria-label="Inference control">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={persona.inferenceDisabled}
+                onChange={(e) => setInferenceDisabled(e.target.checked)}
+              />
+              <span>Do not infer my persona</span>
+            </label>
+          </section>
           <section aria-label="Persona">
             {persona.observations.length === 0 ? (
               <p className="text-sm text-muted-foreground">

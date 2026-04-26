@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { usePersonaStore } from "../store/persona-store";
 
 export interface Signal {
   type: "dwell" | "skip" | "click" | "hover";
@@ -73,6 +74,8 @@ export function useSignalCollector(sessionId: string | null) {
       const signals = bufferRef.current;
       if (signals.length === 0) return;
       bufferRef.current = [];
+
+      if (usePersonaStore.getState().inferenceDisabled) return;
 
       const body: {
         session_id: string;

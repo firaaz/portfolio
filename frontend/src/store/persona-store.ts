@@ -25,12 +25,14 @@ interface PersonaState {
   rationale: string;
   trust: number;
   observations: PersonaObservation[];
+  inferenceDisabled: boolean;
 }
 
 export const usePersonaStore = create<PersonaState>(() => ({
   rationale: "",
   trust: 0,
   observations: [],
+  inferenceDisabled: false,
 }));
 
 export function applyPersonaDelta(delta: PersonaDelta): void {
@@ -39,6 +41,10 @@ export function applyPersonaDelta(delta: PersonaDelta): void {
     trust: delta.trust ?? state.trust,
     observations: [...state.observations, ...delta.observations_added],
   }));
+}
+
+export function setInferenceDisabled(disabled: boolean): void {
+  usePersonaStore.setState({ inferenceDisabled: disabled });
 }
 
 export function getRoleObservations(state: PersonaState): PersonaObservation[] {
