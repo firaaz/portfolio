@@ -62,3 +62,36 @@ class TestPersonaDeltaEvent:
         ev = persona_delta_event(_persona(0.7), prior_trust=0.4, prior_rationale="x")
         payload = json.loads(ev[len("data: ") :].strip())
         assert payload["custom"]["trust"] == 0.7
+
+
+class TestVoiceUtteranceEvent:
+    def test_emits_well_formed_sse_data_frame(self) -> None:
+        from app.adapters.api.persona_events import voice_utterance_event
+        from app.domain.strategies.voice import VoiceUtterance
+
+        utt = VoiceUtterance(
+            voice_tag="whisper",
+            utterance_kind="observation",
+            content="reading slowly here",
+            references=[],
+        )
+        ev = voice_utterance_event(utt)
+        assert ev.startswith("data: ")
+        assert ev.endswith("\n\n")
+
+    def test_payload_carries_voice_tag_and_content(self) -> None:
+        from app.adapters.api.persona_events import voice_utterance_event
+        from app.domain.strategies.voice import VoiceUtterance
+
+        utt = VoiceUtterance(
+            voice_tag="whisper",
+            utterance_kind="observation",
+            content="reading slowly here",
+        )
+        ev = voice_utterance_event(utt)
+        payload = json.loads(ev[len("data: ") :].strip())
+        assert payload["type"] == "CUSTOM"
+        assert payload["custom"]["eventType"] == "voice:utterance"
+        assert payload["custom"]["voice_tag"] == "whisper"
+        assert payload["custom"]["utterance_kind"] == "observation"
+        assert payload["custom"]["content"] == "reading slowly here"

@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from app.domain.persona import Persona
+from app.domain.strategies.voice import VoiceUtterance
 
 
 def persona_delta_event(
@@ -24,5 +25,18 @@ def persona_delta_event(
     if persona.trust != prior_trust:
         custom["trust"] = persona.trust
 
+    payload = {"type": "CUSTOM", "custom": custom}
+    return f"data: {json.dumps(payload)}\n\n"
+
+
+def voice_utterance_event(utt: VoiceUtterance) -> str:
+    """Format a VOICE_UTTERANCE as an AG-UI CustomEvent SSE event."""
+    custom: dict[str, Any] = {
+        "eventType": "voice:utterance",
+        "voice_tag": utt.voice_tag,
+        "utterance_kind": utt.utterance_kind,
+        "content": utt.content,
+        "references": list(utt.references),
+    }
     payload = {"type": "CUSTOM", "custom": custom}
     return f"data: {json.dumps(payload)}\n\n"
