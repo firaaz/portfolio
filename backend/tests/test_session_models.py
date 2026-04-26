@@ -45,6 +45,37 @@ class TestSignalBatch:
         assert batch.session_id == "abc-123"
         assert len(batch.signals) == 1
 
+    def test_initial_context_fields_optional(self) -> None:
+        from app.domain.session import SignalBatch
+
+        batch = SignalBatch(session_id="abc-123", signals=[])
+        assert batch.viewport is None
+        assert batch.landing_path is None
+        assert batch.user_agent_summary is None
+
+    def test_carries_first_paint_context(self) -> None:
+        from app.domain.context import UserAgentSummary, Viewport
+        from app.domain.session import SignalBatch
+
+        batch = SignalBatch(
+            session_id="s1",
+            signals=[],
+            viewport=Viewport(
+                width=1440,
+                height=900,
+                pointer_type="mouse",
+                prefers_reduced_motion=True,
+            ),
+            landing_path="/work",
+            user_agent_summary=UserAgentSummary(family="Firefox", platform="Linux"),
+        )
+        assert batch.viewport is not None
+        assert batch.viewport.width == 1440
+        assert batch.viewport.prefers_reduced_motion is True
+        assert batch.landing_path == "/work"
+        assert batch.user_agent_summary is not None
+        assert batch.user_agent_summary.family == "Firefox"
+
 
 class TestVisitorProfile:
     def test_default_tier_is_one(self) -> None:

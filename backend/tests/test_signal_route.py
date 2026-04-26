@@ -388,3 +388,85 @@ class TestSignalRouteVoiceEmission:
         assert len(received) >= 2
         assert "persona:delta" in received[0]
         assert "voice:utterance" in received[1]
+
+
+class TestSignalRouteInitialContext:
+    """First-paint context (viewport, landing_path, UA summary) lifts onto profile."""
+
+    def test_first_batch_persists_initial_context(self) -> None:
+        from app.adapters.api.signal_route import _get_session_store
+
+        sid = "ic-first-batch"
+        response = client.post(
+            "/api/agent/signal",
+            json={
+                "session_id": sid,
+                "signals": [_signal()],
+                "viewport": {
+                    "width": 390,
+                    "height": 844,
+                    "pointer_type": "touch",
+                    "prefers_reduced_motion": True,
+                },
+                "landing_path": "/work",
+                "user_agent_summary": {"family": "Safari", "platform": "iOS"},
+            },
+        )
+        assert response.status_code == 200
+
+        profile = _get_session_store().get(sid)
+        assert profile is not None
+        assert profile.context.viewport is not None
+        assert profile.context.viewport.width == 390
+        assert profile.context.viewport.pointer_type == "touch"
+        assert profile.context.viewport.prefers_reduced_motion is True
+        assert profile.context.landing_path == "/work"
+        assert profile.context.user_agent_summary is not None
+        assert profile.context.user_agent_summary.family == "Safari"
+        assert profile.context.user_agent_summary.platform == "iOS"
+
+    def test_initial_context_optional_for_subsequent_batches(self) -> None:
+        sid = "ic-no-second"
+        client.post(
+            "/api/agent/signal",
+            json={
+                "session_id": sid,
+                "signals": [_signal()],
+                "viewport": {"width": 1440, "height": 900, "pointer_type": "mouse"},
+            },
+        )
+        # Second batch omits initial_context — must still succeed.
+        response = client.post(
+            "/api/agent/signal",
+            json={"session_id": sid, "signals": [_signal(ts=2.0)]},
+        )
+        assert response.status_code == 200
+
+    def test_subsequent_batch_does_not_clobber_initial_context(self) -> None:
+        from app.adapters.api.signal_route import _get_session_store
+
+        sid = "ic-no-clobber"
+        client.post(
+            "/api/agent/signal",
+            json={
+                "session_id": sid,
+                "signals": [_signal()],
+                "viewport": {"width": 1440, "height": 900, "pointer_type": "mouse"},
+                "landing_path": "/",
+            },
+        )
+        client.post(
+            "/api/agent/signal",
+            json={
+                "session_id": sid,
+                "signals": [_signal(ts=2.0)],
+                "viewport": {"width": 320, "height": 568, "pointer_type": "touch"},
+                "landing_path": "/should-not-overwrite",
+            },
+        )
+        profile = _get_session_store().get(sid)
+        assert profile is not None
+        assert profile.context.viewport is not None
+        assert profile.context.viewport.width == 1440
+        assert profile.context.viewport.pointer_type == "mouse"
+        assert profile.context.landing_path == "/"

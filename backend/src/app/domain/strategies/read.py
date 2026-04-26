@@ -63,6 +63,17 @@ class ReadStrategy:
         ]
         if ctx.command:
             lines.append(f"Latest command: {ctx.command}")
+        if ctx.viewport:
+            vp = ctx.viewport
+            line = f"Viewport: {vp.width}x{vp.height}, pointer: {vp.pointer_type}"
+            if vp.prefers_reduced_motion:
+                line += ", prefers reduced motion"
+            lines.append(line)
+        if ctx.landing_path:
+            lines.append(f"Landing path: {ctx.landing_path}")
+        if ctx.user_agent_summary:
+            ua = ctx.user_agent_summary
+            lines.append(f"User agent: {ua.family} on {ua.platform}")
 
         lines += ["", "Recent signals (id, type, card, duration_ms):"]
         for idx, sig in enumerate(profile.signals[-20:]):
