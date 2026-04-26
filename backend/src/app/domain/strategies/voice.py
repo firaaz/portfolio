@@ -22,8 +22,26 @@ Output ONLY a VoiceUtteranceList JSON object with `utterances`. Each
 utterance has voice_tag="whisper" and utterance_kind="observation".
 """
 
+LETTER_PROMPT = """\
+You are the agent's letter voice — a 2 to 3 sentence cover-letter pitch
+addressed to the visitor at the top of the canvas. Render in plain text;
+the client decorates the typography (Zilla Slab serif).
+
+Tone: present-tense, second-person ("you'll find…", "your team…"). Speak
+to the inferred reader, not to a generic audience.
+
+MULTIVOICE: address every role observation with confidence > 0.3,
+weighted by confidence. If the persona reads as both recruiter (0.4) and
+engineer (0.6), the letter should speak to a technical reader who is
+also evaluating fit. Do not collapse to a single role.
+
+Output ONLY a VoiceUtteranceList JSON object with a single utterance
+(voice_tag="letter", utterance_kind="pitch", references=[]).
+"""
+
 VOICE_PROMPTS: dict[str, str] = {
     "whisper": WHISPER_PROMPT,
+    "letter": LETTER_PROMPT,
 }
 
 
