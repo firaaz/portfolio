@@ -1,6 +1,83 @@
 # Status
 
-## Current State (2026-04-26, post-Slice-D2 persona on the wire, merged into develop)
+## Current State (2026-04-26, post-Slice-D3 whisper voice, merged into develop)
+
+Slice D3 of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `47fb3ab`). **The agent now speaks on the page.** When the adapt cycle fires for a low-trust visitor (trust < 0.4), the backend runs `evaluate_persona` → emits PERSONA_DELTA → calls `select_voice` → instantiates `VoiceStrategy("whisper")` → calls `evaluate_voice` → emits one VOICE_UTTERANCE event per utterance through `SessionEventBus`. The frontend's `useVoiceStore` collects them and `WhisperLayer.tsx` renders italic gutter observations next to the bento at 0.6 opacity (active) / 0.3 (backgrounded). Whisper-only in D3 — `VOICE_PROMPTS` registers `"whisper"`; `select_voice` returning `"letter"` (trust 0.4–0.69) or `"dialogue"` (trust ≥ 0.7) currently falls through silently because those tags are not yet registered. D4 and D5 fill them.
+
+**Branch state:** `develop` at `47fb3ab`. `feat/006-d3-whisper` carried 6 commits pre-merge:
+- `a0f71a0` — D3.1 `select_voice` pure function + `VisitorSteer` model (5 tests)
+- `d954a5e` — D3.2 `VoiceStrategy` + `VOICE_PROMPTS` registry + `WHISPER_PROMPT` + `VoiceUtterance`/`VoiceUtteranceList` schemas (6 tests)
+- `2b7b8ac` — D3.3 `voice_utterance_event` SSE formatter appended to `persona_events.py` (2 new tests)
+- `20bd883` — D3.4 wire StageSelector + VoiceStrategy into `_run_adaptation`; new `domain/voice_evaluation.py` (1 new integration test)
+- `2dac107` — D3.5 frontend `voice-store` + `isVoiceUtterance` guard + `useAgentStream` voice branch (6 frontend tests across 3 files)
+- `96b2f58` — D3.6 `WhisperLayer.tsx` + Canvas integration (3 tests)
+
+No fixup commit needed — every task commit was clean at commit time (typecheck + ruff + biome + tests all green per task).
+
+`develop` is now **133 commits ahead of `origin/develop`** (was 126 pre-D3; +6 slice commits + 1 merge = +7 ✓). No push this session.
+
+**Test counts on `develop` (post-merge):** backend pytest **239** (was 225, +14: 5 stage_selector + 6 voice_strategy + 2 persona_events.voice + 1 signal_route.voice_emission), frontend vitest **139** (was 130, +9: 3 voice-store + 2 sse-parsers.voice + 1 use-agent-stream.voice + 3 WhisperLayer), e2e **6/6** unchanged. pytest 0.86s; vitest 2.10s; e2e 7.3s.
+
+## Accomplished This Session
+
+1. **Plan written and approved** — `/Users/firaazfarook/.claude/plans/humble-shimmying-kahan.md` (D3 plan referencing the prescriptive task code at `specs/006-agent-is-the-page/plan.md` lines 1432–2332). User approved via ExitPlanMode then said "start d3."
+
+2. **Slice D3 implementation (TDD-driven, 6 tasks, all green at commit time):**
+   - **D3.1** `backend/src/app/domain/stage.py` (~25 lines) — `VisitorSteer` Pydantic model with open-vocab `requested_voice: str`; `select_voice(persona, steer) -> str` pure function with module-private thresholds `_LETTER_THRESHOLD=0.4` and `_DIALOGUE_THRESHOLD=0.7`. Steer overrides trust-based routing. Selector does NOT validate against `VOICE_PROMPTS` — that validation lives at the strategy boundary, keeping the selector pure.
+   - **D3.2** `backend/src/app/domain/strategies/voice.py` (~95 lines) — plain class (mirrors `read.py`/`adapt.py`; avoids Pydantic's reserved `model_config` `ClassVar` shadow if ever migrated to `BaseModel`). `VOICE_PROMPTS = {"whisper": WHISPER_PROMPT}`. `WHISPER_PROMPT` instructs 1-3 short italic lines (≤12 words), present-tense first-person, never breaking the fourth wall. `VoiceUtterance` + `VoiceUtteranceList(min_length=1)` are the wire shapes for the LLM's structured output. `__init__` raises `ValueError` on unknown `voice_tag` (fail-fast). Temperature 0.5 (warmer than ReadStrategy's 0.2 for tonal variety), max_tokens 512.
+   - **D3.3** `voice_utterance_event` appended to `backend/src/app/adapters/api/persona_events.py` — same AG-UI CustomEvent envelope shape as `persona_delta_event` (`type: "CUSTOM"`, nested `custom.eventType: "voice:utterance"`). Decision: keep it co-located with persona events for now; renaming to `agent_events.py` deferred to D6.
+   - **D3.4** `backend/src/app/domain/voice_evaluation.py` (new, parallel to `persona_evaluation.py`) + `signal_route._run_adaptation` rewrite. The orchestration sequence is now: `evaluate_persona` → publish `persona:delta` → `select_voice(persona, None)` → if `voice_tag in VOICE_PROMPTS`, `VoiceStrategy(voice_tag)` + assign `strategy.persona = persona` + `evaluate_voice` → publish one `voice:utterance` per utterance → `evaluate_intelligence` → publish UX events. Ordering enforces think → speak → act causality. `evaluate_voice` calls `strategy.system_prompt()` internally (cleaner than `evaluate_persona`'s `system_prompt` arg, because `VoiceStrategy` carries the prompt via the registry).
+   - **D3.5** `frontend/src/store/voice-store.ts` (~45 lines) — Zustand store `{ activeVoice: string ("whisper"), utterancesByVoice: Record<string, VoiceUtterance[]>, setActiveVoice }`. Standalone exported `addUtterance` action (mirrors `persona-store`'s `applyPersonaDelta` pattern; no store methods). `isVoiceUtterance` type guard + `VoiceUtteranceEvent` interface appended to `hooks/sse-parsers.ts`. `use-agent-stream.ts` voice branch dispatches `addUtterance` + `useVoiceStore.getState().setActiveVoice(voice_tag)`.
+   - **D3.6** `frontend/src/voice/WhisperLayer.tsx` (~50 lines, new directory) — italic `<aside aria-label="Whisper layer">` rendered before `<Bento />` in `Canvas.tsx` (DOM-order-first so screen readers hear the agent's voice before its content). Opacity 0.6 when `activeVoice === "whisper"`, 0.3 otherwise. `transition: opacity 350ms ease-out` (opacity-only — `prefers-reduced-motion` is satisfied automatically). Local `withStableKeys` helper mirrors D2's TransparencyPanel pattern for content-derived collision-resistant keys.
+
+3. **Two design moves worth noting:**
+   - **Stable empty-array sentinel for Zustand v5 selectors** — the plan's `?? []` fallback in `getWhisperUtterances` triggered Zustand v5's "getSnapshot should be cached to avoid an infinite loop" warning, then a `Maximum update depth exceeded` crash on first render with no utterances. Root cause: `useSyncExternalStore` compares snapshots by `Object.is`, and `arr ?? []` mints a fresh empty array each call → "state changed" on every render → infinite loop. Fix: hoisted `EMPTY_UTTERANCES = Object.freeze([])` constant. **Caught by the `renders nothing when no whisper utterances` unit test on first run** — would have shipped as a runtime bug visible immediately when any new visitor loaded the page before an utterance arrived. Worth promoting to `tasks/lessons.md` as a Zustand v5 selector idiom (relevant any time a selector returns a record-keyed array fallback).
+   - **`withStableKeys` for utterance list** — the plan-prescribed `${voice_tag}-${idx}-${content.slice(0,12)}` template included `${idx}` and tripped Biome's `noArrayIndexKey`. Refactored to a Map-based collision counter keyed on `${voice_tag}::${content}` — content-derived, suppression-free, identical pattern to D2's TransparencyPanel `withStableKeys`. Same lesson D2 surfaced; same fix.
+
+4. **Process discipline:** direct execution (not subagent-driven). The plan's task code blocks were prescriptive enough that subagents per task would have been pure overhead, especially since D3 tasks are sequentially dependent (D3.4 imports D3.1+D3.2+D3.3; D3.5 imports D3.3 wire shape; D3.6 imports D3.5). Single-file edits with TDD per task — failing test → watch fail → implement minimal → green → commit. Six commits, six clean test runs, zero fixups. Mirrors D2's pattern.
+
+## Key Decisions
+
+- **`VoiceStrategy` is a plain class, not `BaseModel`** — explicit decision, mirrors `ReadStrategy`/`AdaptStrategy`. Pydantic's `model_config` is a reserved `ClassVar`; the strategy's `model_config()` method would shadow it if any strategy were ever migrated to `BaseModel`. The constraint is implicit but stable across the strategies module.
+- **`evaluate_voice` lives in a new `domain/voice_evaluation.py`, parallel to `persona_evaluation.py`** — not a generic refactor. D2 set this precedent: parallel functions over premature abstraction. The existing `evaluate_intelligence`/`evaluate_persona` contracts are stable and other tests depend on them; adding a third focused function preserves stability. Refactor when there's a fourth.
+- **Whisper-only voice tag in D3 — architecture complete, registry intentionally sparse.** `VOICE_PROMPTS = {"whisper": ...}`. When `select_voice` returns `"letter"` or `"dialogue"`, the `voice_tag in VOICE_PROMPTS` guard short-circuits the voice branch silently. Visitors with trust ≥ 0.4 hear nothing yet. D4 registers `"letter"` (trust 0.4–0.69), D5 registers `"dialogue"` (trust ≥ 0.7). New voices = prompt registration, not protocol change.
+- **`select_voice` is open-vocab on input, `VoiceStrategy` is closed-vocab on instantiation.** Steer can request `"podcast"` and the selector returns it unchanged; passing `"podcast"` to `VoiceStrategy()` raises `ValueError`. Separation lets the selector stay pure (no registry coupling) and lets future voices be added at the strategy layer without revisiting the selector.
+- **PERSONA_DELTA → VOICE_UTTERANCE → UX events ordering is load-bearing** — preserves visitor-perceived causality (think → speak → act). The voice consumes the freshly-published persona because the persona delta has already been bus-published before voice generation begins. The same `_run_adaptation` invocation publishes all three event types in order on the bus.
+- **Stable empty-array sentinel as Zustand v5 selector idiom** — promoted in spirit (see Accomplished). Any selector that returns `state.someRecord[key] ?? []` needs an identity-stable fallback or it will infinite-loop via `useSyncExternalStore`. A reasonable lessons.md candidate after one more occurrence.
+
+## Blockers
+
+- **D4 implementation has not started** — letter voice for trust band 0.4–0.69. Plan task list is in `specs/006-agent-is-the-page/plan.md` slice D4. Mirrors D3 structure: register `LETTER_PROMPT` in `VOICE_PROMPTS`; create `LetterPanel.tsx` that renders when `activeVoice === "letter"`; whisper stays visible at 0.3 opacity (cohabitation, not replacement).
+- **Triple LLM round-trips per adapt cycle now in flight** — D3 added a third LLM call (read + voice + adapt) on every escalation. The 2s debounce planned for D9 may need to land earlier than scheduled; flag this once a manual smoke test produces dev-cost observations.
+- **`develop` 133 commits ahead of `origin/develop`** — unchanged push posture. User decision pending.
+- **Pre-existing backend ruff issues** — 12 errors in untouched files (`tests/test_validation.py`, `src/app/domain/strategies/*.py`); 7 files would reformat (also pre-existing). Untouched this session.
+- **Pre-existing frontend Biome issues** — `src/__tests__/SkillTag.test.tsx:16` (noNonNullAssertion), `src/__tests__/Canvas.test.tsx` (format), `src/index.css:232-233` (noImportantStyles ×2). Untouched this session.
+- **No manual smoke test of the D3 whisper loop yet.** Wiring is proven by 14 backend + 9 frontend + 6 e2e tests. End-to-end demo with `LLM_API_KEY` set in the running backend would confirm whisper utterances arrive on the same bus subscription a low-trust visitor's PERSONA_DELTA travels, render in the gutter, and dim correctly when (eventually) `activeVoice` changes. Operational verification, not a code blocker — and it doubles as the cost-debounce datapoint above.
+
+## Next Step
+
+**Run Slice D4 of FEAT-006 — letter voice + LetterPanel.** Trust band 0.4–0.69. Mid-confidence visitor sees a "cover-letter pitch" surface as the foreground voice; whisper stays visible at reduced opacity (cohabitation per spec line 226–229).
+
+**Concrete starting state for fresh context:**
+- Branch start point: `develop` @ `47fb3ab` (post-D3 merge).
+- New branch name: `feat/006-d4-letter` from `develop`.
+- Plan: `specs/006-agent-is-the-page/plan.md` Slice D4 (mirrors D3 structure: register `LETTER_PROMPT` → ship `LetterPanel.tsx` → adjust opacity logic so whisper backgrounds when letter is active).
+- D3's substrate is in place: `VoiceStrategy` engine, `VOICE_PROMPTS` registry, `voice_utterance_event` formatter, frontend `useVoiceStore` + `isVoiceUtterance` guard + stream branch, `WhisperLayer` precedent for layout. D4 reuses everything except adds one prompt + one component.
+- LLM_API_KEY in `backend/.env` works — D4 dev should include manual smoke-test passes (and would also exercise D3's whisper loop incidentally via low-trust runs).
+
+### Backlogged (not for next session unless user redirects)
+
+- **Manual smoke test of D3 whisper loop with `LLM_API_KEY` set** — verify whisper utterances render in the gutter under a real Anthropic round-trip; capture cost observations for the debounce-priority decision.
+- **Push `develop` to `origin`** — 133 commits unpushed. User decision pending.
+- **Pre-existing lint sweep** (SkillTag noNonNullAssertion, Canvas.test format, index.css `!important` ×2, ruff E501 across test_validation/strategies). Standalone ~5-min slice.
+- **Cost debounce for read+voice+adapt cycle** (D9-scoped, may land sooner). Currently 3 LLM calls per escalation; need real-LLM dev observations to size the actual spend.
+- **Promote Zustand v5 stable-sentinel idiom to `tasks/lessons.md`** if/when it surfaces in another store. Currently a single occurrence; lessons.md threshold is 2+.
+- **Bento cohesion beyond tiling** (editorial rhythm). Distinct problem; needs its own brainstorm.
+- **Tooling-hooks slice (cairn cherry-pick)** — still backlogged behind feature work.
+
+---
+
+## Previous State (2026-04-26, post-Slice-D2 persona on the wire, merged into develop)
 
 Slice D2 of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `c8e22c8`). **First visible end-to-end beat from FEAT-006 is now live:** when the adapt cycle fires, the backend runs `evaluate_persona` alongside `evaluate_intelligence`, formats the result as a `persona:delta` AG-UI CustomEvent, and publishes it through `SessionEventBus` ahead of the UX events. The frontend stream hook routes it into a new `usePersonaStore`; `TransparencyPanel` now reads "What the agent thinks of you" — rationale + trust + per-observation cards (dimension / value / confidence / rationale). No voice rendering yet — that's D3+.
 
