@@ -8,9 +8,11 @@ import { useUXStore } from "../store/ux-store";
 import { getHighlightedItemIds, useVoiceStore } from "../store/voice-store";
 import { CoverLetterPanel } from "../voice/CoverLetterPanel";
 import { DialogueOverlay } from "../voice/DialogueOverlay";
+import { FallbackUtterance } from "../voice/FallbackUtterance";
 import { WhisperLayer } from "../voice/WhisperLayer";
 import { Bento } from "./Bento";
 
+const KNOWN_VOICES = ["whisper", "letter", "dialogue"];
 const NEUTRAL_SALIENCE = 0.5;
 
 function neutralize(items: UXItem[]): UXItem[] {
@@ -42,6 +44,7 @@ export function Canvas({
         highlighted={highlighted}
       />
       <WhisperLayer />
+      <FallbackUtterance knownVoices={KNOWN_VOICES} />
       <div className="canvas-chrome">
         <div className="flex items-center gap-3">
           <div className="text-right">
