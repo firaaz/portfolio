@@ -134,3 +134,69 @@ describe("useAgentStream persona handling", () => {
     expect(s.observations).toHaveLength(1);
   });
 });
+
+describe("useAgentStream voice handling", () => {
+  it("dispatches a VOICE_UTTERANCE event into useVoiceStore", async () => {
+    const { useVoiceStore } = await import("../store/voice-store");
+    useVoiceStore.setState({ activeVoice: "whisper", utterancesByVoice: {} });
+
+    type Handler = (event: MessageEvent) => void;
+    const captured: { handler: Handler | null } = { handler: null };
+    class CapturingEventSource {
+      static readonly CONNECTING = 0;
+      static readonly OPEN = 1;
+      static readonly CLOSED = 2;
+      readyState = 0;
+      onerror: ((event: Event) => void) | null = null;
+      onopen: ((event: Event) => void) | null = null;
+      readonly url: string;
+      constructor(url: string) {
+        this.url = url;
+      }
+      close() {
+        this.readyState = 2;
+      }
+    }
+    const proto = CapturingEventSource.prototype as unknown as {
+      onmessage: Handler | null;
+    };
+    Object.defineProperty(proto, "onmessage", {
+      configurable: true,
+      get() {
+        return (this as { _om?: Handler | null })._om ?? null;
+      },
+      set(handler: Handler | null) {
+        (this as { _om?: Handler | null })._om = handler;
+        captured.handler = handler;
+      },
+    });
+    globalThis.EventSource =
+      CapturingEventSource as unknown as typeof EventSource;
+
+    sessionStorage.setItem(SESSION_KEY, "voice-test-sid");
+    renderHook(() => useAgentStream());
+
+    expect(captured.handler).not.toBeNull();
+    captured.handler?.(
+      new MessageEvent("message", {
+        data: JSON.stringify({
+          type: "CUSTOM",
+          custom: {
+            eventType: "voice:utterance",
+            voice_tag: "whisper",
+            utterance_kind: "observation",
+            content: "reading slowly here",
+            references: [],
+          },
+        }),
+      }),
+    );
+
+    const s = useVoiceStore.getState();
+    expect(s.activeVoice).toBe("whisper");
+    expect(s.utterancesByVoice.whisper).toHaveLength(1);
+    expect(s.utterancesByVoice.whisper?.[0]?.content).toBe(
+      "reading slowly here",
+    );
+  });
+});

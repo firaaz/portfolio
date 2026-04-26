@@ -4,6 +4,7 @@ import {
   isPersonaDelta,
   isStateDelta,
   isStateSnapshot,
+  isVoiceUtterance,
 } from "../hooks/sse-parsers";
 
 describe("sse-parsers", () => {
@@ -105,6 +106,32 @@ describe("sse-parsers", () => {
       expect(isPersonaDelta({ type: "STATE_SNAPSHOT", snapshot: {} })).toBe(
         false,
       );
+    });
+  });
+
+  describe("isVoiceUtterance", () => {
+    it("matches a voice:utterance CUSTOM event", () => {
+      expect(
+        isVoiceUtterance({
+          type: "CUSTOM",
+          custom: {
+            eventType: "voice:utterance",
+            voice_tag: "whisper",
+            utterance_kind: "observation",
+            content: "reading slowly here",
+            references: [],
+          },
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects other CUSTOM events", () => {
+      expect(
+        isVoiceUtterance({
+          type: "CUSTOM",
+          custom: { eventType: "persona:delta", observations_added: [] },
+        }),
+      ).toBe(false);
     });
   });
 });
