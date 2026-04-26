@@ -8,6 +8,7 @@ Hexagonal architecture: `src/app/{domain,ports,adapters}/`. Domain has zero fram
 - `uv run pytest evals/` — LLM evaluation suite (slow, hits API)
 - `uv run ruff check src tests` — lint
 - `uv run ruff format --check src tests` — format check
+- Pyright "Import could not be resolved" diagnostics on `app.*` / pydantic / fastapi imports are false positives — LSP is not configured for `src/`. ruff + pytest are authoritative; ignore the LSP noise.
 
 ## Architecture
 - Hexagonal: `domain/` (models + logic), `ports/` (protocols), `adapters/` (implementations).
