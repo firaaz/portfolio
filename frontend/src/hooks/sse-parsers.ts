@@ -1,7 +1,7 @@
 /**
  * Shared SSE event type guards for AG-UI protocol.
  */
-import type { DecisionRecord } from "../store/audit-store";
+import type { DecisionActivity } from "../store/audit-store";
 import type { ImportanceUpdate, ManifestItem } from "../store/manifest-store";
 import type { PersonaObservation } from "../store/persona-store";
 import type { VoiceReference } from "../store/voice-store";
@@ -42,7 +42,7 @@ export interface DecisionEvent {
   type: "CUSTOM";
   custom: {
     eventType: "DECISION";
-    decision: DecisionRecord;
+    decision: Omit<DecisionActivity, "kind">;
   };
 }
 

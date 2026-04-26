@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   applyPersonaDelta,
   type PersonaObservation,
+  setInferenceDisabled,
   usePersonaStore,
 } from "../store/persona-store";
 
@@ -18,7 +19,12 @@ const baseObs = (
 });
 
 afterEach(() => {
-  usePersonaStore.setState({ rationale: "", trust: 0, observations: [] });
+  usePersonaStore.setState({
+    rationale: "",
+    trust: 0,
+    observations: [],
+    inferenceDisabled: false,
+  });
 });
 
 describe("usePersonaStore", () => {
@@ -66,5 +72,33 @@ describe("usePersonaStore", () => {
     });
     applyPersonaDelta({ observations_added: [baseObs({ value: "founder" })] });
     expect(usePersonaStore.getState().rationale).toBe("first read");
+  });
+
+  it("starts with inferenceDisabled = false", () => {
+    expect(usePersonaStore.getState().inferenceDisabled).toBe(false);
+  });
+
+  it("setInferenceDisabled(true) flips the flag on", () => {
+    setInferenceDisabled(true);
+    expect(usePersonaStore.getState().inferenceDisabled).toBe(true);
+  });
+
+  it("setInferenceDisabled(false) flips the flag off", () => {
+    setInferenceDisabled(true);
+    setInferenceDisabled(false);
+    expect(usePersonaStore.getState().inferenceDisabled).toBe(false);
+  });
+
+  it("setInferenceDisabled does not clobber observations or trust", () => {
+    applyPersonaDelta({
+      rationale: "linkedin engineer",
+      trust: 0.5,
+      observations_added: [baseObs()],
+    });
+    setInferenceDisabled(true);
+    const s = usePersonaStore.getState();
+    expect(s.rationale).toBe("linkedin engineer");
+    expect(s.trust).toBe(0.5);
+    expect(s.observations).toHaveLength(1);
   });
 });

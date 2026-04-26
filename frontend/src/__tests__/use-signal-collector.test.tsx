@@ -4,6 +4,7 @@ import {
   captureInitialContext,
   useSignalCollector,
 } from "../hooks/use-signal-collector";
+import { setInferenceDisabled, usePersonaStore } from "../store/persona-store";
 
 const BATCH_INTERVAL_MS = 4000;
 
@@ -35,6 +36,12 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  usePersonaStore.setState({
+    rationale: "",
+    trust: 0,
+    observations: [],
+    inferenceDisabled: false,
+  });
 });
 
 describe("captureInitialContext", () => {
@@ -214,5 +221,90 @@ describe("useSignalCollector — initial-context latch", () => {
     await vi.advanceTimersByTimeAsync(BATCH_INTERVAL_MS);
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("useSignalCollector — inference-disabled gate", () => {
+  it("skips POST when usePersonaStore.inferenceDisabled is true", async () => {
+    stubMatchMedia({});
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null));
+    vi.stubGlobal("fetch", fetchMock);
+
+    setInferenceDisabled(true);
+
+    const { result } = renderHook(() => useSignalCollector("session-D"));
+    result.current.addSignal({
+      type: "dwell",
+      card_id: "hero",
+      duration_ms: 1500,
+      timestamp: 1.0,
+    });
+    await vi.advanceTimersByTimeAsync(BATCH_INTERVAL_MS);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("clears the buffer when gating skips the POST (no replay)", async () => {
+    stubMatchMedia({});
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null));
+    vi.stubGlobal("fetch", fetchMock);
+
+    setInferenceDisabled(true);
+
+    const { result } = renderHook(() => useSignalCollector("session-E"));
+    result.current.addSignal({
+      type: "dwell",
+      card_id: "hero",
+      duration_ms: 1500,
+      timestamp: 1.0,
+    });
+    await vi.advanceTimersByTimeAsync(BATCH_INTERVAL_MS);
+
+    // Re-enable; only signals added AFTER re-enable should ship.
+    setInferenceDisabled(false);
+    result.current.addSignal({
+      type: "click",
+      card_id: "hero",
+      duration_ms: 0,
+      timestamp: 2.0,
+    });
+    await vi.advanceTimersByTimeAsync(BATCH_INTERVAL_MS);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
+    );
+    expect(body.signals).toHaveLength(1);
+    expect(body.signals[0].type).toBe("click");
+  });
+
+  it("resumes POSTing once the flag is flipped back to false", async () => {
+    stubMatchMedia({});
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null));
+    vi.stubGlobal("fetch", fetchMock);
+
+    setInferenceDisabled(true);
+
+    const { result } = renderHook(() => useSignalCollector("session-F"));
+    result.current.addSignal({
+      type: "dwell",
+      card_id: "hero",
+      duration_ms: 1500,
+      timestamp: 1.0,
+    });
+    await vi.advanceTimersByTimeAsync(BATCH_INTERVAL_MS);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    setInferenceDisabled(false);
+    result.current.addSignal({
+      type: "hover",
+      card_id: "hero",
+      duration_ms: 200,
+      timestamp: 2.0,
+    });
+    await vi.advanceTimersByTimeAsync(BATCH_INTERVAL_MS);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

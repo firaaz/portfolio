@@ -1,11 +1,16 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { TransparencyPanel } from "../chrome/TransparencyPanel";
 import { usePersonaStore } from "../store/persona-store";
 
 afterEach(() => {
   cleanup();
-  usePersonaStore.setState({ rationale: "", trust: 0, observations: [] });
+  usePersonaStore.setState({
+    rationale: "",
+    trust: 0,
+    observations: [],
+    inferenceDisabled: false,
+  });
 });
 
 describe("TransparencyPanel persona section", () => {
@@ -47,5 +52,43 @@ describe("TransparencyPanel persona section", () => {
     expect(screen.getByText(/0\.50/)).toBeInTheDocument();
     expect(screen.getByText(/engineer/i)).toBeInTheDocument();
     expect(screen.getByText(/recruiter/i)).toBeInTheDocument();
+  });
+});
+
+describe("TransparencyPanel — do-not-infer toggle", () => {
+  it("renders an unchecked checkbox labeled 'Do not infer my persona'", () => {
+    render(<TransparencyPanel open={true} onOpenChange={() => {}} />);
+    const toggle = screen.getByRole("checkbox", {
+      name: /do not infer my persona/i,
+    });
+    expect(toggle).toBeInTheDocument();
+    expect(toggle).not.toBeChecked();
+  });
+
+  it("reflects the current store state on first render when flag is true", () => {
+    usePersonaStore.setState({ inferenceDisabled: true });
+    render(<TransparencyPanel open={true} onOpenChange={() => {}} />);
+    expect(
+      screen.getByRole("checkbox", { name: /do not infer my persona/i }),
+    ).toBeChecked();
+  });
+
+  it("clicking flips inferenceDisabled in the store from false to true", () => {
+    render(<TransparencyPanel open={true} onOpenChange={() => {}} />);
+    const toggle = screen.getByRole("checkbox", {
+      name: /do not infer my persona/i,
+    });
+    fireEvent.click(toggle);
+    expect(usePersonaStore.getState().inferenceDisabled).toBe(true);
+  });
+
+  it("clicking again flips it back to false", () => {
+    usePersonaStore.setState({ inferenceDisabled: true });
+    render(<TransparencyPanel open={true} onOpenChange={() => {}} />);
+    const toggle = screen.getByRole("checkbox", {
+      name: /do not infer my persona/i,
+    });
+    fireEvent.click(toggle);
+    expect(usePersonaStore.getState().inferenceDisabled).toBe(false);
   });
 });
