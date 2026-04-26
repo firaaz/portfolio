@@ -43,3 +43,9 @@ export function getWhisperUtterances(
 ): readonly VoiceUtterance[] {
   return state.utterancesByVoice.whisper ?? EMPTY_UTTERANCES;
 }
+
+export function getLetterUtterances(
+  state: VoiceState,
+): readonly VoiceUtterance[] {
+  return state.utterancesByVoice.letter ?? EMPTY_UTTERANCES;
+}

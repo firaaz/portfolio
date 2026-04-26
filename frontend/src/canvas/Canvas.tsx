@@ -4,6 +4,7 @@ import { useSessionId } from "../hooks/use-session-id";
 import { useSignalCollector } from "../hooks/use-signal-collector";
 import type { UXItem } from "../store/ux-store";
 import { useUXStore } from "../store/ux-store";
+import { CoverLetterPanel } from "../voice/CoverLetterPanel";
 import { WhisperLayer } from "../voice/WhisperLayer";
 import { Bento } from "./Bento";
 
@@ -29,6 +30,7 @@ export function Canvas({
 
   return (
     <main className="canvas-shell" data-zone="canvas">
+      <CoverLetterPanel />
       <WhisperLayer />
       <Bento items={rendered} cardHandlers={cardHandlers} />
       <div className="canvas-chrome">

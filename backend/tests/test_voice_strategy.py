@@ -49,3 +49,21 @@ class TestVoiceStrategy:
         prompt = strat.build_prompt(_profile(), [])
         assert "0.30" in prompt or "trust" in prompt.lower()
         assert "early-read" in prompt
+
+
+class TestLetterPrompt:
+    def test_letter_prompt_registered(self) -> None:
+        assert "letter" in VOICE_PROMPTS
+
+    def test_letter_prompt_instructs_2_to_3_sentences(self) -> None:
+        prompt = VOICE_PROMPTS["letter"]
+        assert "2" in prompt and "3" in prompt
+        assert "sentence" in prompt.lower()
+
+    def test_letter_prompt_addresses_multivoice_roles(self) -> None:
+        prompt = VOICE_PROMPTS["letter"].lower()
+        assert "every role observation" in prompt or "all role observations" in prompt
+
+    def test_letter_strategy_can_be_constructed(self) -> None:
+        strat = VoiceStrategy(voice_tag="letter")
+        assert strat.name == "voice:letter"
