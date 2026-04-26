@@ -4,6 +4,7 @@ import { useSessionId } from "../hooks/use-session-id";
 import { useSignalCollector } from "../hooks/use-signal-collector";
 import type { UXItem } from "../store/ux-store";
 import { useUXStore } from "../store/ux-store";
+import { WhisperLayer } from "../voice/WhisperLayer";
 import { Bento } from "./Bento";
 
 const NEUTRAL_SALIENCE = 0.5;
@@ -28,6 +29,7 @@ export function Canvas({
 
   return (
     <main className="canvas-shell" data-zone="canvas">
+      <WhisperLayer />
       <Bento items={rendered} cardHandlers={cardHandlers} />
       <div className="canvas-chrome">
         <div className="flex items-center gap-3">

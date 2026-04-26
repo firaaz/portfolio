@@ -36,6 +36,10 @@ export function addUtterance(utt: VoiceUtterance): void {
   });
 }
 
-export function getWhisperUtterances(state: VoiceState): VoiceUtterance[] {
-  return state.utterancesByVoice.whisper ?? [];
+const EMPTY_UTTERANCES: readonly VoiceUtterance[] = Object.freeze([]);
+
+export function getWhisperUtterances(
+  state: VoiceState,
+): readonly VoiceUtterance[] {
+  return state.utterancesByVoice.whisper ?? EMPTY_UTTERANCES;
 }
