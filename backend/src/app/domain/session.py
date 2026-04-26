@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.domain.context import VisitorContext
+from app.domain.context import UserAgentSummary, Viewport, VisitorContext
 
 _TIER2_MIN_SIGNALS = 3
 _TIER3_CONFIDENCE = 0.7
@@ -25,6 +25,9 @@ class SignalBatch(BaseModel):
 
     session_id: str
     signals: list[BehavioralSignal]
+    viewport: Viewport | None = None
+    landing_path: str | None = None
+    user_agent_summary: UserAgentSummary | None = None
 
 
 class VisitorProfile(BaseModel):

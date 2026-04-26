@@ -62,6 +62,17 @@ def _confidence_band(confidence: float) -> int:
     return int(confidence * 10)
 
 
+def _merge_initial_context(profile: VisitorProfile, batch: SignalBatch) -> None:
+    """Lift first-paint context onto profile.context — only fields not already set."""
+    ctx = profile.context
+    if ctx.viewport is None and batch.viewport is not None:
+        ctx.viewport = batch.viewport
+    if ctx.landing_path is None and batch.landing_path is not None:
+        ctx.landing_path = batch.landing_path
+    if ctx.user_agent_summary is None and batch.user_agent_summary is not None:
+        ctx.user_agent_summary = batch.user_agent_summary
+
+
 def _should_adapt(old_tier: int, old_band: int, profile: VisitorProfile) -> bool:
     """Return True when tier escalated or confidence crossed a 0.1 band."""
     return profile.tier > old_tier or _confidence_band(profile.confidence) > old_band
@@ -136,6 +147,8 @@ async def ingest_signals(
 
     if profile is None:
         profile = VisitorProfile(session_id=batch.session_id, context=VisitorContext())
+
+    _merge_initial_context(profile, batch)
 
     old_tier = profile.tier
     old_band = _confidence_band(profile.confidence)
