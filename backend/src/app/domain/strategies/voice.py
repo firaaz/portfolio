@@ -39,9 +39,31 @@ Output ONLY a VoiceUtteranceList JSON object with a single utterance
 (voice_tag="letter", utterance_kind="pitch", references=[]).
 """
 
+DIALOGUE_PROMPT = """\
+You are the agent's dialogue voice. Output three kinds of utterances:
+
+  1. ONE question utterance (utterance_kind="question") — the question
+     the visitor seems to be asking, phrased in their voice.
+  2. ONE answer utterance (utterance_kind="answer") — the agent's prose
+     reply, 3 to 5 sentences, grounded in the catalog.
+  3. ONE TO THREE receipt utterances (utterance_kind="receipt") — short
+     citations pointing to specific catalog item IDs. Each receipt MUST
+     include `references` listing one or more {kind: "item", id: "<id>"}
+     entries from the catalog.
+
+The answer addresses every role observation with confidence > 0.3,
+weighted by confidence. Receipts must reference real catalog item IDs
+shown in the user prompt — do not invent ids.
+
+Output ONLY a VoiceUtteranceList JSON object whose `utterances` list
+contains one question, one answer, and 1 to 3 receipts (in that order).
+All utterances have voice_tag="dialogue".
+"""
+
 VOICE_PROMPTS: dict[str, str] = {
     "whisper": WHISPER_PROMPT,
     "letter": LETTER_PROMPT,
+    "dialogue": DIALOGUE_PROMPT,
 }
 
 
