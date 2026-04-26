@@ -96,7 +96,7 @@ class TestStreamNoDecisionEvent:
 
         response = client.post(
             "/api/agent/command",
-            json={"text": "show contact info"},
+            json={"text": "show contact info", "session_id": "test-session"},
         )
         assert response.status_code == 200
         events = _parse_events(response.text)
