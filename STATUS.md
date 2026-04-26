@@ -1,6 +1,79 @@
 # Status
 
-## Current State (2026-04-26, post-Slice-D9a backend polish, merged into develop)
+## Current State (2026-04-26, post-Slice-D9b frontend polish — FEAT-006 SHIPPED)
+
+Slice D9b of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `42b84a2`). **D9b covers the frontend half of the decomposed D9: TransparencyPanel "do not infer" toggle (with persona-store flag + signal-collector POST gate) + unified Activity log replacing the legacy decisions array (audit-store discriminated union, agent-stream wires persona-delta + voice-utterance into the log alongside their primary store dispatches).** With this merge, **all D-series slices of FEAT-006 are complete and FEAT-006 ships as a feature.**
+
+The persona store now carries an `inferenceDisabled: boolean` flag (default false) with a standalone `setInferenceDisabled(b)` setter. `TransparencyPanel` renders a checkbox labeled "Do not infer my persona" that flips the flag. `useSignalCollector`'s flush interval reads `usePersonaStore.getState().inferenceDisabled` and skips the `fetch("/api/agent/signal", ...)` call when set — the buffer is cleared on the same path, so signals collected while gated are intentionally discarded rather than queued for replay (privacy intent over throughput). Three tests pin the contract: skip-when-disabled, clear-on-skip-no-replay, resume-when-flipped-back.
+
+The audit store migrated cleanly from `decisions: DecisionRecord[]` to `activities: ActivityEntry[]` (a discriminated union of `decision | persona | voice`). Old `addDecision` had zero production callers (only test-file usage), so no backward-compat shim was needed; standalone helpers `addDecisionActivity` / `addPersonaActivity` / `addVoiceActivity` now exist in the same functional-API style as `applyPersonaDelta` / `addUtterance`. `useAgentStream` was extended with two extra dispatch lines: every `persona:delta` event also calls `addPersonaActivity(...)` and every `voice:utterance` event also calls `addVoiceActivity(...)`. The `TransparencyPanel` "Decision history" section became "Activity," rendering kind-discriminated bodies with monochromatic Unicode glyphs (◆ decision, ● persona, ▲ voice) marked `aria-hidden="true"` so screen readers fall back to the kind label — visual scanability via shape, semantics via text, no color (per the no-accent-color rule).
+
+**Branch state:** `develop` at `42b84a2`. `feat/006-d9b-frontend` carried 2 commits pre-merge:
+- `1f57c15` — D9.3 do-not-infer toggle: `persona-store` adds `inferenceDisabled` + `setInferenceDisabled`; `TransparencyPanel` adds the checkbox in a new `aria-label="Inference control"` section; `use-signal-collector` reads the flag at flush time and gates the POST + drops buffer. 6 files (3 source + 3 test). +192/-3.
+- `eaa3453` — D9.4 unified activity log: `audit-store` rewritten to `ActivityEntry` discriminated union; `TransparencyPanel` Activity section with kind-branched body and stable `withActivityKeys` helper; `use-agent-stream` dispatches `addPersonaActivity` / `addVoiceActivity` alongside primary stores; `sse-parsers.DecisionEvent` retyped to `Omit<DecisionActivity, "kind">` to drop the orphaned `DecisionRecord` import. 7 files. +379/-61 — over the 200-line guideline (net source change ~96; bulk is test density on a wire-shape change). Same rationale as D7.2; called out explicitly in the commit body.
+
+No fixup commits across both task commits. **Test counts on `develop` (post-merge):** backend pytest **264** unchanged (frontend-only slice), frontend vitest **181** (was 174 pre-D9b; +3 persona-store + 3 use-signal-collector + 4 TransparencyPanel.persona toggle + 4 TransparencyPanel render-by-kind + 2 use-agent-stream activity wiring − 1 dropped legacy decisions test = +7 net), e2e **7/7** unchanged. pytest 0.89s; vitest 2.18s; e2e 7.3s.
+
+`develop` is now **165 commits ahead of `origin/develop`** (162 pre-D9b + 2 slice commits + 1 merge = +3, STATUS marker pending). No push this session.
+
+## Accomplished This Session
+
+1. **D9b implementation (TDD-driven, 2 tasks, all green at commit time):**
+   - **D9.3** Three coordinated TDD cycles: (a) `persona-store.ts` gains `inferenceDisabled: boolean` field + `setInferenceDisabled(b)` standalone setter (4 new tests); (b) `use-signal-collector.ts` reads the flag at flush time and gates the POST (`bufferRef.current = []; if (disabled) return;` order — buffer is dropped on the same path so re-enabling does not replay queued signals; 3 new tests); (c) `TransparencyPanel.tsx` renders an `<input type="checkbox">` in a new `Inference control` section, label "Do not infer my persona", reflects + flips the store flag (4 new tests).
+   - **D9.4** Three coordinated TDD cycles: (a) `audit-store.ts` rewritten with `ActivityEntry = DecisionActivity | PersonaActivity | VoiceActivity` discriminated union; new helpers `addDecisionActivity` / `addPersonaActivity` / `addVoiceActivity`; `getActivityCount` selector (6 new tests, one replaces the legacy "decisions" suite); (b) `TransparencyPanel.tsx` Activity section with kind-discriminated `ActivityBody` sub-component and `withActivityKeys` stable-key helper (4 new tests for kind renders + section header); (c) `use-agent-stream.ts` adds two dispatch lines so persona-delta and voice-utterance events also append into the audit log (2 new tests via shared `captureMessageHandler` helper extracted from existing inline duplication).
+
+2. **Three design moves worth noting:**
+   - **Drop-on-skip semantics in `use-signal-collector.ts`.** Gating order is `bufferRef.current = []; if (usePersonaStore.getState().inferenceDisabled) return;` — signals collected during the gated window are intentionally discarded, not queued for replay when the user toggles back on. Keeping the buffer would silently exfiltrate data the moment the toggle flipped, defeating the privacy intent. The `clears the buffer when gating skips the POST` test pins this contract: only signals added *after* re-enable ship.
+   - **Clean migration over backward-compat shim in `audit-store.ts`.** Pre-migration grep confirmed `addDecision` had zero production callers (only test-file usage). Per CLAUDE.md's "don't add backwards-compatibility shims when you can just change the code," migrated `decisions: DecisionRecord[]` → `activities: ActivityEntry[]` cleanly. The orphaned `sse-parsers.DecisionEvent` parser (exported, unit-tested, never wired into `use-agent-stream`) was retyped to `Omit<DecisionActivity, "kind">` to keep the wire-format type guard alive without a stale `DecisionRecord` import.
+   - **Monochromatic iconography for activity kinds.** Per `feedback_no_accent_color.md` the project rejects color as a differentiator — agent signal must come through size/density/glyph. Used three Unicode glyphs (◆ decision, ● persona, ▲ voice) marked `aria-hidden="true"` so screen readers fall back to the kind label. Two channels (visual shape, semantic text), one palette.
+
+3. **Process discipline:** direct execution mirroring D3-D8. Two sequentially-independent tasks (D9.3 = toggle/gate; D9.4 = unified log/render/wire). Each task: failing test → watch fail → minimal impl → green → lint → commit. Two commits, two clean test runs, zero fixup commits. One in-task tooling correction caught BEFORE commit (Biome wanted a single-line import reflow), plus three formatter/lint fixes within D9.4 (no-array-index-key on activities map → `withActivityKeys` helper; two import-line collapses). Pre-commit lint scoped to touched files per lessons.md #29.
+
+## Key Decisions
+
+- **D9.3 gate placement: `use-signal-collector.ts`, not `use-agent-stream.ts`.** The signal POST is the agent's *only* read input; gating that single call cuts off all downstream inference (persona deltas, voice utterances, importance changes) at the source. Gating the SSE channel would still allow signals to ship — the agent would just be unable to *return* its read, which is incoherent. Single point of control = single source of truth for the privacy intent.
+- **Drop-on-skip vs queue-and-replay.** See "design moves" above. Pinned by test.
+- **Audit-store migration: discriminated union over parallel arrays.** Two alternative shapes considered: (a) keep `decisions` and add separate `personaDeltas: PersonaActivity[]` / `voiceUtterances: VoiceActivity[]` arrays, then merge for render; (b) one `activities` array with kind-discriminated entries. (b) wins because the panel renders mixed-kind history newest-first — three parallel arrays would force a per-render merge sort. The discriminated-union approach is also Biome- and TS-strict-friendly: TypeScript narrows `entry.kind` automatically inside `ActivityBody`'s if-arms.
+- **`use-agent-stream.ts` is the wiring point, not the persona/voice stores themselves.** Two alternatives considered: (a) make `applyPersonaDelta` and `addUtterance` call `addPersonaActivity` / `addVoiceActivity` as side effects; (b) wire at the SSE handler. (b) wins because it keeps stores decoupled — the audit-store does not subscribe to or mutate other stores; producers append at the event boundary. Tests confirmed by mocking only the SSE handler.
+- **Use `Omit<DecisionActivity, "kind">` in `sse-parsers.DecisionEvent`.** The parser is exported and unit-tested but has zero production callers (orphaned wire type from an earlier slice). Two options: define a minimal `DecisionRecord` interface inline in sse-parsers, or retype to `Omit<DecisionActivity, "kind">`. Latter wins: single source of truth for the wire shape, no duplicate types.
+- **Drop the legacy "renders decisions" test from `TransparencyPanel.test.tsx`, replace with three kind-specific render tests.** The old test no longer compiled against the migrated store shape. Replacing it with one test per `ActivityEntry` kind (decision, persona, voice) plus a section-heading test gives broader coverage for the same line budget.
+- **D9.4 diff over the 200-line guideline at +379/-61.** Net source change is small (~96 lines, mostly the `audit-store` rewrite + the panel render branches); bulk is test density on a wire-shape change. Same rationale as D7.2 (lesson #28 from the D7 session). Called out explicitly in the commit body. No artificial decomposition because the four files (`audit-store`, `use-agent-stream`, `TransparencyPanel`, `sse-parsers`) commit as a coherent unit; splitting would create awkward intermediate states.
+- **`useAuditStore((s) => s.activities)` selector style preserved.** Does not need a hoisted frozen-empty sentinel because `activities` is always an array on the store from initialization — the lessons.md #6 EMPTY-sentinel pattern only applies when the selector returns a record-keyed array fallback.
+
+## Blockers
+
+- **FEAT-006 ships with this STATUS.md commit. No outstanding D-slices.** Read→Speak→Act→Polish all merged. Manifest stays additive at the wire (PersonaDelta + VoiceUtterance event types backward-compatible with all clients D2 onward).
+- **`develop` 165 commits ahead of `origin/develop`** — unchanged push posture. With FEAT-006 shipping, this is the natural moment for a push decision.
+- **Pre-existing backend ruff issues** — same 4 errors in `src/app/domain/{session,strategy,strategies/adapt,strategies/select}.py` (E501) and 8 errors in `tests/test_validation.py` + `tests/test_five_verb_events.py`. None in files D9b touched (D9b is frontend-only). Untouched this session.
+- **Pre-existing frontend Biome issues** — same as before: `src/__tests__/SkillTag.test.tsx:16` (noNonNullAssertion), `src/index.css:232-233` (noImportantStyles ×2), formatter delta on `src/__tests__/Canvas.test.tsx`. Untouched this session — D9b's touched files passed clean.
+- **No real-LLM smoke test of the full agent-IS-the-page experience yet (D3-D9b end-to-end).** All wiring proven by 181 vitest unit tests + 7 e2e on chromium + 264 backend pytest + 1 LinkedIn-technical EDD eval (D9a). Operational verification with `LLM_API_KEY` set on the dev backend would confirm: (a) toggling "Do not infer" actually quiets the persona/voice channels for the rest of the session; (b) every persona delta + voice utterance appears in the Activity log with correct iconography + timestamp ordering; (c) on a LinkedIn-referred session the agent's first read includes ≥2 role observations.
+- **PresenceDot long-press + Canvas mobile flag + `useDwell` touch tuning unimplemented** — same as post-D8/D9a. Could become a micro-slice, fold into FEAT-007, or skip if not needed.
+
+## Next Step
+
+**FEAT-006 is complete.** Per Shape Up's "Spike → Spec → Ship," this is the natural moment to either:
+
+1. **Smoke-test the full agent-IS-the-page experience with `LLM_API_KEY` set on the dev backend.** Open `localhost:5173` against a running `make dev`, exercise the toggle + observe activity log + try a LinkedIn referrer + scroll-mash to test debounce. Reports whether the system feels coherent at the user level (separate from test-suite correctness).
+2. **Push `develop` to `origin`.** 165 commits unpushed. Now is the natural break point — FEAT-006 shipping is a publishable milestone.
+3. **Brainstorm FEAT-007 (next pitch).** Per the Shape Up methodology and `feedback_shape_up_not_waterfall.md`, this is one spec at a time, no pre-planning of session N+2.
+4. **Shift to portfolio-content authoring.** The agent works; the portfolio content (resume.tsx data, project narratives, skill tags) may now be the bottleneck for a real-feeling demo.
+
+**No concrete starting state for the next slice yet — that depends on which of the above the user picks.**
+
+### Backlogged (not for next session unless user redirects)
+
+- **Manual smoke test of D3-D9b with `LLM_API_KEY` set** — extended through the full feature.
+- **Push `develop` to `origin`** — 165 commits unpushed.
+- **PresenceDot long-press + Canvas mobile flag + `useDwell` touch tuning** — surface tracked since D8.
+- **Pre-existing lint sweep** (SkillTag noNonNullAssertion, index.css `!important` ×2, Canvas.test.tsx formatter, ruff E501 across multiple test/strategy files). Standalone ~5-min slice.
+- **`cleanup()` audit across remaining `src/__tests__/*.test.tsx` files** — fragile pre-existing pattern.
+- **Generic `useMediaQuery(query: string)` hook extraction** — promote when a third media-query consumer arrives.
+- **TTL-aware `_last_adapt_ts` dict (D9a debounce backlog item)** — currently leaks per-session entries indefinitely; bounded only by `SESSION_TTL_SECONDS` at the visitor-session layer. Promote when measured pressure exists.
+- **`addDecisionActivity` has zero callers post-D9.4.** It was preserved alongside its siblings for symmetry, but no SSE event currently produces a decision activity. Either wire it up (e.g., the `LayoutDecision` event from earlier slices) or remove if confirmed dead. Standalone trim-slice ~10 lines.
+
+---
+
+## Previous State (2026-04-26, post-Slice-D9a backend polish, merged into develop)
 
 Slice D9a of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `f64fa43`). **D9 has been decomposed into D9a (backend polish) + D9b (frontend polish)** since the four planned concerns crossed both the ≤5-source-file and ≤200-line-diff caps. **D9a covers the backend half: per-session ReadStrategy debounce + DeepEval persona inference eval (with prompt strengthening surfaced by the eval).**
 
