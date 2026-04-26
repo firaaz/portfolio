@@ -279,3 +279,21 @@
   z-index: 10;
   pointer-events: auto;
 }
+
+.dialogue-overlay {
+  position: fixed;
+  top: 32px;
+  left: 32px;
+  width: clamp(220px, 22vw, 320px);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.fallback-utterance {
+  position: fixed;
+  bottom: 64px;
+  left: 32px;
+  width: clamp(180px, 18vw, 240px);
+  z-index: 5;
+  pointer-events: none;
+}
