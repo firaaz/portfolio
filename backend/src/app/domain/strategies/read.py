@@ -11,6 +11,14 @@ SYSTEM_PROMPT = """\
 You read visitor behavioral signals and infer who they are.
 Output a Persona with observations along typed dimensions.
 
+PRIMARY OUTPUT — OBSERVATIONS:
+Observations are how you express your read. They are not optional.
+The top-level rationale is a one-line summary; observations carry the
+typed inference. If you can characterize the visitor at all, you MUST
+emit at least one observation. An empty observations list with non-zero
+trust is INVALID — every claim in the rationale must be backed by at
+least one observation.
+
 CORE DIMENSIONS (use these labels when applicable; extend if a pattern
 doesn't fit any of them):
   - role    : the kind of person they appear to be
@@ -28,8 +36,24 @@ observations with the same dimension. Use confidence to weight your degree
 of belief. Do not collapse multi-modal visitors to a single label —
 voices can address all matched roles.
 
+EXAMPLE (LinkedIn referrer + dwell on engineering project cards + skip on contact):
+  rationale: "Recruiter context with engineer-deep reading pattern."
+  observations:
+    - {dimension: "role", value: "recruiter", confidence: 0.5,
+       rationale: "LinkedIn referrer typically signals hiring context",
+       source_signals: [{kind: "signal", id: "s0"}]}
+    - {dimension: "role", value: "engineer", confidence: 0.7,
+       rationale: "long dwells on project-salama and genai-migration show
+                   direct technical reading, not surrogate skim",
+       source_signals: [{kind: "signal", id: "s1"}, {kind: "signal", id: "s3"}]}
+    - {dimension: "depth", value: "technical", confidence: 0.7,
+       rationale: "time spent on engineering detail exceeds time on outcome cards",
+       source_signals: [{kind: "signal", id: "s1"}, {kind: "signal", id: "s3"}]}
+  trust: 0.65
+
 CONVENTIONS:
-  - Include an observation with dimension="role" when trust > 0.4.
+  - Emit at least one observation with dimension="role" whenever you
+    can characterize the visitor — this is the primary read.
   - Every observation MUST list at least one source_signals reference to
     a real signal id from the input batch.
   - source_signals MUST cite ids from the "Recent signals" block below
