@@ -53,4 +53,24 @@ describe("DialogueOverlay", () => {
     expect(screen.getByText("newer-question")).toBeInTheDocument();
     expect(screen.queryByText("older-question")).toBeNull();
   });
+
+  it("renders nothing when activeVoice is not 'dialogue'", () => {
+    addUtterance({
+      voice_tag: "dialogue",
+      utterance_kind: "question",
+      content: "ambient-question-from-old-session",
+      references: [],
+    });
+    addUtterance({
+      voice_tag: "dialogue",
+      utterance_kind: "answer",
+      content: "ambient-answer-from-old-session",
+      references: [],
+    });
+    useVoiceStore.setState({ activeVoice: "whisper" });
+    const { container } = render(<DialogueOverlay />);
+    expect(
+      container.querySelector('[aria-label="Dialogue overlay"]'),
+    ).toBeNull();
+  });
 });
