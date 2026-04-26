@@ -44,7 +44,23 @@ export const useUXStore = create<UXState>((set) => ({
   ux: { tempo: 0.5, agency: 0.5 },
   items: [],
   bridges: [],
-  setSnapshot: (snapshot) => set({ ux: snapshot.ux, items: snapshot.items }),
+  setSnapshot: (snapshot) =>
+    set((state) => {
+      const previousById = new Map(state.items.map((it) => [it.id, it]));
+      return {
+        ux: snapshot.ux,
+        items: snapshot.items.map((next) => {
+          const prev = previousById.get(next.id);
+          if (!prev) return next;
+          return {
+            ...next,
+            salience: prev.salience,
+            emphasis: prev.emphasis,
+            generated: prev.generated,
+          };
+        }),
+      };
+    }),
   applySalience: (updates) =>
     set((state) => {
       const updateMap = new Map(updates.map((u) => [u.id, u.salience]));
