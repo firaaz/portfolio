@@ -11,9 +11,11 @@ Slice D7 of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`**
 
 No fixup commit needed across all three task commits. **Three in-task tooling corrections caught BEFORE commit, not by failing CI:** (a) ruff I001 import-order swap on `test_context_model.py` (`UserAgentSummary, VisitorContext, Viewport` → `UserAgentSummary, Viewport, VisitorContext`); (b) ruff E501 docstring shortening (89→88 chars on the new `TestVisitorContextExpansion` docstring); (c) ruff format collapse of a parenthesized one-liner string assignment in `read.py` (the formatter wanted the f-string inline, not wrapped). The pre-existing `session.py:49` E501 + format issue (documented in D6 blockers) was left untouched per project's no-cleanup discipline.
 
-`develop` is now **150 commits ahead of `origin/develop`** (was 146 pre-D7 by git's count; +3 slice commits + 1 merge = +4 ✓). No push this session.
+`develop` is now **152 commits ahead of `origin/develop`** (146 pre-D7 by git's count; +3 slice commits + 1 merge + 1 STATUS.md session marker + 1 post-slice docs commit = +6 ✓). No push this session.
 
 **Test counts on `develop` (post-merge):** backend pytest **262** (was 243 pre-D7; +6 D7.1 + 5 D7.2 + 8 D7.3 = +19 ✓), frontend vitest **160** (was 148; +12 D7.2 ✓), e2e **6/6** unchanged. pytest 0.88s; vitest 2.26s; e2e 7.4s.
+
+**Post-slice meta-docs commit (`42aece2`):** captured three D7 session learnings — added Pyright "Import could not be resolved" false-positive note to `backend/CLAUDE.md` (factual correction; LSP isn't configured for `src/`, ruff + pytest are authoritative), and added two workflow lessons to `tasks/lessons.md` (`git diff --stat` undercount on untracked files → use `wc -l` for slice size sanity; slice lint scope = touched-files only, not project-wide). Both lessons.md entries flagged for promotion to CLAUDE.md if hit a second time. +3 lines / 2 files.
 
 ## Accomplished This Session
 
