@@ -1,6 +1,69 @@
 # Status
 
-## Current State (2026-04-26, post-Slice-D7 visitor context expansion, merged into develop)
+## Current State (2026-04-26, post-Slice-D8 mobile degradation, merged into develop)
+
+Slice D8 of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `83c6c0f`). **`WhisperLayer` now collapses to a `<details>` disclosure on narrow viewports (≤640px).** The component subscribes to `matchMedia("(max-width: 640px)")` via a private `useNarrowViewport()` hook (mirrors the shape of `use-reduced-motion.ts`, kept inline since it has a single consumer for now). When the query matches, the existing `<aside aria-label="Whisper layer">` wrapper still owns the accessible label (preserving aria-label queries from earlier slices), but its body wraps the utterance `<ul>` in a native `<details>` whose `<summary>` reads "Notes from the agent" and is initially closed. Wide viewports keep the inline `<ul>` exactly as before — zero behavioral or visual change above 640px. A new Playwright spec at viewport 375×812 mocks `/api/agent/stream` with a single synthetic `voice:utterance` event and asserts the closed-then-open disclosure cycle end-to-end via `details.evaluate(el => el.open)` reads on the JSHandle.
+
+**Branch state:** `develop` at `83c6c0f`. `feat/006-d8-mobile` carried 2 commits pre-merge:
+- `0c531eb` — D8.1 `WhisperLayer.tsx` adds private `useNarrowViewport()` hook (lazy-init from `matchMedia(...).matches`, reactive via `change` listener with cleanup) + conditional `<details>` wrapper over the existing `<ul>`. Test file gets a `mockViewport(narrow: boolean)` helper using `vi.spyOn(window, "matchMedia")` + 3 new cases (closed-summary / click-opens / wide-no-disclosure). +106/-9.
+- `6b1a259` — D8.2 new `frontend/e2e/mobile-disclosure.spec.ts` (48 lines). `test.use({ viewport: { width: 375, height: 812 } })` at file scope; `page.route("**/api/agent/stream*", route.fulfill({ body: ssePayload, contentType: "text/event-stream" }))` mocks the EventSource source. +48/-0.
+
+No fixup commit needed. **Test counts on `develop` (post-merge):** backend pytest **262** unchanged (frontend-only slice), frontend vitest **163** (was 160; +3 D8.1 ✓), e2e **7/7** (was 6; +1 D8.2 ✓). pytest 0.87s; vitest 2.20s; e2e 7.4s.
+
+`develop` is now **156 commits ahead of `origin/develop`** (153 pre-D8 + 2 slice commits + 1 merge = +3). No push this session.
+
+## Accomplished This Session
+
+1. **Slice D8 implementation (TDD-driven, 2 tasks, all green at commit time):**
+   - **D8.1** `frontend/src/voice/WhisperLayer.tsx` — `useNarrowViewport()` private hook (lazy-init from `matchMedia("(max-width: 640px)").matches`, reactive via `change` listener with cleanup) + conditional render: narrow → `<details><summary>Notes from the agent</summary>{list}</details>`; wide → `{list}` directly. The `<aside>` wrapper, opacity, and aria-label are preserved on both branches so the existing `dims opacity when whisper is not the active voice` and `renders each whisper utterance's content text` tests stayed green without modification.
+   - **D8.2** `frontend/e2e/mobile-disclosure.spec.ts` — `test.use({ viewport: { width: 375, height: 812 } })` at file scope; `page.route("**/api/agent/stream*", route.fulfill({ body: ssePayload, contentType: "text/event-stream" }))` returns one `data: {"type":"CUSTOM","custom":{"eventType":"voice:utterance",...}}\n\n` payload. The page hits `/api/agent/stream`, gets the event, the voice store accumulates it, the WhisperLayer renders the disclosure, and the spec asserts via `details.evaluate(el => el.open)` rather than `toHaveAttribute("open")` — JSHandle property reads are deterministic for native disclosure semantics across Playwright versions.
+
+2. **Two design moves worth noting:**
+   - **`useNarrowViewport()` inlined inside `WhisperLayer.tsx`, not extracted to a generic `useMediaQuery(query)`.** A generic hook would let `useReducedMotion` reuse it too, but extracting now would expand the slice to a third source file and refactor an unrelated hook for no slice-level benefit. The duplication between `use-reduced-motion.ts` and the new inline `useNarrowViewport()` is honest two-instances-of-three; promote when a third media-query consumer arrives.
+   - **JSHandle property reads over `toHaveAttribute("open")` in the e2e.** `<details open>` is a presence-only attribute, but `toHaveAttribute("open", "")` semantics across Playwright versions get fiddly. `details.evaluate((el: HTMLDetailsElement) => el.open)` reads the boolean DOM property directly — deterministic and self-documenting.
+
+3. **Process discipline:** direct execution mirroring D3-D7. Two sequentially-independent tasks (D8.1 = component change with vitest coverage; D8.2 = e2e with mocked SSE; neither imports the other). Each task: failing test → watch fail → implement minimally → green → lint → commit. Two commits, two clean test runs, zero fixup commits. One in-task observation noted: Biome ignores `e2e/` by config (Playwright specs use a different runner), so e2e files don't lint with `pnpm exec biome check`.
+
+## Key Decisions
+
+- **Narrow breakpoint at `(max-width: 640px)`.** Matches Tailwind's default `sm` breakpoint. Below 640 = phones in portrait (iPhone 13 mini at 375, iPhone 15 Pro Max at 430, Pixel 7 at 412). At 640+ the gutter italics fit alongside bento without crowding. The plan called for ≤640; honored verbatim.
+- **`<details>` over a custom disclosure widget.** Native HTML element provides keyboard support (Enter/Space toggle), screen-reader semantics ("disclosure triangle"), and zero-JS state — directly satisfies WCAG 2.1 AA without extra ARIA wiring.
+- **`useNarrowViewport()` is inlined.** See "design moves" above. Single consumer; module-private; mirrors `use-reduced-motion.ts` shape so a future generic extraction is cheap.
+- **The e2e mocks SSE via `page.route()`, not the real backend.** The real `/api/agent/stream` requires LLM responses + signal accumulation to drive a whisper utterance — too non-deterministic for an e2e. Mocking gives the test the exact event shape it needs without standing up the full read+voice loop. The route handler responds with a single fulfill; EventSource will reconnect after the connection closes, but the assertion completes well before any reconnect cycle becomes visible (test ran in 1.2s).
+- **`<aside>` wrapper preserved on both branches.** The narrow variant nests `<details>` INSIDE the `<aside aria-label="Whisper layer">`, not in place of it. Existing tests querying by aria-label keep working unchanged. Future styling that targets `.whisper-layer` also continues to apply.
+- **PresenceDot long-press, Canvas mobile flag, `useDwell` touch tuning — out of scope this slice.** The plan task list (D8.1 + D8.2 + D8.3) covered only the WhisperLayer disclosure + e2e. The slice header mentioned other concerns (PresenceDot tap, touch dwell tuning) but no implementation steps were specified. Honored the task list as authoritative; bonus concerns can land in D9 polish or a future micro-slice.
+
+## Blockers
+
+- **D9 implementation has not started** — **final FEAT-006 slice.** Plan task list at `specs/006-agent-is-the-page/plan.md` Slice D9: ReadStrategy debounce config + audit-store extensions + `evals/test-persona-inference.py` (DeepEval EDD) + TransparencyPanel toggle to disable inference. ~4 source files. May decompose into D9a/D9b/D9c if all four concerns can't fit ≤5 files / ≤200 lines.
+- **`develop` 156 commits ahead of `origin/develop`** — unchanged push posture. User decision pending.
+- **Pre-existing backend ruff issues** — same 4 errors in `src/app/domain/{session,strategy,strategies/adapt,strategies/select}.py` (E501) and 8 errors in `tests/test_validation.py` + `tests/test_five_verb_events.py`. None in files D8 touched. Untouched this session.
+- **Pre-existing frontend Biome issues** — same as before: `src/__tests__/SkillTag.test.tsx:16` (noNonNullAssertion), `src/index.css:232-233` (noImportantStyles ×2), formatter delta on `src/__tests__/Canvas.test.tsx`. Untouched this session.
+- **No manual smoke test of the D8 mobile path on a real device yet.** All wiring proven by 6 vitest unit tests + 7 e2e on chromium @ 375×812. Operational verification on actual iOS Safari + Android Chrome would confirm: (a) the disclosure caret renders in the user-agent style; (b) tap on summary toggles correctly; (c) opacity/transitions don't degrade on touch hardware. Operational verification, not a code blocker.
+- **PresenceDot long-press + Canvas mobile flag + `useDwell` touch tuning unimplemented.** Mentioned in the D8 slice header but absent from the D8 task list. Could ship as D8.5 micro-slice or fold into D9 polish. Surface tracked.
+
+## Next Step
+
+**Run Slice D9 of FEAT-006.** Read `specs/006-agent-is-the-page/plan.md` Slice D9 first to confirm scope (Polish + Cost Debounce + EDD Evals + Inference Toggle — four concerns that may decompose). **D9 is the final FEAT-006 slice; the feature ships when D9 merges.** After D9, the candidate next steps are: smoke-test the full agent-IS-the-page experience on a real device with `LLM_API_KEY` set, push `develop` to `origin`, and decide whether to brainstorm FEAT-007 or shift to portfolio-content authoring.
+
+**Concrete starting state for fresh context:**
+- Branch start point: `develop` @ `83c6c0f` (post-D8 merge).
+- New branch name: per plan (likely `feat/006-d9-polish` or split if decomposed).
+- Plan: `specs/006-agent-is-the-page/plan.md` Slice D9.
+
+### Backlogged (not for next session unless user redirects)
+
+- **Manual smoke test of D3+D4+D5+D6+D7+D8 with `LLM_API_KEY` set** — extended to include mobile disclosure on a real touch device.
+- **Push `develop` to `origin`** — 156+ commits unpushed. User decision pending.
+- **PresenceDot long-press + Canvas mobile flag + `useDwell` touch tuning** — mentioned in D8 plan header but no task steps. Promote to D9 polish or its own micro-slice.
+- **Pre-existing lint sweep** (SkillTag noNonNullAssertion, index.css `!important` ×2, Canvas.test.tsx formatter, ruff E501 across multiple test/strategy files). Standalone ~5-min slice.
+- **`cleanup()` audit across remaining `src/__tests__/*.test.tsx` files** — fragile pre-existing pattern; not encountered this slice.
+- **Generic `useMediaQuery(query: string)` hook extraction** — promote when a third media-query consumer arrives (currently `useReducedMotion` + `useNarrowViewport`). Two consumers isn't enough.
+- **Bento cohesion beyond tiling** (editorial rhythm). Distinct problem; needs its own brainstorm.
+
+---
+
+## Previous State (2026-04-26, post-Slice-D7 visitor context expansion, merged into develop)
 
 Slice D7 of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `b1f9027`). **`VisitorContext` now carries first-paint signals** the agent can read before any behavioral signal arrives: `viewport` (width/height/pointer_type/prefers_reduced_motion), `landing_path`, and `user_agent_summary` (family + platform only — no fingerprintable detail). The frontend's `useSignalCollector` captures these via a new pure `captureInitialContext()` function and attaches them to the **first** signal batch it POSTs (latched via `sentInitialContextRef`); subsequent batches omit the bundle. `signal_route._merge_initial_context` lifts the bundle onto `profile.context` using set-if-None semantics — defensive against future paths that might populate context fields independently. `ReadStrategy.build_prompt` now surfaces these fields conditionally to the LLM (one extra prompt line per non-None field group), so the seed inference for first-load visitors is sharper before any dwell/click signal accumulates. The protocol stays additive at the wire: SignalBatch's three new fields are all `Optional` with `None` defaults, so older clients (and existing tests) continue to round-trip cleanly.
 
