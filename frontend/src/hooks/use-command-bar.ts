@@ -3,6 +3,7 @@
  */
 import { useCallback, useState } from "react";
 import { useUXStore } from "../store/ux-store";
+import { useSessionId } from "./use-session-id";
 import {
   isUXAgency,
   isUXSalience,
@@ -15,6 +16,7 @@ export function useCommandBar(): {
   isLoading: boolean;
 } {
   const [isLoading, setIsLoading] = useState(false);
+  const sessionId = useSessionId();
   const setSnapshot = useUXStore((s) => s.setSnapshot);
   const applySalience = useUXStore((s) => s.applySalience);
   const setTempo = useUXStore((s) => s.setTempo);
@@ -27,7 +29,7 @@ export function useCommandBar(): {
         const response = await fetch("/api/agent/command", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text, session_id: sessionId }),
         });
         if (!response.ok || !response.body) return;
 
@@ -64,7 +66,7 @@ export function useCommandBar(): {
         setIsLoading(false);
       }
     },
-    [setSnapshot, applySalience, setTempo, setAgency],
+    [sessionId, setSnapshot, applySalience, setTempo, setAgency],
   );
 
   return { submitCommand, isLoading };
