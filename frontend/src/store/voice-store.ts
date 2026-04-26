@@ -49,3 +49,21 @@ export function getLetterUtterances(
 ): readonly VoiceUtterance[] {
   return state.utterancesByVoice.letter ?? EMPTY_UTTERANCES;
 }
+
+export function getDialogueUtterances(
+  state: VoiceState,
+): readonly VoiceUtterance[] {
+  return state.utterancesByVoice.dialogue ?? EMPTY_UTTERANCES;
+}
+
+export function getHighlightedItemIds(state: VoiceState): string[] {
+  const dialogue = state.utterancesByVoice.dialogue ?? EMPTY_UTTERANCES;
+  const ids = new Set<string>();
+  for (const u of dialogue) {
+    if (u.utterance_kind !== "receipt") continue;
+    for (const ref of u.references) {
+      if (ref.kind === "item") ids.add(ref.id);
+    }
+  }
+  return [...ids];
+}
