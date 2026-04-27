@@ -26,9 +26,9 @@ Underneath these three observable shapes lies the *real* architectural fault: **
 
 Plus three protocol invariants that are silent in the code:
 
-- **Staggered dispatch** (150–350 ms gaps per ADR-0009) — events emit at SSE write speed, no agent-cadence pacing.
+- **Staggered dispatch** (150–350 ms gaps per ADR-0009) — honored within each adaptation cycle by `staggered_dispatch` in `dispatch.py`, but consecutive cycles are not coordinated. Successive bursts can arrive too close together at the cycle boundary, breaking the "agent thinking" cadence.
 - **Signal-scoped lifecycle** — bridges and surfaces should auto-clear when intent state changes; no mechanism exists.
-- **Voices aren't in the protocol** — whisper / letter / dialogue are a parallel custom-event channel that bypasses the verb vocabulary entirely.
+- **Voices live outside the verb vocabulary** — whisper / letter / dialogue arrive as typed `VOICE_UTTERANCE` extension events from FEAT-006 (additive to AG-UI). The wire format is fine; the duplication is at the *component* layer (three parallel `<Layer>` files, no shared rendering primitive). Folding voices into the verb vocabulary is out of scope for this pitch — see No-Gos.
 
 The page therefore looks barebones not because the design is undone, but because the *substrate the design was meant to ride on never finished*, and the *protocol the substrate was meant to honor stayed aspirational*. FEAT-007's job is to reify the protocol end-to-end, finish the substrate as a consequence, and install structural guardrails (the **"no loose-ends growth"** principle) that prevent this same gap from accumulating again.
 
@@ -40,7 +40,7 @@ The page therefore looks barebones not because the design is undone, but because
 
 **Week breakdown:**
 - **Week 1** — protocol foundation + walking skeleton (`protocol.{ts,py}` types; `applyRephrase` rename; `signal(state)` end-to-end; ProjectCard end-to-end through new layout grid + new VoiceSlot).
-- **Week 2** — staggered dispatch + signal-scoped lifecycle + bridge renderer + voice-as-sixth-verb (`speak`) folded into protocol.
+- **Week 2** — cadence queue (cross-cycle pacing) + signal-scoped lifecycle + bridge renderer + voice migration to `<VoiceSlot>` (whisper + letter + dialogue collapse to thin renderers; no protocol change to voices).
 - **Week 3** — molecule expansion across the other 5 (Hero, Experience, Skill, Education, Contact) + AdaptStrategy `max_tier` constraint + SkillTag richness.
 - **Week 4** — `BASE_VOICE_RULES` extraction + EDD evals for letter + whisper + property-based tests + editorial restraint pass + no-loose-ends sweep.
 
@@ -61,8 +61,7 @@ export type Verb =
   | { kind: "recede"; id: string; importance: number }
   | { kind: "bridge"; text: string; from: string; to: string }
   | { kind: "surface"; id: string; reason: string }
-  | { kind: "signal"; state: IntentState; rationale: string }
-  | { kind: "speak"; voice_tag: VoiceTag; utterance_kind: UtteranceKind; content: string; references: ItemRef[] };
+  | { kind: "signal"; state: IntentState; rationale: string };
 
 export const INTENT_GAP_MS_MIN = 150;
 export const INTENT_GAP_MS_MAX = 350;
@@ -70,7 +69,7 @@ export const INTENT_GAP_MS_MAX = 350;
 
 `backend/src/app/domain/protocol.py` mirrors these as Pydantic models. A property-based round-trip test (Hypothesis on Python side, fast-check on TS side) asserts the wire format stays consistent across the two files.
 
-**Voices fold into the protocol as the sixth verb `speak`.** This is the architectural choice that prevents future parallel-duplication bugs: every voice (whisper / letter / dialogue, or a future fourth) becomes a `speak` verb with the same staggered-dispatch + signal-scoped-lifecycle invariants as every other verb.
+**Voices stay outside the verb vocabulary** — they arrive as the typed `VOICE_UTTERANCE` extension events FEAT-006 already shipped (additive to AG-UI). The bug-prevention property this pitch needs (fix one prompt-leak, fix everywhere) is delivered at the *component* layer alone: `BASE_VOICE_RULES` shares prompt rules across whisper/letter/dialogue; `<VoiceSlot>` shares rendering invariants across the same three. Folding voices into the verb vocabulary as a sixth verb is deferred to a future feature when there's evidence cadence pacing improves voice UX. (See No-Gos.)
 
 ### Verb-by-verb implementation commitments
 
@@ -83,8 +82,6 @@ export const INTENT_GAP_MS_MAX = 350;
 **`surface(id, reason)`** — semantic: "new content slides in with a visual marker." The current `applySurface(id, generated)` action is renamed to `applyRephrase(id, generated)` (rename to its honest meaning, semantics unchanged). A new `applySurface(id, reason)` flips a `surfaced` field on the item; the molecule renders a `<SurfaceMarker>` (◇ glyph) for ~3 seconds, then settles. **Two distinct verbs, two distinct operations. Frees the name `surface` to mean what the protocol says.**
 
 **`signal(state)`** — semantic: "ambient presence communicating current understanding." Backend grows an `IntentStrategy` that infers `exploring | evaluating | deep_diving | seeking_contact` from persona + dwell patterns. Frontend grows a `<StatusLine>` component near `<PresenceDot>` that surfaces the current intent state in a single italic phrase ("noticing engineering depth"). `setTempo` + `setAgency` actions are removed; intent state is the canonical "where is the visitor."
-
-**`speak(voice_tag, utterance_kind, content, references)`** — sixth verb. Voices fold into protocol. `<VoiceSlot region="…" voiceTag="…">` is the visual primitive for any speak call regardless of voice tag. Letter / whisper / dialogue become *configurations* of `<VoiceSlot>`, not separate components.
 
 ### Density mechanism: tier baseline + emphasis modulation
 
@@ -105,7 +102,9 @@ The `max_tier` column lives in catalog YAML per item (override-able for specific
 
 `SkillTag.tsx` is renamed to `Skill.tsx` (molecule key in catalog is already `"skill"`). Catalog YAML expands with the new subfields. `breathing-extra` divs in `ProjectCard.tsx:44-45` and `ExperienceCard.tsx:25-30` are removed entirely.
 
-### Voice abstraction
+### Voice abstraction (component-layer only)
+
+Wire format unchanged from FEAT-006: voices arrive as typed `VOICE_UTTERANCE` events; FEAT-007 does **not** introduce a sixth verb. `<VoiceSlot>` is a React abstraction that consumes the existing event stream and unifies the three layers' rendering boilerplate:
 
 ```tsx
 <VoiceSlot region="rail"   voiceTag="whisper">  <WhisperContent />  </VoiceSlot>
@@ -136,9 +135,13 @@ Voices, chrome, and bento are siblings in the grid — overlap is impossible by 
 
 ### Cross-cutting protocol guarantees
 
-**Cadence queue** — `backend/src/app/adapters/api/cadence.py`. Wraps the existing `BackgroundTasks.add_task` pattern with a per-session `asyncio.Queue` + sleeper that enforces 150–350 ms gaps between successive verb events. Pre-existing `_run_adaptation` becomes a queue producer. Bounded queue (`maxsize=64` per session). Producer-side cap: 30 verbs per cycle.
+**Cadence queue** — `backend/src/app/adapters/api/cadence.py`. Builds on the existing `staggered_dispatch` (in `dispatch.py`, ADR-0003 + ADR-0009) which already paces events *within* a single adaptation cycle. The new cadence queue extends pacing **across cycles** with a per-session `asyncio.Queue` + sleeper that enforces 150–350 ms gaps between successive **layout-verb** events. Pre-existing `_run_adaptation` becomes a queue producer. Bounded queue (`maxsize=64` per session). Producer-side cap: 30 verbs per cycle.
 
-**Signal-scoped lifecycle** — when `signal(state)` transitions, all bridges + surface markers from the previous state auto-clear via `clearSignalScoped()` action. **Persistent state** (salience, generated copy, intent_state) is kept; **ephemeral state** (bridges, surface markers) is cleared. Voice utterances are also ephemeral (cleared on signal transition) — this is a new decision the ADR didn't make explicitly.
+Voice utterances **bypass** the cadence queue and emit at SSE write speed — pacing prose reads as artificial typing animation; voice keeps FEAT-006's bursty delivery. Voice events route through the existing `VOICE_UTTERANCE` SSE channel directly.
+
+**Interaction with FEAT-006's per-session signal debounce** (`_DEBOUNCE_WINDOW_S = 2.0` in `signal_route.py`): the debounce is input-side (coalescing rapid signal POSTs); the cadence queue is output-side (pacing emitted layout verbs). The two operate at different layers and do not compose — implementers should not add additional pacing.
+
+**Signal-scoped lifecycle** — when `signal(state)` transitions, all bridges + surface markers from the previous state auto-clear via `clearSignalScoped()` action. **Persistent state** (salience, generated copy, intent_state, **voice utterances**) is kept; **ephemeral state** (bridges, surface markers) is cleared. Voices are explicitly exempt from `clearSignalScoped()` — preserving FEAT-006's accumulation rule ("the page never erases prior agent expression within a session"). Stage lighting (opacity-by-active-voice from FEAT-006) handles the visual-weight job for backgrounded voices: when dialogue activates, letter shrinks to a small italic line and whispers fade further; both remain readable.
 
 ### What gets *removed* (no-loose-ends growth)
 
@@ -154,16 +157,26 @@ A static no-loose-ends audit script (regex-based v1, `scripts/audit-loose-ends.m
 
 ### Data flow (per verb, end-to-end)
 
-The shared invariant: every verb passes through the cadence queue and is type-checked against `protocol.{ts,py}` at the emit boundary.
+The shared invariant: every layout verb is type-checked against `protocol.{ts,py}` at the emit boundary; voices stay on the FEAT-006 `VOICE_UTTERANCE` channel.
 
 ```
-ReadStrategy → Persona → AdaptStrategy/IntentStrategy/VoiceStrategy
-  → emits typed Verb (focus / recede / bridge / surface / signal / speak)
-  → cadence queue (150–350 ms gaps, per session)
-  → SSE custom-event → use-agent-stream parses against protocol.ts type
-  → store reducer applies (ux-store / voice-store / new intent-state field)
-  → component renders the resulting state change
-  → on signal(state) transition: clearSignalScoped() wipes bridges + surface markers
+Layout verbs (cadence-queued):
+  ReadStrategy → Persona → AdaptStrategy / IntentStrategy
+    → emits typed Verb (focus / recede / bridge / surface / signal)
+    → cadence queue (150–350 ms gaps, per session)
+    → SSE custom-event → use-agent-stream parses against protocol.ts type
+    → store reducer applies (ux-store / new intent-state field)
+    → component renders the resulting state change
+    → on signal(state) transition: clearSignalScoped() wipes bridges + surface markers
+                                   (voice utterances exempt — they persist)
+
+Voices (unchanged from FEAT-006):
+  ReadStrategy → Persona → VoiceStrategy
+    → emits VOICE_UTTERANCE (additive to AG-UI; outside verb vocabulary)
+    → SSE custom-event (no cadence queue) → use-agent-stream
+    → voice-store reducer
+    → <VoiceSlot> renders by voice_tag, gates on activeVoice
+    → utterances persist within session
 ```
 
 ### Error handling (cataloged)
@@ -179,7 +192,7 @@ ReadStrategy → Persona → AdaptStrategy/IntentStrategy/VoiceStrategy
 | Snapshot during cadence drain | Snapshot applies; buffered verbs continue draining. E1's snapshot-merge fix (preserves client-mutated salience/emphasis/generated) ensures no collision. |
 | "Do not infer" toggle flipped during in-flight verbs | Verbs already emitted complete normally. Once toggle is set, no new signals reach backend, so no new verbs emitted. One-cycle latency, consistent with privacy intent. |
 | SSE reconnect during cadence drain | Cadence queue is per-session and persists across reconnects (server-side asyncio queue). Reconnecting frontend gets snapshot then continues receiving paced verbs. |
-| Voice utterance arrives after `activeVoice` changed | Utterance lands in voice-store. `<VoiceSlot>` doesn't render because activeVoice gate. Stored utterance available if user re-activates. Different voice tags don't conflict (each slot is tagged). |
+| Voice utterance arrives after `activeVoice` changed | Utterance lands in voice-store. `<VoiceSlot>` renders at backgrounded opacity per stage lighting (per FEAT-006 coexistence rule); foregrounds when its `voice_tag` becomes active again. Different voice tags don't conflict (each slot is tagged). Voice utterances persist within session — exempt from `clearSignalScoped()`. |
 
 ### Testing strategy
 
@@ -201,7 +214,7 @@ Three layers per ADR-0006 (pytest TDD + DeepEval EDD + vitest BDD), plus a new *
 **Property-based tests** (Hypothesis on Python, fast-check on TS): three high-leverage invariants only.
 - `setSnapshot` merge invariant (the E1 fix as a property): for any sequence of mutations + any subsequent snapshot, items in both snapshots have client-mutated fields preserved.
 - `computeLayout` invariants: cell budget never exceeded; at most one tier-5 hero claimed; no items dropped silently; descending salience with stable index tiebreaker.
-- Protocol type round-trips: random verb instance → JSON → parse on the other side → equivalence assertion. **Catches the "we changed protocol.py but forgot to update protocol.ts" silent breakage at CI time.**
+- Protocol type round-trips: random instance of one of the **five layout verbs** (focus / recede / bridge / surface / signal) → JSON → parse on the other side → equivalence assertion, in both directions. **Catches the "we changed protocol.py but forgot to update protocol.ts" silent breakage at CI time.** `VOICE_UTTERANCE` is not part of the verb vocabulary and is covered by its existing FEAT-006 wire-format tests.
 
 **E2E walking-skeleton scenario** (Playwright): one headline test that proves the full protocol loop end-to-end. Open `?utm_source=linkedin` → assert differentiated tiers → assert second-person cover letter, no metadata substrings → Cmd+K + dialogue answer → bridge connects two cards → mock signal-state transition → assert bridge clears + surface markers clear within 350 ms; salience persists; status line reflects new intent state.
 
@@ -252,12 +265,17 @@ Three layers per ADR-0006 (pytest TDD + DeepEval EDD + vitest BDD), plus a new *
 
 **N-ary bridges.** `bridge(text, from, to)` stays binary. Multi-item narrative connections are a verb extension for later.
 
+**Folding voices into the verb vocabulary as a sixth `speak` verb.** Considered and deferred. Voices stay as `VOICE_UTTERANCE` extension events from FEAT-006. Two reasons. (1) The bug-prevention motivation — metadata leaks across whisper/letter/dialogue — is fully addressed at the component layer (`BASE_VOICE_RULES` + `<VoiceSlot>`); the wire format is not the source of the bug class. (2) Cadence pacing of voice utterances would be a behavior change with no surfaced evidence it improves UX — paced delivery of conversational text reads as artificial typing animation. We'll revisit this only with field evidence that pacing helps. If folding does happen later, it requires a new ADR (likely ADR-0011) extending ADR-0003's five-verb vocabulary; the immutability rule means ADR-0003 is not edited.
+
+**Clearing voice utterances on signal-state transition.** Considered and rejected. Voices are exempt from `clearSignalScoped()` — preserves FEAT-006's accumulation rule ("the page never erases prior agent expression within a session"). Visual de-weighting of older voices is handled by stage lighting (opacity-by-active-voice), not deletion.
+
 **Anti-creepy hard-constraint amendments.** Per CLAUDE.md, "do not infer toggle + presence dot + 300–500 ms transitions" stays exactly as today. No new anti-creepy primitives, no new transparency surfaces beyond what's already shipped.
 
 ## References
 
 - ADR-0003 — Agent Interaction Protocol (the five verbs this pitch reifies)
-- ADR-0009 — Dispatch Timing Revision (cadence constants 150–350 ms)
+- ADR-0009 — Dispatch Timing Revision (cadence constants 150–350 ms; existing `staggered_dispatch` in `backend/src/app/adapters/api/dispatch.py`)
+- ADR-0010 — Persona Protocol (FEAT-006 wire types: `PERSONA_DELTA`, `VOICE_UTTERANCE`; persona-store + voice-store descend from this)
 - ADR-0006 — Testing Frameworks (pytest + DeepEval + vitest + Biome)
 - `tasks/lessons.md` #6 (frozen-sentinel for record-keyed selectors), #22 (e2e catches contract drift), #30 (spec EXAMPLE blocks are load-bearing), #31 (EDD evals catch what mocks miss)
 - `frontend/src/molecules/` — six molecule files, current state
