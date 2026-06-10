@@ -1,6 +1,53 @@
 # Status
 
-## Current State (2026-04-26, post-Slice-D9b frontend polish — FEAT-006 SHIPPED)
+## Current State (2026-06-10, develop pushed + first real-LLM smoke test — findings session, no fixes)
+
+Two structural risks closed: **`develop` (171 commits) and `feat/007-spec` are now on `origin`** (fast-forward push, no divergence), and **the full agent-IS-the-page experience ran against a real LLM for the first time** (Llama-3.3-70B-Instruct-Turbo via `LLM_API_KEY`, `make dev`). All five planned scenarios executed; observations recorded below. Per the session plan, failures are findings, not fixes — everything feeds the FEAT-007 pitch decision.
+
+**Method note:** Playwright MCP was unusable (it requires system Chrome, which is no longer installed; only the Playwright-cache chromium exists), so the smoke test ran as a scripted Playwright chromium session using the frontend's own `@playwright/test`, with an injected EventSource tap recording all SSE traffic, request logging on `/api/agent/*`, and DOM diffs of `[data-testid^='bento-card-']` across adaptation bursts. Debounce was probed with synthetic curl batches on a throwaway session (client-side 4s batching makes a browser scroll-mash incapable of sub-2s POST bursts).
+
+### Scenario verdicts
+
+1. **LinkedIn-referred session — FAIL on the D9a contract.** The pre-LLM `ux:signal` works: "LinkedIn visitor — elevating leadership and business impact" (referrer classified from the Referer header at stream connect). But every signal-route persona delta arrived with `observations_added: []` and a rationale calling the visitor a "direct user" / "curious individual" — expected ≥2 role observations (recruiter + engineer). Two distinct causes:
+   - **Referral context never reaches ReadStrategy.** `signal_route.py:153` builds `VisitorProfile(context=VisitorContext())` — empty. The context captured at the stream route (which has the Referer) is discarded; the ReadStrategy prompt says "Visitor referrer: direct". Separately, `?utm_source=linkedin` is dead end-to-end: `referrer.py` reads UTM from the API request's own query params, but `use-agent-stream.ts:32` forwards only `session_id`, and `landing_path` strips the query string. Only the Referer-header path works at all, and only on the stream/command routes.
+   - **Observations are empty even with referral context.** The command-route delta (which does get the Referer) said "recruiter or engineer based on their referrer" — still 0 observations. 5/5 live deltas empty, while the D9a eval passes with 3 observations. **Eval↔live divergence unexplained** — needs investigation (provider structured-output mode, max_tokens, prompt parity).
+   - TransparencyPanel: activity glyphs (● persona, ▲ voice) and newest-first ordering correct. But "What the agent thinks of you" stays on "The agent has not formed a read yet" through 4 deltas — the read summary renders observations, which never arrive.
+2. **Adaptation visibility — FEAT-007's "drops on the floor" AMENDED, not confirmed wholesale.** Adaptation IS visible, through exactly two channels: which cards occupy the four visible tier-4 slots (real reordering — `skill-langgraph` and `project-genai-migration` were promoted after dwells on them) and `data-highlighted` toggling. Everything else drops: 26 `ux:focus` events carrying `emphasis` arrays produced **zero** DOM change (fontSize/opacity/grid-span/box identical across all bursts); tier moves are binary 0↔4 with no graded treatment; 6 `ux:bridge` events with real connective copy ("Built Salama AI Platform") have **no consumer component** — `addBridge` fills the store, nothing renders it (test files are the only references). Emphasis-ignored: CONFIRMED. Bridges-never-render: CONFIRMED.
+3. **Voice quality — text good, wiring broken.** The dialogue answer itself is excellent: second-person, specific, no metadata leaks ("You'll find two production AI systems worth digging into…"). But: (a) **dialogue fires unsolicited** — signal-route adaptation selected the dialogue voice twice and the overlay visibly rendered a fabricated Q&A ("What are the technical details of the projects?") ~15s into a session where the visitor never asked anything — an anti-creepy violation; (b) **Cmd+K ignores the actual question** — typing "What kind of AI work has Firaaz done?" produced the byte-identical fabricated Q&A, because `VoiceStrategy.build_prompt` (`voice.py:142`) sends only voice_tag/trust/rationale/observations; `ctx.command` never reaches the dialogue LLM; (c) whisper utterances ("Noticing slow reading", "Technical interest shown") carry no metadata leaks, though the framing is agent-narration rather than second person; (d) the letter voice was unobservable — a recruiter persona can never form while finding #1 stands.
+4. **Debounce — PASS.** Six escalating signal batches POSTed within 1.5s on a synthetic session produced exactly one adaptation burst (1 persona:delta + voice + ux events). `_DEBOUNCE_WINDOW_S = 2.0` holds.
+5. **"Do not infer" toggle — PASS.** After checking the box: 0 signal POSTs and 0 new SSE events across ~60s of continued card hovering. The gate cuts the agent off at its only read input, as designed.
+
+### FEAT-007 pitch verdicts
+
+- Emphasis ignored by molecules: **CONFIRMED** (at the DOM level — emphasis payloads arrive and change nothing).
+- Bridges never render: **CONFIRMED** (store-only; no consumer).
+- Letter + whisper leak: **AMENDED** — no metadata leak observed in whispers this run; letter is untestable until persona context wiring is fixed. The pitch should absorb the **new** gaps this session surfaced: referral context never reaching ReadStrategy (and UTM dead end-to-end), observations empty live despite a passing eval, dialogue ignoring the visitor's actual question, and unsolicited dialogue selection.
+
+## Accomplished This Session
+
+1. Committed the dangling `session.py` E501 wrap (`08c84bb`, ruff now clean on that file) — the last pre-push working-tree noise.
+2. Pushed `develop` (1f9e765..08c84bb, 171 commits) and `feat/007-spec` (new branch) to `origin`. Fast-forward, no force. feat/007-spec NOT merged — pitch acceptance stays a separate decision.
+3. Real-LLM smoke test, five scenarios, as above. Backend logs clean throughout (no exceptions, no LLM fallbacks triggered).
+4. Three lessons appended to `tasks/lessons.md` (Playwright MCP/Chrome dependency, SSE-vs-networkidle, eval↔live divergence).
+
+## Key Decisions
+
+- **Scripted Playwright over installing Chrome.** Playwright MCP demands system Chrome; reinstalling an app the user removed is not a smoke-test prerequisite. The frontend's own `@playwright/test` chromium + an EventSource tap gave strictly more observability (raw SSE log, request timing, DOM diffs).
+- **Synthetic debounce probe.** The client batches signal flushes at 4s, so no browser interaction can exercise the backend's 2s debounce window. Probed it honestly with 6 rapid curl batches on a throwaway session while tailing that session's SSE stream.
+- **Findings, not fixes.** Nothing found this session was patched (separate phases). The unsolicited-dialogue and dialogue-ignores-question findings are arguably fix-slice material independent of FEAT-007's reification frame.
+
+## Blockers
+
+- **Persona pipeline is structurally blind to referral context** (finding #1) — blocks the letter voice, recruiter-persona behavior, and the D9a contract in production. The highest-leverage single fix surfaced this session.
+- **Eval↔live divergence on observations** — the D9a eval green does not currently predict live behavior. Until explained, EDD greens for ReadStrategy carry less weight.
+- Carried-over lint debt unchanged except `session.py` E501 (fixed): `strategy.py`, `strategies/{adapt,select}.py` E501; `test_validation.py` + `test_five_verb_events.py` ruff; frontend `SkillTag.test.tsx` noNonNullAssertion, `index.css` noImportantStyles ×2, `Canvas.test.tsx` formatter delta.
+- PresenceDot long-press + Canvas mobile flag + `useDwell` touch tuning unimplemented (carried over).
+
+## Next Step
+
+Decide FEAT-007 scope with this evidence in hand. The pitch's reification thesis held for emphasis and bridges, but the session's biggest finds are upstream of rendering: context wiring (referral/UTM → ReadStrategy), observation emptiness live, and dialogue question threading. Options: amend the FEAT-007 pitch to absorb the wiring gaps, or cut 2-3 surgical fix-slices (context plumbing; command threading; suppress unsolicited dialogue) ahead of the bigger bet.
+
+## Previous State (2026-04-26, post-Slice-D9b frontend polish — FEAT-006 SHIPPED)
 
 Slice D9b of FEAT-006 ("Agent IS the Page") **shipped and merged into `develop`** via `--no-ff` ceremony (merge commit `42b84a2`). **D9b covers the frontend half of the decomposed D9: TransparencyPanel "do not infer" toggle (with persona-store flag + signal-collector POST gate) + unified Activity log replacing the legacy decisions array (audit-store discriminated union, agent-stream wires persona-delta + voice-utterance into the log alongside their primary store dispatches).** With this merge, **all D-series slices of FEAT-006 are complete and FEAT-006 ships as a feature.**
 
